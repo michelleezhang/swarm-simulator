@@ -3,7 +3,7 @@ import sys, traceback, pickle, json, select
 import arcade
 from dataclasses import dataclass
 from datetime import datetime
-from time import sleep
+import time
 import numpy as np
 from robot_class import bot
 import re
@@ -67,20 +67,24 @@ def init():
     screen = pygame.display.set_mode((width, height))
     pygame.display.flip()
 
-def visualisation(screen, robot_id, robot_state):
+# def update(robot_id, robot_state):
 
-    for i in range(len(robot_id)):
+    
+
+def visualisation(screen, robot_id, robot_state, num_of_robot):
+
+    for i in range(num_of_robot):
 
         if robot_id[i] >0:
             robo = robot_state[i]
-            print(robo.usr_led)
+            # print(robo.usr_led)
             colour = robo.usr_led #green
             circle_x_y = (i*2, i*2)
             circle_radius = 8
             border_width = 1 #0 = filled circle
 
             pygame.draw.circle(screen, colour, circle_x_y, circle_radius, border_width)
-            pygame.display.flip()
+    pygame.display.flip()
             
 def loop():
     
@@ -94,7 +98,8 @@ def loop():
     robot = bot_sim(id=0,usr_led=(100,100,100),clk=datetime.now())
     robot_state = [robot]*10000
 
-    sim_time_start = datetime.now()
+
+    sim_time_start = time.time()
     num_of_robot = 0
     
     (width, height) = (1500, 1000)
@@ -102,8 +107,8 @@ def loop():
     pygame.display.flip()
 
     while True:
-        sim_time = datetime.now() - sim_time_start
         
+        start_of_loop = time.time()
         try:
             rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
 
@@ -157,10 +162,15 @@ def loop():
                                 robot_id[int(msg[1])] = msg[1]
                                 robot = bot_sim(id=msg[1],usr_led=(msg[3],msg[4],msg[5]),clk=datetime.now())
                                 robot_state[int(msg[1])] = robot
-            visualisation(screen, robot_id, robot_state)
-            
+            sim_time = time.time() - sim_time_start
+            # Only allows visualization every 0.001 seconds
+            if sim_time > 0.005: 
+                visualisation(screen, robot_id, robot_state, num_of_robot)
+                sim_time_start = time.time()
+            # print(time.time() - start_of_loop, " seconds ")
         except Exception:
-            print("Some error")
+            # print("Some error")
+            continue
 
         # visualisation(screen, robot_id, robot_state)
         
