@@ -5,7 +5,7 @@ run `python3 simulator` in one terminal. \
 run `./run_parallel.sh 1` in another terminal. 
 
 ## Current structure 
-[Structure](workflow.drawio.png)
+![Structure](workflow.drawio.png)
 
 ## Current Stats
 Speed (per loop): \
