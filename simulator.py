@@ -78,8 +78,8 @@ def visualisation(screen, robot_id, robot_state, num_of_robot):
             robo = robot_state[i]
             # print(robo.usr_led)
             colour = robo.usr_led #green
-            circle_x_y = (i*4, i*4)
-            circle_radius = 12
+            circle_x_y = (i*8, i*8)
+            circle_radius = 20
             border_width = 2 #0 = filled circle
 
             pygame.draw.circle(screen, colour, circle_x_y, circle_radius, border_width)
