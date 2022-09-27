@@ -34,7 +34,6 @@ class bot_sim:
         self.usr_led = usr_led
         self.pos_x = 3
         self.pos_y = 3
-        self.clk = clk
         self.delay = delay
         # self.so = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -55,17 +54,17 @@ def broadcast_message(sock, message):
         if socket != server_socket and socket != sock:
             socket.send(message)
 
-def init():
-#     SCREEN_WIDTH = 600
-#     SCREEN_HEIGHT = 600
+# def init():
+# #     SCREEN_WIDTH = 600
+# #     SCREEN_HEIGHT = 600
 
-# # Open the window. Set the window title and dimensions (width and height)
-#     arcade.open_window(SCREEN_WIDTH, SCREEN_HEIGHT, "Swarms")
-#     arcade.set_background_color(arcade.color.WHITE)
-#     arcade.start_render()
-    (width, height) = (300, 200)
-    screen = pygame.display.set_mode((width, height))
-    pygame.display.flip()
+# # # Open the window. Set the window title and dimensions (width and height)
+# #     arcade.open_window(SCREEN_WIDTH, SCREEN_HEIGHT, "Swarms")
+# #     arcade.set_background_color(arcade.color.WHITE)
+# #     arcade.start_render()
+#     (width, height) = (300, 200)
+#     screen = pygame.display.set_mode((width, height))
+#     pygame.display.flip()
 
 # def update(robot_id, robot_state):
 
@@ -79,13 +78,20 @@ def visualisation(screen, robot_id, robot_state, num_of_robot):
             robo = robot_state[i]
             # print(robo.usr_led)
             colour = robo.usr_led #green
-            circle_x_y = (i*2, i*2)
-            circle_radius = 8
-            border_width = 1 #0 = filled circle
+            circle_x_y = (i*4, i*4)
+            circle_radius = 12
+            border_width = 2 #0 = filled circle
 
             pygame.draw.circle(screen, colour, circle_x_y, circle_radius, border_width)
     pygame.display.flip()
-            
+
+def conv_to_json(robot_state, num_of_robot):
+    json_dict = {}
+    for i in range(num_of_robot):
+        json_dict[i] = robot_state[i].__dict__
+    
+    return json_dict
+
 def loop():
     
     
@@ -123,6 +129,7 @@ def loop():
                     
                     if len(data) != 0:
                         msg = data.decode()
+                        
                         # print(msg)
                         if int(msg,2) ==7:
                             # print(num_of_robot)
@@ -135,11 +142,17 @@ def loop():
                     open_client_sockets.append(new_socket) # clients list
                 else:
                     data = current_socket.recv(1024)
+                    val_for_vis = '0b101'
                     if len(data) == 0:
                         open_client_sockets.remove(current_socket) # remove user if he quit.
                         print("Connection with client closed.")
                         # send_waiting_messages(wlist) # send message to specfic client
-
+                    # elif len(data) == 5:
+                    #         print("enter this part")
+                    #         msg1 = conv_to_json(robot_state, num_of_robot)
+                    #         new_socket.send(json.dumps(msg1))
+                    #         print("sent to vis")
+                            # msg1 = pickle.dumps(robot_state[:num_of_robot])
                     else:
                        
                         # broadcast_message(current_socket, "\r" + '<' + data + '> ')
