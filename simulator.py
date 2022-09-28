@@ -1,3 +1,7 @@
+"""
+Main Server for Swarm Simulation 
+"""
+
 import socket
 import sys, traceback, pickle, json, select
 import arcade
@@ -9,9 +13,9 @@ from robot_class import bot
 import re
 import pygame
 
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.bind((socket.gethostname(),1245))
-server_socket.listen(1)
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # SOCK_STREAM is for TCP 
+server_socket.bind((socket.gethostname(),1245)) # Binds to port 1245
+server_socket.listen(1) 
 open_client_sockets = [] # current clients handler
 messages_to_send = [] # future message send handler
 
@@ -53,23 +57,7 @@ def broadcast_message(sock, message):
     for socket in open_client_sockets:
         if socket != server_socket and socket != sock:
             socket.send(message)
-
-# def init():
-# #     SCREEN_WIDTH = 600
-# #     SCREEN_HEIGHT = 600
-
-# # # Open the window. Set the window title and dimensions (width and height)
-# #     arcade.open_window(SCREEN_WIDTH, SCREEN_HEIGHT, "Swarms")
-# #     arcade.set_background_color(arcade.color.WHITE)
-# #     arcade.start_render()
-#     (width, height) = (300, 200)
-#     screen = pygame.display.set_mode((width, height))
-#     pygame.display.flip()
-
-# def update(robot_id, robot_state):
-
-    
-
+ 
 def visualisation(screen, robot_id, robot_state, num_of_robot):
 
     for i in range(num_of_robot):
@@ -93,9 +81,7 @@ def conv_to_json(robot_state, num_of_robot):
     return json_dict
 
 def loop():
-    
-    
-    # init()
+
     rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
     # serversocket, address = s.accept()
     # msg = s.recv(1024)
@@ -103,7 +89,6 @@ def loop():
     robot_id = -1*np.ones((10000))
     robot = bot_sim(id=0,usr_led=(100,100,100),clk=datetime.now())
     robot_state = [robot]*10000
-
 
     sim_time_start = time.time()
     num_of_robot = 0
@@ -144,8 +129,9 @@ def loop():
                     data = current_socket.recv(1024)
                     val_for_vis = '0b101'
                     if len(data) == 0:
-                        open_client_sockets.remove(current_socket) # remove user if he quit.
-                        print("Connection with client closed.")
+                        gibberish =0
+                        # open_client_sockets.remove(current_socket) # remove user if he quit.
+                        # print("Connection with client closed.")
                         # send_waiting_messages(wlist) # send message to specfic client
                     # elif len(data) == 5:
                     #         print("enter this part")
@@ -176,7 +162,7 @@ def loop():
                                 robot = bot_sim(id=msg[1],usr_led=(msg[3],msg[4],msg[5]),clk=datetime.now())
                                 robot_state[int(msg[1])] = robot
             sim_time = time.time() - sim_time_start
-            # Only allows visualization every 0.001 seconds
+            # Only allows visualization every 0.005 seconds
             if sim_time > 0.005: 
                 visualisation(screen, robot_id, robot_state, num_of_robot)
                 sim_time_start = time.time()

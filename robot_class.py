@@ -20,22 +20,11 @@ class bot:
         self.usr_led = usr_led
         self.pos_x = 3
         self.pos_y = 3
-        self.clk = 0
-        # self.so = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        
+        self.clk = 0        
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.client_socket.settimeout(0.5)
         self.client_socket.connect((socket.gethostname(), 1245))
         self.set_id()
-        # data = 0
-        # data_string = pickle.dumps((data))
-        # self.client_socket.send(data_string)
-        # data = self.client_socket.recv(1024)
-        # msg = pickle.loads(data)
-        # self.id = msg
-        # self.s.bind((socket.gethostname(),1234))
-        # self.s.listen(5)
-        # self.clientsocket, self.address = self.s.accept()
     
     def set_id(self):
         data = '0b111'
