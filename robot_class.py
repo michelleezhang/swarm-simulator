@@ -55,29 +55,18 @@ class bot:
         return data_arr
 
     def send_data(self,fnc_num,data):
-        flag = True
-        while flag == True:
-            # ready = select.select([self.client_socket], [], [], .1)
-            data_string = self.msg_encode(fnc_num,data)
-            # data_string = pickle.dumps((data))
-            self.client_socket.send(data_string)
-            data = self.client_socket.recv(1024)
-            msg = self.msg_decode(data)
-            # msg = pickle.loads(data)
-            # print(msg)
-            
-            flag = False
-
+        data_string = self.msg_encode(fnc_num,data)
+        self.client_socket.send(data_string)
+        data = self.client_socket.recv(1024)
+        msg = self.msg_decode(data)
 
     def set_led(self,r,g,b):
         m_range = (0, 100)
         self.usr_led = (r,g,b)
         info = str(bin(r)) + str(bin(g)) + str(bin(b))
-        # data = Data(led=self.usr_led, delay=0, id = self.id)
         self.send_data(2,info)
 
     def delay(self, delay):
-        # time in milliseconds
         timeout = time.time()*1000 + delay - 5
         # self.client_socket.close()
         flag = True

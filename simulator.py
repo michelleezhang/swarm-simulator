@@ -60,13 +60,13 @@ def broadcast_message(sock, message):
  
 def visualisation(screen, robot_id, robot_state, num_of_robot):
 
-    for i in range(num_of_robot):
+    for i in range(num_of_robot+1):
 
         if robot_id[i] >0:
             robo = robot_state[i]
             # print(robo.usr_led)
             colour = robo.usr_led #green
-            circle_x_y = (i*8, i*8)
+            circle_x_y = (5+i*8, 5+i*8)
             circle_radius = 20
             border_width = 2 #0 = filled circle
 
@@ -103,6 +103,7 @@ def loop():
         try:
             rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
 
+            # print(rlist)
             for current_socket in rlist: # sockets that can be read
                 if current_socket is server_socket: # if there is a new client
                     (new_socket, address) = server_socket.accept() 
@@ -129,7 +130,7 @@ def loop():
                     data = current_socket.recv(1024)
                     val_for_vis = '0b101'
                     if len(data) == 0:
-                        gibberish =0
+                        gibberish = 0
                         # open_client_sockets.remove(current_socket) # remove user if he quit.
                         # print("Connection with client closed.")
                         # send_waiting_messages(wlist) # send message to specfic client
