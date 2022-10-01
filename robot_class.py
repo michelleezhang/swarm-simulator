@@ -13,7 +13,7 @@ import re
 
 @dataclass
 class Data:
-    timestamp = datetime.now()
+    timestamp = time.time()
     led: tuple
     delay: int
     id: int

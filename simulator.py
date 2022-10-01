@@ -93,7 +93,7 @@ def loop():
     # msg = s.recv(1024)
     # print(msg.decode("utf-8"))
     robot_id = -1*np.ones((10000))
-    robot = bot_sim(id=0,usr_led=(100,100,100),clk=datetime.now())
+    robot = bot_sim(id=0,usr_led=(100,100,100),clk=time.time())
     robot_state = [robot]*10000
     fd_to_id_map = {}
     sim_time_start = time.time()
@@ -158,7 +158,7 @@ def loop():
                         # broadcast_message(current_socket, "\r" + '<' + data + '> ')
                         msg = msg_decode(data)
                         if msg[2] == 3:
-                            robot_state[int(msg[1])].clk = time.time()*1000 + msg[3]
+                            robot_state[int(msg[1])].clk = time.time() + msg[3]/1000
                             data_string = '0b1'
                             current_socket.send(data_string.encode())
                             continue
@@ -179,16 +179,18 @@ def loop():
                                 robot = bot_sim(id=msg[1],usr_led=(msg[3],msg[4],msg[5]),clk=time.time())
                                 robot_state[int(msg[1])] = robot
             sim_time = time.time() - sim_time_start
-            robot_state = update_time(robot_state,num_of_robot)
+            
             # Only allows visualization every 0.005 seconds
-            if sim_time > 0.005: 
-                visualisation(screen, robot_id, robot_state, num_of_robot)
-                sim_time_start = time.time()
+            # if sim_time > 0.005: 
+            visualisation(screen, robot_id, robot_state, num_of_robot)
+            sim_time_start = time.time()
             # print(time.time() - start_of_loop, " seconds ")
             print("fd to id:", fd_to_id_map)
+        
         except Exception:
             # print("Some error")
             continue
+        robot_state = update_time(robot_state,num_of_robot)
 
         # visualisation(screen, robot_id, robot_state)
         
