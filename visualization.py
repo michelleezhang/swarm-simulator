@@ -21,8 +21,17 @@ class visualization:
         # self.screen = pygame.display.set_mode((width, height))
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_socket.connect((socket.gethostname(), 1245))
+        self.set_vis_id()
 
         # pygame.display.flip()
+    
+    def set_vis_id(self):
+        data = '0b101'
+        self.client_socket.send(data.encode())
+        print("Connected")
+        data = self.client_socket.recv(1024)
+        if data.decode() != str(bin(2)):
+            print("Error in connecting to simulator server")
     
     # def update(self, robot_state, num_of_robot):
     #     for i in range(num_of_robot):
@@ -37,36 +46,13 @@ class visualization:
 
     def loop(self):
 
-        time_start = time.time()
         while True:
-            
-            if time.time() - time_start > 0.001:  
-                # self.client_socket.connect((socket.gethostname(), 1245))  
-                data_send = '0b101'
-                self.client_socket.send(data_send.encode())
-                msg = self.client_socket.recv(4096)
-                # flag = True
-                # msg = []
-                # while flag:
-                    
-                #     try:
-                #         msg = self.client_socket.recv(4096)
-                #     except Exception:
-                #         a = 0
-                #     if len(msg)>0:
-                #         flag = False
-                # print('Done with getting message')
-                if len(msg)>1:
-                    msg = json.loads(msg)
-                    print(msg)
-                    l = len(msg)
-                    print("size", l)
-                    time_start = time.time()
-                else:
-                    msg = '0'
-                
-            # data_send = '0b11'
-            # self.client_socket.send(data_send.encode())
+            print("Waiting for client to receive")
+            msg = self.client_socket.recv(4096)
+            # msg = json.loads(msg)
+            # print(msg)  
+            data_send = '0b11'
+            self.client_socket.send(data_send.encode())
             # gn = self.client_socket.recv(1024)
             print('loop')
 

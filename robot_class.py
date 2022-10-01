@@ -39,7 +39,7 @@ class bot:
             self.id = msg
 
     def msg_encode(self,fnc_num, data):
-
+        
         client = str(bin(2))
         robot_id = str((bin(self.id)))
         fnc = str(bin(fnc_num))

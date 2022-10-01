@@ -2,8 +2,6 @@
 Main Server for Swarm Simulation 
 """
 
-from inspect import currentframe
-from lib2to3.pgen2.literals import simple_escapes
 import socket
 import sys, traceback, pickle, json, select
 from turtle import update
@@ -64,7 +62,7 @@ def visualisation(screen, robot_id, robot_state, num_of_robot):
             robo = robot_state[i]
             # print(robo.usr_led)
             colour = robo.usr_led #green
-            circle_x_y = (5+i*8, 5+i*8)
+            circle_x_y = (15+i*15, 15+i*15)
             circle_radius = 20
             border_width = 2 #0 = filled circle
 
@@ -101,6 +99,8 @@ def loop():
     (width, height) = (1500, 1000)
     screen = pygame.display.set_mode((width, height))
     pygame.display.flip()
+    vis_fd = -1
+    vis_socket = None
     while True:
         
         
@@ -110,11 +110,15 @@ def loop():
             # print(rlist)
             for current_socket in rlist: # sockets that can be read
                 
+                if current_socket.fileno() == vis_fd:
+                    print(vis_socket)
+                    continue
+
                 if current_socket.fileno() in fd_to_id_map.keys():
                     
                     if robot_state[fd_to_id_map[current_socket.fileno()]].clk > sim_time_real:
                         continue
-                    print(current_socket.fileno())
+                    # print(current_socket.fileno())
 
                 if current_socket is server_socket: # if there is a new client
                     (new_socket, address) = server_socket.accept() 
@@ -129,12 +133,19 @@ def loop():
                         
                         # print(msg)
                         if int(msg,2) ==7:
-                            # print(num_of_robot)
+                            print(num_of_robot)
                             num_of_robot += 1
                             msg1 = str(bin(num_of_robot))
                             fd_to_id_map[new_socket.fileno()] = num_of_robot
                             new_socket.send(msg1.encode())
                             robot_state[num_of_robot] = bot_sim(id=num_of_robot,usr_led=(0,0,0),clk=time.time())
+                        elif int(msg,2) == 5: 
+                            vis_fd = new_socket.fileno()
+                            vis_socket = new_socket
+                            msg1 = str(bin(2))
+                            print(vis_socket)
+                            new_socket.send(msg1.encode())
+                            print("Got vis connected")
                         elif msg == 1:
                             msg1 = str(bin(-1))
                             new_socket.send(msg.encode())
@@ -144,6 +155,7 @@ def loop():
                     val_for_vis = '0b101'
                     if len(data) == 0:
                         gibberish = 0
+                        print("Gibberish")
                         # open_client_sockets.remove(current_socket) # remove user if he quit.
                         # print("Connection with client closed.")
                         # send_waiting_messages(wlist) # send message to specfic client
@@ -181,11 +193,17 @@ def loop():
             sim_time = time.time() - sim_time_start
             
             # Only allows visualization every 0.005 seconds
-            # if sim_time > 0.005: 
-            visualisation(screen, robot_id, robot_state, num_of_robot)
-            sim_time_start = time.time()
+            if sim_time > 0.005: 
+                print("call vis")
+                if vis_fd>0:
+                    msg1 = conv_to_json(robot_state, num_of_robot)
+                    vis_socket.send(json.dumps(msg1))
+                    recv_msg = vis_socket.recv(1024)
+                    print(recv_msg)
+                visualisation(screen, robot_id, robot_state, num_of_robot)
+                sim_time_start = time.time()
             # print(time.time() - start_of_loop, " seconds ")
-            print("fd to id:", fd_to_id_map)
+            # print("fd to id:", fd_to_id_map)
         
         except Exception:
             # print("Some error")
