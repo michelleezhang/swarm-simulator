@@ -2,8 +2,11 @@
 Main Server for Swarm Simulation 
 """
 
+from inspect import currentframe
+from lib2to3.pgen2.literals import simple_escapes
 import socket
 import sys, traceback, pickle, json, select
+from turtle import update
 import arcade
 from dataclasses import dataclass
 from datetime import datetime
@@ -39,12 +42,7 @@ class bot_sim:
         self.pos_x = 3
         self.pos_y = 3
         self.delay = delay
-        # self.so = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # self.client_socket.connect((socket.gethostname(), 1234))
-        # self.s.bind((socket.gethostname(),1234))
-        # self.s.listen(5)
-        # self.clientsocket, self.address = self.s.accept()
+        self.clk = clk
 
 def send_waiting_messages(wlist):
     for message in messages_to_send:
@@ -80,6 +78,14 @@ def conv_to_json(robot_state, num_of_robot):
     
     return json_dict
 
+def update_time(robot_state, num_of_robot):
+
+    for i in range(num_of_robot+1):
+        if robot_state[i].clk < time.time():
+           robot_state[i].clk = time.time()
+    
+    return robot_state
+
 def loop():
 
     rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
@@ -89,22 +95,27 @@ def loop():
     robot_id = -1*np.ones((10000))
     robot = bot_sim(id=0,usr_led=(100,100,100),clk=datetime.now())
     robot_state = [robot]*10000
-
+    fd_to_id_map = {}
     sim_time_start = time.time()
     num_of_robot = 0
-    
     (width, height) = (1500, 1000)
     screen = pygame.display.set_mode((width, height))
     pygame.display.flip()
-
     while True:
         
-        start_of_loop = time.time()
+        
         try:
             rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
-
+            sim_time_real = time.time()
             # print(rlist)
             for current_socket in rlist: # sockets that can be read
+                
+                if current_socket.fileno() in fd_to_id_map.keys():
+                    
+                    if robot_state[fd_to_id_map[current_socket.fileno()]].clk > sim_time_real:
+                        continue
+                    print(current_socket.fileno())
+
                 if current_socket is server_socket: # if there is a new client
                     (new_socket, address) = server_socket.accept() 
                     try:
@@ -121,7 +132,9 @@ def loop():
                             # print(num_of_robot)
                             num_of_robot += 1
                             msg1 = str(bin(num_of_robot))
+                            fd_to_id_map[new_socket.fileno()] = num_of_robot
                             new_socket.send(msg1.encode())
+                            robot_state[num_of_robot] = bot_sim(id=num_of_robot,usr_led=(0,0,0),clk=time.time())
                         elif msg == 1:
                             msg1 = str(bin(-1))
                             new_socket.send(msg.encode())
@@ -143,10 +156,13 @@ def loop():
                     else:
                        
                         # broadcast_message(current_socket, "\r" + '<' + data + '> ')
-                        # msg = pickle.loads(data)
-                        # print(msg)
-                        # msg1 = pickle.dumps((3))
                         msg = msg_decode(data)
+                        if msg[2] == 3:
+                            robot_state[int(msg[1])].clk = time.time()*1000 + msg[3]
+                            data_string = '0b1'
+                            current_socket.send(data_string.encode())
+                            continue
+                            
                         data_string = '0b1'
                         current_socket.send(data_string.encode())
                         if len(msg)>1:
@@ -156,18 +172,20 @@ def loop():
                             # if msg !=1:
                             # print(msg)
                             if msg[1] in robot_id:
-                                robot = bot_sim(id=msg[1],usr_led=(msg[3],msg[4],msg[5]),clk=datetime.now())
+                                robot = bot_sim(id=msg[1],usr_led=(msg[3],msg[4],msg[5]),clk=time.time())
                                 robot_state[int(msg[1])] = robot
                             else:
                                 robot_id[int(msg[1])] = msg[1]
-                                robot = bot_sim(id=msg[1],usr_led=(msg[3],msg[4],msg[5]),clk=datetime.now())
+                                robot = bot_sim(id=msg[1],usr_led=(msg[3],msg[4],msg[5]),clk=time.time())
                                 robot_state[int(msg[1])] = robot
             sim_time = time.time() - sim_time_start
+            robot_state = update_time(robot_state,num_of_robot)
             # Only allows visualization every 0.005 seconds
             if sim_time > 0.005: 
                 visualisation(screen, robot_id, robot_state, num_of_robot)
                 sim_time_start = time.time()
             # print(time.time() - start_of_loop, " seconds ")
+            print("fd to id:", fd_to_id_map)
         except Exception:
             # print("Some error")
             continue

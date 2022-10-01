@@ -1,3 +1,7 @@
+"""
+Define Robot class that will act as an API
+"""
+
 from dataclasses import dataclass
 from datetime import date, datetime
 from time import sleep
@@ -66,26 +70,7 @@ class bot:
         info = str(bin(r)) + str(bin(g)) + str(bin(b))
         self.send_data(2,info)
 
-    def delay(self, delay):
-        timeout = time.time()*1000 + delay - 5
-        # self.client_socket.close()
-        flag = True
-        while flag:
-            # data_string = pickle.dumps((1))
-            data_string = '0b11'
-            self.client_socket.send(data_string.encode())
-            data = self.client_socket.recv(1024)
-            msg = self.msg_decode(data)
-            # print(msg)
-            if time.time()*1000 > timeout:
-                flag = False
-                break
-            # print("Delay done")
-            
-        # self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # self.client_socket.connect((socket.gethostname(), 1245))
+    def delay(self, delay_time):
+        info = str(bin(delay_time))
+        self.send_data(3,info)
         
-        # data = self.client_socket.recv(1024)
-        # msg = pickle.loads(data)
-        # print(msg)
-        self.clk = self.clk+delay
