@@ -197,9 +197,11 @@ def loop():
                 print("call vis")
                 if vis_fd>0:
                     msg1 = conv_to_json(robot_state, num_of_robot)
-                    vis_socket.send(json.dumps(msg1))
+                    msg1 = '0b1011'
+                    # vis_socket.send(json.dumps(msg1))
+                    vis_socket.send(msg1.encode())
                     recv_msg = vis_socket.recv(1024)
-                    print(recv_msg)
+                    print(recv_msg.decode())
                 visualisation(screen, robot_id, robot_state, num_of_robot)
                 sim_time_start = time.time()
             # print(time.time() - start_of_loop, " seconds ")
