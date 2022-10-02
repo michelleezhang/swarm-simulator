@@ -49,8 +49,9 @@ class visualization:
         while True:
             print("Waiting for client to receive")
             msg = self.client_socket.recv(4096)
-            # msg = json.loads(msg)
-            # print(msg)  
+            msg = msg.decode('utf-8')
+            msg = json.loads(msg)
+            print(msg)  
             data_send = '0b11'
             self.client_socket.send(data_send.encode())
             # gn = self.client_socket.recv(1024)

@@ -196,10 +196,11 @@ def loop():
             if sim_time > 0.005: 
                 print("call vis")
                 if vis_fd>0:
+                    # Need to change this part. Json Dumps not working. Maybe look at something else
                     msg1 = conv_to_json(robot_state, num_of_robot)
-                    msg1 = '0b1011'
-                    # vis_socket.send(json.dumps(msg1))
-                    vis_socket.send(msg1.encode())
+                    # msg1 = '0b1011'
+                    vis_socket.sendall(json.dumps(msg1).encode('utf-8'))
+                    # vis_socket.send(msg1.encode())
                     recv_msg = vis_socket.recv(1024)
                     print(recv_msg.decode())
                 visualisation(screen, robot_id, robot_state, num_of_robot)
