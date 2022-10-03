@@ -71,14 +71,14 @@ def broadcast_message(sock, message):
 
 def conv_to_json(robot_state, num_of_robot):
     json_dict = {}
-    for i in range(num_of_robot):
+    for i in range(1,num_of_robot+1):
         json_dict[i] = robot_state[i].__dict__
-    
+    # print(json_dict)
     return json_dict
 
 def update_time(robot_state, num_of_robot):
 
-    for i in range(num_of_robot+1):
+    for i in range(1,num_of_robot+1):
         if robot_state[i].clk < time.time():
            robot_state[i].clk = time.time()
     
@@ -111,7 +111,7 @@ def loop():
             for current_socket in rlist: # sockets that can be read
                 
                 if current_socket.fileno() == vis_fd:
-                    print(vis_socket)
+                    # print(vis_socket)
                     continue
 
                 if current_socket.fileno() in fd_to_id_map.keys():
@@ -133,8 +133,9 @@ def loop():
                         
                         # print(msg)
                         if int(msg,2) ==7:
-                            print(num_of_robot)
+                            
                             num_of_robot += 1
+                            # print(fd_to_id_map)
                             msg1 = str(bin(num_of_robot))
                             fd_to_id_map[new_socket.fileno()] = num_of_robot
                             new_socket.send(msg1.encode())

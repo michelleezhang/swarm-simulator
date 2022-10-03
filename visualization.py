@@ -40,9 +40,9 @@ class visualization:
             print("Error in connecting to simulator server")
     
     def update_states(self, data):
-        num_of_robot = len(data)
+        num_of_robot = len(data) +1
         robot_state = [0]*num_of_robot
-        i=0
+        i=1
         for key in data:
             robot_state[i] = Dict2Class(data[key])
             # print(robot_state[i].id)
@@ -51,11 +51,11 @@ class visualization:
         self.update(robot_state,num_of_robot)
 
     def update(self, robot_state, num_of_robot):
-        for i in range(num_of_robot):
+        for i in range(1,num_of_robot):
             robo = robot_state[i]
             # print(robo.usr_led)
             colour = robo.usr_led #green
-            circle_x_y = (15+i*15, 15+i*15)
+            circle_x_y = (12+i*12, 15+i*12)
             circle_radius = 12
             border_width = 2 #0 = filled circle
             pygame.draw.circle(self.screen, colour, circle_x_y, circle_radius, border_width)
@@ -65,7 +65,7 @@ class visualization:
 
         while True:
             # print("Waiting for client to receive")
-            msg = self.client_socket.recv(4096)
+            msg = self.client_socket.recv(3*4096)
             msg = msg.decode('utf-8')
             msg = json.loads(msg)
             self.update_states(msg)
