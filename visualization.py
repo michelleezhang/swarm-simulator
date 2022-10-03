@@ -2,7 +2,14 @@
 import socket, sys, traceback
 import pickle, time, json
 
-from sympy import true
+import pygame
+
+class Dict2Class(object):
+    def __init__(self,my_dict):
+
+        for key in my_dict:
+            setattr(self,key,my_dict[key])
+
 
 class bot_sim:
     def __init__(self, id, usr_led,clk,delay=0):
@@ -18,12 +25,11 @@ class visualization:
     def __init__(self):
         
         (width, height) = (1500, 1000)
-        # self.screen = pygame.display.set_mode((width, height))
+        self.screen = pygame.display.set_mode((width, height))
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_socket.connect((socket.gethostname(), 1245))
         self.set_vis_id()
-
-        # pygame.display.flip()
+        pygame.display.flip()
     
     def set_vis_id(self):
         data = '0b101'
@@ -33,29 +39,41 @@ class visualization:
         if data.decode() != str(bin(2)):
             print("Error in connecting to simulator server")
     
-    # def update(self, robot_state, num_of_robot):
-    #     for i in range(num_of_robot):
-    #         robo = robot_state[i]
-    #         # print(robo.usr_led)
-    #         colour = robo.usr_led #green
-    #         circle_x_y = (i*2, i*2)
-    #         circle_radius = 8
-    #         border_width = 1 #0 = filled circle
-    #         pygame.draw.circle(self.screen, colour, circle_x_y, circle_radius, border_width)
-    #     pygame.display.flip()
+    def update_states(self, data):
+        num_of_robot = len(data)
+        robot_state = [0]*num_of_robot
+        i=0
+        for key in data:
+            robot_state[i] = Dict2Class(data[key])
+            # print(robot_state[i].id)
+            i+=1
+        
+        self.update(robot_state,num_of_robot)
+
+    def update(self, robot_state, num_of_robot):
+        for i in range(num_of_robot):
+            robo = robot_state[i]
+            # print(robo.usr_led)
+            colour = robo.usr_led #green
+            circle_x_y = (15+i*15, 15+i*15)
+            circle_radius = 12
+            border_width = 2 #0 = filled circle
+            pygame.draw.circle(self.screen, colour, circle_x_y, circle_radius, border_width)
+        pygame.display.flip()
 
     def loop(self):
 
         while True:
-            print("Waiting for client to receive")
+            # print("Waiting for client to receive")
             msg = self.client_socket.recv(4096)
             msg = msg.decode('utf-8')
             msg = json.loads(msg)
-            print(msg)  
+            self.update_states(msg)
+            # print(msg)  
             data_send = '0b11'
             self.client_socket.send(data_send.encode())
             # gn = self.client_socket.recv(1024)
-            print('loop')
+            # print('loop')
 
 def main():
     try:

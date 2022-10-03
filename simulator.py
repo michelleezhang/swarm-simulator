@@ -12,7 +12,7 @@ import time
 import numpy as np
 from robot_class import bot
 import re
-import pygame
+# import pygame
 
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # SOCK_STREAM is for TCP 
 server_socket.bind((socket.gethostname(),1245)) # Binds to port 1245
@@ -54,20 +54,20 @@ def broadcast_message(sock, message):
         if socket != server_socket and socket != sock:
             socket.send(message)
  
-def visualisation(screen, robot_id, robot_state, num_of_robot):
+# def visualisation(screen, robot_id, robot_state, num_of_robot):
 
-    for i in range(num_of_robot+1):
+#     for i in range(num_of_robot+1):
 
-        if robot_id[i] >0:
-            robo = robot_state[i]
-            # print(robo.usr_led)
-            colour = robo.usr_led #green
-            circle_x_y = (15+i*15, 15+i*15)
-            circle_radius = 20
-            border_width = 2 #0 = filled circle
+#         if robot_id[i] >0:
+#             robo = robot_state[i]
+#             # print(robo.usr_led)
+#             colour = robo.usr_led #green
+#             circle_x_y = (15+i*15, 15+i*15)
+#             circle_radius = 20
+#             border_width = 2 #0 = filled circle
 
-            pygame.draw.circle(screen, colour, circle_x_y, circle_radius, border_width)
-    pygame.display.flip()
+#             pygame.draw.circle(screen, colour, circle_x_y, circle_radius, border_width)
+#     pygame.display.flip()
 
 def conv_to_json(robot_state, num_of_robot):
     json_dict = {}
@@ -97,8 +97,8 @@ def loop():
     sim_time_start = time.time()
     num_of_robot = 0
     (width, height) = (1500, 1000)
-    screen = pygame.display.set_mode((width, height))
-    pygame.display.flip()
+    # screen = pygame.display.set_mode((width, height))
+    # pygame.display.flip()
     vis_fd = -1
     vis_socket = None
     while True:
@@ -194,7 +194,7 @@ def loop():
             
             # Only allows visualization every 0.005 seconds
             if sim_time > 0.005: 
-                print("call vis")
+                # print("call vis")
                 if vis_fd>0:
                     # Need to change this part. Json Dumps not working. Maybe look at something else
                     msg1 = conv_to_json(robot_state, num_of_robot)
@@ -202,8 +202,8 @@ def loop():
                     vis_socket.sendall(json.dumps(msg1).encode('utf-8'))
                     # vis_socket.send(msg1.encode())
                     recv_msg = vis_socket.recv(1024)
-                    print(recv_msg.decode())
-                visualisation(screen, robot_id, robot_state, num_of_robot)
+                    # print(recv_msg.decode())
+                # visualisation(screen, robot_id, robot_state, num_of_robot)
                 sim_time_start = time.time()
             # print(time.time() - start_of_loop, " seconds ")
             # print("fd to id:", fd_to_id_map)
