@@ -33,7 +33,7 @@ class visualization:
     
     def set_vis_id(self):
         data = '0b101'
-        self.client_socket.send(data.encode())
+        self.client_socket.sendall(data.encode())
         print("Connected")
         data = self.client_socket.recv(1024)
         if data.decode() != str(bin(2)):
@@ -71,7 +71,7 @@ class visualization:
             self.update_states(msg)
             # print(msg)  
             data_send = '0b11'
-            self.client_socket.send(data_send.encode())
+            self.client_socket.sendall(data_send.encode())
             # gn = self.client_socket.recv(1024)
             # print('loop')
 

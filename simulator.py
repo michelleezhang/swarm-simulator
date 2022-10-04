@@ -175,11 +175,11 @@ def loop():
                         if msg[2] == 3:
                             robot_state[int(msg[1])].clk = time.time() + msg[3]/1000
                             data_string = '0b1'
-                            current_socket.send(data_string.encode())
+                            current_socket.sendall(data_string.encode())
                             continue
                             
                         data_string = '0b1'
-                        current_socket.send(data_string.encode())
+                        current_socket.sendall(data_string.encode())
                         if len(msg)>1:
                             # print(msg)
                         # print(msg)
