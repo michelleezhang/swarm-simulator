@@ -11,6 +11,7 @@ run `./run_parallel.sh 1` in another terminal.
 Speed (per loop): \
 Without visualization: 0.0002 s (average) \
 In visualization: display.flip to be after for loop: 0.005 s
+![Real time vs Sim Time](time.png)
 
 
 ## License
