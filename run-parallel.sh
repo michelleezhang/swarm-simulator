@@ -4,4 +4,4 @@ trap "pkill -P $$; kill -INT $$" INT
 while read n
 do
     python3 user.py &
-done < <(seq 40)
+done < <(seq 30)

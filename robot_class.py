@@ -32,7 +32,7 @@ class bot:
     
     def set_id(self):
         data = '0b111'
-        self.client_socket.send(data.encode())
+        self.client_socket.sendall(data.encode())
         data = self.client_socket.recv(1024)
         msg = int(data.decode(),2)
         if msg>0:
@@ -60,7 +60,7 @@ class bot:
 
     def send_data(self,fnc_num,data):
         data_string = self.msg_encode(fnc_num,data)
-        self.client_socket.send(data_string)
+        self.client_socket.sendall(data_string)
         data = self.client_socket.recv(1024)
         msg = self.msg_decode(data)
 

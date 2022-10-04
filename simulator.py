@@ -99,6 +99,8 @@ def loop():
     (width, height) = (1500, 1000)
     # screen = pygame.display.set_mode((width, height))
     # pygame.display.flip()
+    sim_ticks = 0
+    sim_time_or = time.time()
     vis_fd = -1
     vis_socket = None
     while True:
@@ -138,18 +140,18 @@ def loop():
                             # print(fd_to_id_map)
                             msg1 = str(bin(num_of_robot))
                             fd_to_id_map[new_socket.fileno()] = num_of_robot
-                            new_socket.send(msg1.encode())
+                            new_socket.sendall(msg1.encode())
                             robot_state[num_of_robot] = bot_sim(id=num_of_robot,usr_led=(0,0,0),clk=time.time())
                         elif int(msg,2) == 5: 
                             vis_fd = new_socket.fileno()
                             vis_socket = new_socket
                             msg1 = str(bin(2))
                             print(vis_socket)
-                            new_socket.send(msg1.encode())
+                            new_socket.sendall(msg1.encode())
                             print("Got vis connected")
                         elif msg == 1:
                             msg1 = str(bin(-1))
-                            new_socket.send(msg.encode())
+                            new_socket.sendall(msg.encode())
                     open_client_sockets.append(new_socket) # clients list
                 else:
                     data = current_socket.recv(1024)
@@ -191,6 +193,7 @@ def loop():
                                 robot_id[int(msg[1])] = msg[1]
                                 robot = bot_sim(id=msg[1],usr_led=(msg[3],msg[4],msg[5]),clk=time.time())
                                 robot_state[int(msg[1])] = robot
+                # sim_ticks +=1
             sim_time = time.time() - sim_time_start
             
             # Only allows visualization every 0.005 seconds
@@ -203,12 +206,17 @@ def loop():
                     vis_socket.sendall(json.dumps(msg1).encode('utf-8'))
                     # vis_socket.send(msg1.encode())
                     recv_msg = vis_socket.recv(1024)
+                    # sim_ticks+=1
                     # print(recv_msg.decode())
                 # visualisation(screen, robot_id, robot_state, num_of_robot)
                 sim_time_start = time.time()
+            
+            if sim_ticks%200 == 0:
+                print('Ticks:',sim_ticks, 'Real time:',time.time()-sim_time_or)
+
             # print(time.time() - start_of_loop, " seconds ")
             # print("fd to id:", fd_to_id_map)
-        
+            sim_ticks +=1
         except Exception:
             # print("Some error")
             continue
