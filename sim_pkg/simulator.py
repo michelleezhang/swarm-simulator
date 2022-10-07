@@ -101,11 +101,10 @@ def loop():
     (width, height) = (1500, 1000)
     # screen = pygame.display.set_mode((width, height))
     # pygame.display.flip()
-    sim_ticks = 0
+    sim_ticks = 0 
     sim_time_or = time.time()
     vis_fd = -1
     vis_socket = None
-    
     while True:
         
         
@@ -158,7 +157,6 @@ def loop():
                     open_client_sockets.append(new_socket) # clients list
                 else:
                     data = current_socket.recv(1024)
-                    sim_ticks +=1
                     val_for_vis = '0b101'
                     if len(data) == 0:
                         gibberish = 0
@@ -197,7 +195,6 @@ def loop():
                                 robot_id[int(msg[1])] = msg[1]
                                 robot = bot_sim(id=msg[1],usr_led=(msg[3],msg[4],msg[5]),clk=time.time())
                                 robot_state[int(msg[1])] = robot
-                
                 data_csv = [sim_ticks,time.time()-sim_time_or]
                 writer.writerow(data_csv)
             sim_time = time.time() - sim_time_start
@@ -213,19 +210,12 @@ def loop():
                     sim_ticks +=1
                     # vis_socket.send(msg1.encode())
                     recv_msg = vis_socket.recv(1024)
-                    # sim_ticks+=1
                     # print(recv_msg.decode())
                 # visualisation(screen, robot_id, robot_state, num_of_robot)
                 sim_time_start = time.time()
-            
-            # if sim_ticks%1000 == 0:
-            #     print('Ticks:',sim_ticks, 'Real time:',time.time()-sim_time_or)
-
             # print(time.time() - start_of_loop, " seconds ")
             # print("fd to id:", fd_to_id_map)
-            # sim_ticks +=1
-            
-            
+        
         except Exception:
             # print("Some error")
             continue
@@ -240,7 +230,6 @@ def main():
        loop()
     except KeyboardInterrupt:
         print("Shutdown requested...exiting")
-        file.close()
     except Exception:
         traceback.print_exc(file=sys.stdout)
     sys.exit(0)

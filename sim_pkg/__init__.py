@@ -1,0 +1,1 @@
+from .robot_class import bot

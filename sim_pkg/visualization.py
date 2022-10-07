@@ -55,7 +55,7 @@ class visualization:
             robo = robot_state[i]
             # print(robo.usr_led)
             colour = robo.usr_led #green
-            circle_x_y = (12+i*12, 15+i*12)
+            circle_x_y = (3+i*12, 3+i*12)
             circle_radius = 12
             border_width = 2 #0 = filled circle
             pygame.draw.circle(self.screen, colour, circle_x_y, circle_radius, border_width)
@@ -65,7 +65,7 @@ class visualization:
 
         while True:
             # print("Waiting for client to receive")
-            msg = self.client_socket.recv(3*4096)
+            msg = self.client_socket.recv(10*4096)
             msg = msg.decode('utf-8')
             msg = json.loads(msg)
             self.update_states(msg)
