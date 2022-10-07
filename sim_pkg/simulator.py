@@ -14,13 +14,14 @@ from robot_class import bot
 import re
 import csv
 # import pygame
-file = open('time.csv','w')
-writer = csv.writer(file)
+# file = open('time.csv','w')
+# writer = csv.writer(file)
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # SOCK_STREAM is for TCP 
 server_socket.bind((socket.gethostname(),1245)) # Binds to port 1245
 server_socket.listen(1) 
 open_client_sockets = [] # current clients handler
 messages_to_send = [] # future message send handler
+elapsedDIffList = []
 
 def msg_decode(msg):
 
@@ -78,11 +79,11 @@ def conv_to_json(robot_state, num_of_robot):
     # print(json_dict)
     return json_dict
 
-def update_time(robot_state, num_of_robot):
+def update_time(robot_state, num_of_robot, sim_time):
 
     for i in range(1,num_of_robot+1):
-        if robot_state[i].clk < time.time():
-           robot_state[i].clk = time.time()
+        if robot_state[i].clk < sim_time:
+           robot_state[i].clk = sim_time
     
     return robot_state
 
@@ -93,24 +94,31 @@ def loop():
     # msg = s.recv(1024)
     # print(msg.decode("utf-8"))
     robot_id = -1*np.ones((10000))
-    robot = bot_sim(id=0,usr_led=(100,100,100),clk=time.time())
-    robot_state = [robot]*10000
+    
     fd_to_id_map = {}
     sim_time_start = time.time()
     num_of_robot = 0
     (width, height) = (1500, 1000)
     # screen = pygame.display.set_mode((width, height))
     # pygame.display.flip()
-    sim_ticks = 0 
-    sim_time_or = time.time()
+    notslept = 0
+    real_time_factor = 1
+    freq = 300
+    delta_t = real_time_factor/(freq)
+    
+    # sim_ticks = 0 
+    # sim_time_or = time.time()
+    sim_time_curr = time.time()
+    robot = bot_sim(id=0,usr_led=(100,100,100),clk=sim_time_curr)
+    robot_state = [robot]*10000
     vis_fd = -1
     vis_socket = None
     while True:
         
-        
+        time_now_start = time.time()
         try:
             rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
-            sim_time_real = time.time()
+            # sim_time_real = time.time()
             # print(rlist)
             for current_socket in rlist: # sockets that can be read
                 
@@ -120,7 +128,7 @@ def loop():
 
                 if current_socket.fileno() in fd_to_id_map.keys():
                     
-                    if robot_state[fd_to_id_map[current_socket.fileno()]].clk > sim_time_real:
+                    if robot_state[fd_to_id_map[current_socket.fileno()]].clk > sim_time_curr:
                         continue
                     # print(current_socket.fileno())
 
@@ -131,7 +139,7 @@ def loop():
                     except Exception:
                         data = '0b0'
                         data = data.encode()
-                    sim_ticks +=1
+                    # sim_ticks +=1
                     if len(data) != 0:
                         msg = data.decode()
                         
@@ -143,7 +151,7 @@ def loop():
                             msg1 = str(bin(num_of_robot))
                             fd_to_id_map[new_socket.fileno()] = num_of_robot
                             new_socket.sendall(msg1.encode())
-                            robot_state[num_of_robot] = bot_sim(id=num_of_robot,usr_led=(0,0,0),clk=time.time())
+                            robot_state[num_of_robot] = bot_sim(id=num_of_robot,usr_led=(0,0,0),clk=sim_time_curr)
                         elif int(msg,2) == 5: 
                             vis_fd = new_socket.fileno()
                             vis_socket = new_socket
@@ -175,7 +183,7 @@ def loop():
                         # broadcast_message(current_socket, "\r" + '<' + data + '> ')
                         msg = msg_decode(data)
                         if msg[2] == 3:
-                            robot_state[int(msg[1])].clk = time.time() + msg[3]/1000
+                            robot_state[int(msg[1])].clk += (msg[3]/1000)
                             data_string = '0b1'
                             current_socket.sendall(data_string.encode())
                             continue
@@ -189,39 +197,53 @@ def loop():
                             # if msg !=1:
                             # print(msg)
                             if msg[1] in robot_id:
-                                robot = bot_sim(id=msg[1],usr_led=(msg[3],msg[4],msg[5]),clk=time.time())
+                                robot = bot_sim(id=msg[1],usr_led=(msg[3],msg[4],msg[5]),clk=sim_time_curr)
                                 robot_state[int(msg[1])] = robot
                             else:
                                 robot_id[int(msg[1])] = msg[1]
-                                robot = bot_sim(id=msg[1],usr_led=(msg[3],msg[4],msg[5]),clk=time.time())
+                                robot = bot_sim(id=msg[1],usr_led=(msg[3],msg[4],msg[5]),clk=sim_time_curr)
                                 robot_state[int(msg[1])] = robot
-                data_csv = [sim_ticks,time.time()-sim_time_or]
-                writer.writerow(data_csv)
-            sim_time = time.time() - sim_time_start
+                # data_csv = [sim_ticks,time.time()-sim_time_or]
+                # writer.writerow(data_csv)
+            # sim_time = time.time() - sim_time_start
             
             # Only allows visualization every 0.005 seconds
-            if sim_time > 0.005: 
+            # if sim_time > 0.005: 
                 # print("call vis")
-                if vis_fd>0:
-                    # Need to change this part. Json Dumps not working. Maybe look at something else
-                    msg1 = conv_to_json(robot_state, num_of_robot)
-                    # msg1 = '0b1011'
-                    vis_socket.sendall(json.dumps(msg1).encode('utf-8'))
-                    sim_ticks +=1
-                    # vis_socket.send(msg1.encode())
-                    recv_msg = vis_socket.recv(1024)
+            if vis_fd>0:
+                # Need to change this part. Json Dumps not working. Maybe look at something else
+                msg1 = conv_to_json(robot_state, num_of_robot)
+                # msg1 = '0b1011'
+                vis_socket.sendall(json.dumps(msg1).encode('utf-8'))
+                # sim_ticks +=1
+                # vis_socket.send(msg1.encode())
+                recv_msg = vis_socket.recv(1024)
                     # print(recv_msg.decode())
                 # visualisation(screen, robot_id, robot_state, num_of_robot)
-                sim_time_start = time.time()
+                # sim_time_start = time.time()
             # print(time.time() - start_of_loop, " seconds ")
             # print("fd to id:", fd_to_id_map)
-        
+            sim_time_curr += delta_t
+            robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
+            
+            time_now_end = time.time()
+            elapsed_time_diff = time_now_end - time_now_start
+            print("Elapsed time diff:",elapsed_time_diff)
+            print("Delta t:", delta_t)
+            if elapsed_time_diff < delta_t:
+                time.sleep(delta_t - elapsed_time_diff)
+                # print("sleep")
+            else:
+                elapsedDIffList.append(elapsed_time_diff)
+                notslept += 1
+                print(notslept)
+            # visualisation(screen, robot_id, robot_state)
+            print("Sim time:",sim_time_curr)
+            print("real time:", time.time())
         except Exception:
             # print("Some error")
             continue
-        robot_state = update_time(robot_state,num_of_robot)
-
-        # visualisation(screen, robot_id, robot_state)
+        
         
     server_socket.close()
 
