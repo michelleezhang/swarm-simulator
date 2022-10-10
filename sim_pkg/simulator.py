@@ -103,7 +103,7 @@ def loop():
     # pygame.display.flip()
     notslept = 0
     real_time_factor = 1
-    freq = 300
+    freq = 1000
     delta_t = real_time_factor/(freq)
     
     # sim_ticks = 0 
@@ -223,17 +223,24 @@ def loop():
                 # sim_time_start = time.time()
             # print(time.time() - start_of_loop, " seconds ")
             # print("fd to id:", fd_to_id_map)
-            sim_time_curr += delta_t
-            robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
+            # sim_time_curr += delta_t
+            # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
             
             time_now_end = time.time()
             elapsed_time_diff = time_now_end - time_now_start
             print("Elapsed time diff:",elapsed_time_diff)
             print("Delta t:", delta_t)
             if elapsed_time_diff < delta_t:
+                sim_time_curr += delta_t
+                robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
+                
+                time_now_end = time.time()
+                elapsed_time_diff = time_now_end - time_now_start
                 time.sleep(delta_t - elapsed_time_diff)
                 # print("sleep")
             else:
+                sim_time_curr = time.time()
+                robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
                 elapsedDIffList.append(elapsed_time_diff)
                 notslept += 1
                 print(notslept)
