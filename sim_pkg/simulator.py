@@ -102,9 +102,9 @@ def loop():
     # screen = pygame.display.set_mode((width, height))
     # pygame.display.flip()
     notslept = 0
-    real_time_factor = 1
-    freq = 1000
-    delta_t = real_time_factor/(freq)
+    real_time_factor = 5
+    T_real = 0.001
+    T_sim = real_time_factor*T_real
     
     # sim_ticks = 0 
     # sim_time_or = time.time()
@@ -113,9 +113,10 @@ def loop():
     robot_state = [robot]*10000
     vis_fd = -1
     vis_socket = None
+    delta_vis = 0
     while True:
         
-        time_now_start = time.time()
+        real_time_now_start = time.time()
         try:
             rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
             # sim_time_real = time.time()
@@ -208,16 +209,18 @@ def loop():
             # sim_time = time.time() - sim_time_start
             
             # Only allows visualization every 0.005 seconds
-            # if sim_time > 0.005: 
+            delta_vis += T_real
+            if delta_vis > 0.005: 
                 # print("call vis")
-            if vis_fd>0:
-                # Need to change this part. Json Dumps not working. Maybe look at something else
-                msg1 = conv_to_json(robot_state, num_of_robot)
-                # msg1 = '0b1011'
-                vis_socket.sendall(json.dumps(msg1).encode('utf-8'))
-                # sim_ticks +=1
-                # vis_socket.send(msg1.encode())
-                recv_msg = vis_socket.recv(1024)
+                delta_vis = 0
+                if vis_fd>0:
+                    # Need to change this part. Json Dumps not working. Maybe look at something else
+                    msg1 = conv_to_json(robot_state, num_of_robot)
+                    # msg1 = '0b1011'
+                    vis_socket.sendall(json.dumps(msg1).encode('utf-8'))
+                    # sim_ticks +=1
+                    # vis_socket.send(msg1.encode())
+                    recv_msg = vis_socket.recv(1024)
                     # print(recv_msg.decode())
                 # visualisation(screen, robot_id, robot_state, num_of_robot)
                 # sim_time_start = time.time()
@@ -226,27 +229,27 @@ def loop():
             # sim_time_curr += delta_t
             # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
             
-            time_now_end = time.time()
-            elapsed_time_diff = time_now_end - time_now_start
-            print("Elapsed time diff:",elapsed_time_diff)
-            print("Delta t:", delta_t)
-            if elapsed_time_diff < delta_t:
-                sim_time_curr += delta_t
+            real_time_now_end = time.time()
+            elapsed_time_diff = real_time_now_end - real_time_now_start
+            # print("Elapsed time diff:",elapsed_time_diff)
+            # print("T_real", T_real)
+            if elapsed_time_diff < T_real:
+                sim_time_curr += T_sim
                 robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
                 
-                time_now_end = time.time()
-                elapsed_time_diff = time_now_end - time_now_start
-                time.sleep(delta_t - elapsed_time_diff)
+                real_time_now_end = time.time()
+                elapsed_time_diff = real_time_now_end - real_time_now_start
+                time.sleep(T_real - elapsed_time_diff)
                 # print("sleep")
             else:
-                sim_time_curr = time.time()
+                sim_time_curr += real_time_factor*elapsed_time_diff
                 robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
                 elapsedDIffList.append(elapsed_time_diff)
                 notslept += 1
                 print(notslept)
             # visualisation(screen, robot_id, robot_state)
-            print("Sim time:",sim_time_curr)
-            print("real time:", time.time())
+            # print("Sim time:",sim_time_curr)
+            # print("real time:", time.time())
         except Exception:
             # print("Some error")
             continue
