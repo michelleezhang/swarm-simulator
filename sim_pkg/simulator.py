@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Main Server for Swarm Simulation 
 """
@@ -102,18 +103,19 @@ def loop():
     # screen = pygame.display.set_mode((width, height))
     # pygame.display.flip()
     notslept = 0
-    real_time_factor = 5
+    real_time_factor = 2
     T_real = 0.001
     T_sim = real_time_factor*T_real
     
     # sim_ticks = 0 
     # sim_time_or = time.time()
-    sim_time_curr = time.time()
+    sim_time_curr = 0
     robot = bot_sim(id=0,usr_led=(100,100,100),clk=sim_time_curr)
     robot_state = [robot]*10000
     vis_fd = -1
     vis_socket = None
     delta_vis = 0
+    real_time_curr = 0
     while True:
         
         real_time_now_start = time.time()
@@ -156,7 +158,7 @@ def loop():
                         elif int(msg,2) == 5: 
                             vis_fd = new_socket.fileno()
                             vis_socket = new_socket
-                            msg1 = str(bin(2))
+                            msg1 = str(real_time_factor)
                             print(vis_socket)
                             new_socket.sendall(msg1.encode())
                             print("Got vis connected")
@@ -221,6 +223,10 @@ def loop():
                     # sim_ticks +=1
                     # vis_socket.send(msg1.encode())
                     recv_msg = vis_socket.recv(1024)
+                    
+                    # Send time to visualization
+                    data_string = str(sim_time_curr) + '0b0' + str(real_time_curr)
+                    vis_socket.sendall(data_string.encode('utf-8'))
                     # print(recv_msg.decode())
                 # visualisation(screen, robot_id, robot_state, num_of_robot)
                 # sim_time_start = time.time()
@@ -235,6 +241,7 @@ def loop():
             # print("T_real", T_real)
             if elapsed_time_diff < T_real:
                 sim_time_curr += T_sim
+                real_time_curr += T_real
                 robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
                 
                 real_time_now_end = time.time()
@@ -243,10 +250,11 @@ def loop():
                 # print("sleep")
             else:
                 sim_time_curr += real_time_factor*elapsed_time_diff
+                real_time_curr += elapsed_time_diff
                 robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
                 elapsedDIffList.append(elapsed_time_diff)
                 notslept += 1
-                print(notslept)
+                # print(notslept)
             # visualisation(screen, robot_id, robot_state)
             # print("Sim time:",sim_time_curr)
             # print("real time:", time.time())
