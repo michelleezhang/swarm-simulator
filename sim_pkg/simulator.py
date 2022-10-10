@@ -103,7 +103,7 @@ def loop():
     # screen = pygame.display.set_mode((width, height))
     # pygame.display.flip()
     notslept = 0
-    real_time_factor = 2
+    real_time_factor = 1
     T_real = 0.001
     T_sim = real_time_factor*T_real
     

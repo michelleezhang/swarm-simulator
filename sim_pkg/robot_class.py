@@ -1,22 +1,22 @@
+#!/usr/bin/env python2
 """
 Define Robot class that will act as an API
 """
 
-from dataclasses import dataclass
-from datetime import date, datetime
-from time import sleep
+# from dataclasses import dataclass
+# from time import sleep
 import time
 import socket
-import sys, traceback, pickle, json, select
+# import sys, traceback, pickle, json, select
 import re
 
 
-@dataclass
-class Data:
-    timestamp = time.time()
-    led: tuple
-    delay: int
-    id: int
+# @dataclass
+# class Data:
+#     timestamp = time.time()
+#     led: tuple
+#     delay: int
+#     id: int
 
 class bot:
     def __init__(self, usr_led, id_n = -1):
@@ -149,7 +149,7 @@ class bot:
             list[str]: Up to ``custom_net.MAX_MSG_NUM`` messages since last
             invokation.
         """
-        
+        return None
 
     def get_pose(self):
         #  type: () -> tuple[float, float, float] | None

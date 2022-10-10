@@ -1,3 +1,4 @@
+#!/usr/bin/env python2
 from robot_class import bot
 
 robot = bot((0,0,0))
