@@ -1,1 +1,1 @@
-from .robot_class import bot
+from .robot_class import Coachbot

@@ -3,22 +3,17 @@
 Define Robot class that will act as an API
 """
 
-# from dataclasses import dataclass
-# from time import sleep
-import time
 import socket
-# import sys, traceback, pickle, json, select
 import re
 
+class BotModel:
+    def __init__(self):
+        pass
 
-# @dataclass
-# class Data:
-#     timestamp = time.time()
-#     led: tuple
-#     delay: int
-#     id: int
-
-class bot:
+class Coachbot:
+    """
+    Represents the base Coachbot
+    """
     def __init__(self, usr_led, id_n = -1):
         self.id = id_n
         self.usr_led = usr_led
@@ -39,7 +34,9 @@ class bot:
             self.id = msg
 
     def msg_encode(self,fnc_num, data):
-        
+        """
+        Encodes data
+        """
         client = str(bin(2))
         robot_id = str((bin(self.id)))
         fnc = str(bin(fnc_num))
@@ -47,6 +44,9 @@ class bot:
         return packet.encode()
     
     def msg_decode(self,msg):
+        """
+        Decodes data
+        """
         packet = msg.decode()
         result = [_.start() for _ in re.finditer('0b', packet)] 
         result.append(len(packet))
@@ -59,18 +59,36 @@ class bot:
         return data_arr
 
     def send_data(self,fnc_num,data):
+        """
+        Sends data
+        """
         data_string = self.msg_encode(fnc_num,data)
         self.client_socket.sendall(data_string)
         data = self.client_socket.recv(1024)
         msg = self.msg_decode(data)
 
     def set_led(self,r,g,b):
+        # type: (int, int, int) -> None
+        """ Sets the color of the onboard LED.
+        Note:
+            This function **does not accept values between 0-255**. Allowable
+            values are between 0 - 100.
+        Parameters:
+            r (int): red value (0 - 100).
+            g (int): green value (0 - 100).
+            b (int): blue value (0 - 100).
+        """
         m_range = (0, 100)
         self.usr_led = (r,g,b)
         info = str(bin(r)) + str(bin(g)) + str(bin(b))
         self.send_data(2,info)
 
     def delay(self, delay_time):
+        # type: (float) -> None
+        """Waits some miliseconds (default 200).
+        Parameters:
+            millis: The amount of time to wait.
+        """
         info = str(bin(delay_time))
         self.send_data(3,info)
     
@@ -82,7 +100,7 @@ class bot:
             left (int): The left motor speed (-100 - 100)
             right (int): The right motor speed (-100 - 100)
         """
-        return None
+        raise NotImplementedError
 
     def rotate_with_power(self, power):
         # type: (int) -> None
@@ -91,7 +109,7 @@ class bot:
         Parameters:
             power (int): The amount of power to rotate to Coachbot with.
         """
-        return None
+        raise NotImplementedError
         
 
     def rotate_to_theta(self, theta, max_error=1e-1,
@@ -102,7 +120,7 @@ class bot:
             theta (float): The target theta to rotate to.
             max_error (float): The maximum acceptable error.
         """
-        
+        raise NotImplementedError
 
     def move_meters(self, position, max_error=1e-1):
         # type: (Vec2, float) -> None
@@ -116,7 +134,7 @@ class bot:
             position (Vec2): The vector describing the displacement of the
             Coachbot.
         """
-        return None
+        raise NotImplementedError
 
     def get_clock(self):
         # type: () -> float
@@ -124,7 +142,7 @@ class bot:
         Returns:
             float: The time elapsed since the program started in seconds.
         """
-        return None
+        raise NotImplementedError
 
     def send_msg(self, msg):
         # type: (str) -> bool
@@ -135,7 +153,7 @@ class bot:
             of size ``coach_os.custom_net.MSG_LEN - 8`` or shorter. Longer
             messages are trimmed. The ``-8`` is here due to being a legacy bug.
         """
-        return None
+        raise NotImplementedError
 
     def recv_msg(self, clear=False):
         # type: (bool) -> list[str]
@@ -149,7 +167,7 @@ class bot:
             list[str]: Up to ``custom_net.MAX_MSG_NUM`` messages since last
             invokation.
         """
-        return None
+        raise NotImplementedError
 
     def get_pose(self):
         #  type: () -> tuple[float, float, float] | None
@@ -161,7 +179,7 @@ class bot:
             y, theta) if new data available since last invokation, None
             otherwise.
         """
-        return None
+        raise NotImplementedError
         
 
     def get_pose_blocking(self, delay_millis=200.0):
@@ -176,4 +194,4 @@ class bot:
         Returns:
             tuple[Vec2, float]: The pos_x, pos_y, theta of the robot.
         """
-        return None
+        raise NotImplementedError
