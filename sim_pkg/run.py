@@ -10,7 +10,7 @@ def main():
     time.sleep(1)
     for i in range(int(num)):
         subprocess.Popen(['python2','user.py'],close_fds=True,cwd=path)
-    subprocess.Popen(['python2','user2.py'],close_fds=True,cwd=path)
+    # subprocess.Popen(['python2','user2.py'],close_fds=True,cwd=path)
     res = subprocess.run(['python3','visualization.py'],cwd=path)
 
 if __name__ == '__main__':

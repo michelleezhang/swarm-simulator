@@ -120,8 +120,8 @@ def loop():
     # screen = pygame.display.set_mode((width, height))
     # pygame.display.flip()
     notslept = 0
-    real_time_factor = 1
-    T_real = 0.0001
+    real_time_factor = 0.5
+    T_real = 0.001
     T_sim = real_time_factor*T_real
     
     # sim_ticks = 0 
@@ -209,7 +209,7 @@ def loop():
                             current_socket.sendall(data_string.encode())
                             continue
                         elif msg[2] == 4:
-                            print('Message sent:',msg[3])
+                            # print('Message sent:',msg[3])
                             data_string = '0b1'
                             current_socket.sendall(data_string.encode())
                             msg_buffer = msg[3]
@@ -218,7 +218,8 @@ def loop():
                             data_string = '0b1'
                             current_socket.sendall(data_string.encode())
                             current_socket.sendall(msg_buffer.encode())
-                            print('Send data:')
+                            # print('Send data:')
+                            continue
                         data_string = '0b1'
                         current_socket.sendall(data_string.encode())
                         if len(msg)>1:
@@ -267,7 +268,7 @@ def loop():
             elapsed_time_diff = real_time_now_end - real_time_now_start
             # print("Elapsed time diff:",elapsed_time_diff)
             # print("T_real", T_real)
-            if elapsed_time_diff < T_sim:
+            if elapsed_time_diff < T_real:
                 sim_time_curr += T_sim
                 real_time_curr += T_real
                 robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
