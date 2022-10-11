@@ -65,7 +65,7 @@ class Coachbot:
         data_string = self.msg_encode(fnc_num,data)
         self.client_socket.sendall(data_string)
         data = self.client_socket.recv(1024)
-        msg = self.msg_decode(data)
+        # msg = self.msg_decode(data)
 
     def set_led(self,r,g,b):
         # type: (int, int, int) -> None
@@ -153,7 +153,10 @@ class Coachbot:
             of size ``coach_os.custom_net.MSG_LEN - 8`` or shorter. Longer
             messages are trimmed. The ``-8`` is here due to being a legacy bug.
         """
-        raise NotImplementedError
+        info = '0b'+msg
+        self.send_data(4,info)
+        return True
+
 
     def recv_msg(self, clear=False):
         # type: (bool) -> list[str]
@@ -167,7 +170,12 @@ class Coachbot:
             list[str]: Up to ``custom_net.MAX_MSG_NUM`` messages since last
             invokation.
         """
-        raise NotImplementedError
+        info = '0bGetData'
+        self.send_data(5,info)
+        data = self.client_socket.recv(4*1024)
+        msg = data.decode()
+        return msg
+
 
     def get_pose(self):
         #  type: () -> tuple[float, float, float] | None

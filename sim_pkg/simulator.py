@@ -26,26 +26,35 @@ def msg_decode(msg: bytes) -> list:
     Decodes the message
     """
     packet = msg.decode()
+    # print("Stuff")
+    # print(packet)
     result = [_.start() for _ in re.finditer('0b', packet)] 
+    
     result.append(len(packet))
     data_arr = []
     for i in range(len(result)-1):
         num = packet[result[i]:result[i+1]]
-        num = int(num,2)
-        data_arr.append(num)   
+        if num[2] == '1' or num[2] == '0':
+            # print(num)
+            num = int(num,2)
+            data_arr.append(num) 
+        else:
+            data_arr.append(num[2:])  
+    # print(data_arr)
     return data_arr
 
 class BotSim:
     """
     Defines Bot Class for simulation    
     """
-    def __init__(self, id, usr_led,clk,delay=0):
+    def __init__(self, id, usr_led,clk,delay=0, msg = ''):
         self.id = id
         self.usr_led = usr_led
         self.pos_x = 3
         self.pos_y = 3
         self.delay = delay
         self.clk = clk
+        self.msg = msg
 
 # def send_waiting_messages(wlist):
 #     for message in messages_to_send:
@@ -112,7 +121,7 @@ def loop():
     # pygame.display.flip()
     notslept = 0
     real_time_factor = 1
-    T_real = 0.001
+    T_real = 0.0001
     T_sim = real_time_factor*T_real
     
     # sim_ticks = 0 
@@ -124,6 +133,7 @@ def loop():
     vis_socket = None
     delta_vis = 0
     real_time_curr = 0
+    msg_buffer = 'Nothing'
     while True:
         
         real_time_now_start = time.time()
@@ -175,7 +185,7 @@ def loop():
                             new_socket.sendall(msg.encode())
                     open_client_sockets.append(new_socket) # clients list
                 else:
-                    data = current_socket.recv(1024)
+                    data = current_socket.recv(4*1024)
                     val_for_vis = '0b101'
                     if len(data) == 0:
                         gibberish = 0
@@ -198,7 +208,17 @@ def loop():
                             data_string = '0b1'
                             current_socket.sendall(data_string.encode())
                             continue
-                            
+                        elif msg[2] == 4:
+                            print('Message sent:',msg[3])
+                            data_string = '0b1'
+                            current_socket.sendall(data_string.encode())
+                            msg_buffer = msg[3]
+                            continue
+                        elif msg[2] == 5:
+                            data_string = '0b1'
+                            current_socket.sendall(data_string.encode())
+                            current_socket.sendall(msg_buffer.encode())
+                            print('Send data:')
                         data_string = '0b1'
                         current_socket.sendall(data_string.encode())
                         if len(msg)>1:
@@ -247,7 +267,7 @@ def loop():
             elapsed_time_diff = real_time_now_end - real_time_now_start
             # print("Elapsed time diff:",elapsed_time_diff)
             # print("T_real", T_real)
-            if elapsed_time_diff < T_real:
+            if elapsed_time_diff < T_sim:
                 sim_time_curr += T_sim
                 real_time_curr += T_real
                 robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
