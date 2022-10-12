@@ -15,6 +15,9 @@ class Coachbot:
     Represents the base Coachbot
     """
     def __init__(self, usr_led, id_n = -1):
+        """
+        Initializes coachbot
+        """
         self.id = id_n
         self.usr_led = usr_led
         self.pos_x = 3
@@ -26,10 +29,13 @@ class Coachbot:
         self.set_id()
     
     def set_id(self):
+        """
+        Sets id during initialization
+        """
         data = '0b111'
-        self.client_socket.sendall(data.encode())
+        self.client_socket.sendall(data.encode('utf-8'))
         data = self.client_socket.recv(1024)
-        msg = int(data.decode(),2)
+        msg = int(data.decode('utf-8'),2)
         if msg>0:
             self.id = msg
 
@@ -41,13 +47,13 @@ class Coachbot:
         robot_id = str((bin(self.id)))
         fnc = str(bin(fnc_num))
         packet = client+robot_id+fnc+data
-        return packet.encode()
+        return packet.encode('utf-8')
     
     def msg_decode(self,msg):
         """
         Decodes data
         """
-        packet = msg.decode()
+        packet = msg.decode('utf-8')
         result = [_.start() for _ in re.finditer('0b', packet)] 
         result.append(len(packet))
         data_arr = []
@@ -83,9 +89,9 @@ class Coachbot:
         info = str(bin(r)) + str(bin(g)) + str(bin(b))
         self.send_data(2,info)
 
-    def delay(self, delay_time):
+    def delay(self, delay_time=200):
         # type: (float) -> None
-        """Waits some miliseconds (default 200).
+        """Waits some milliseconds (default 200).
         Parameters:
             millis: The amount of time to wait.
         """
@@ -159,7 +165,7 @@ class Coachbot:
 
 
     def recv_msg(self, clear=False):
-        # type: (bool) -> list[str]
+        # type: (bool) -> list
         """
         Reads up to ``custom_net.talk.MAX_MSG_NUM`` messages since the last
         invokation. If this function does not have any new updates to send, it
@@ -170,11 +176,16 @@ class Coachbot:
             list[str]: Up to ``custom_net.MAX_MSG_NUM`` messages since last
             invokation.
         """
-        info = '0bGetData'
+        info = '0bdata'
+        # print("In recv_msg")
         self.send_data(5,info)
-        data = self.client_socket.recv(4*1024)
-        msg = data.decode()
-        return msg
+        # print("Sent data. Now waiting for msg")
+        data_string = str(clear)
+        self.client_socket.sendall(data_string.encode('utf-8'))
+        msg = self.client_socket.recv(4*1024)
+        # msg = data.decode('utf-8')
+        # print(msg)
+        return [msg]
 
 
     def get_pose(self):
