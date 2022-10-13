@@ -23,6 +23,47 @@ open_client_sockets = [] # current clients handler
 messages_to_send = [] # future message send handler
 elapsedDIffList = []
 
+class BotDiffDrive:
+    """
+    Bot Diff Drive robot with all the math
+    """
+    def __init__(self):
+        """
+        Define base variables. 
+        All values are expected in metres, seconds and radians. 
+        """
+        self.pos_x = 0 
+        self.pos_y = 0 
+        self.pos_angle = 0 
+        self.left_wheel_angle = 0
+        self.right_wheel_angle = 0 
+        self.radius_of_wheel = 0.5
+        self.distance_between_wheel = 0.5
+        
+
+    def integrate(self,u_left, u_right, delta_time):
+        """
+        Integrate the state of robot
+        """
+        state_matrix = np.array([[-self.radius_of_wheel/(2*self.distance_between_wheel), self.radius_of_wheel/(2*self.distance_between_wheel)], 
+                                 [self.radius_of_wheel*np.cos(self.pos_angle)/2, self.radius_of_wheel*np.cos(self.pos_angle)/2], 
+                                 [self.radius_of_wheel*np.sin(self.pos_angle)/2, self.radius_of_wheel*np.sin(self.pos_angle)/2],
+                                 [1, 0],
+                                 [0, 1] ])
+        
+        velocity_vector = np.array([[u_left],[u_right]])
+
+        delta_pos = state_matrix@velocity_vector * delta_time
+
+        self.pos_angle += delta_pos[0][0]
+        self.pos_x += delta_pos[0][1]
+        self.pos_y += delta_pos[0][2]
+        self.left_wheel_angle += delta_pos[0][3]
+        self.right_wheel_angle += delta_pos[0][4]
+
+        
+
+
 def msg_decode(msg: bytes) -> list:
     """
     Decodes the message
@@ -126,7 +167,7 @@ def loop():
     vis_socket = None
     delta_vis = 0
     real_time_curr = 0
-    msg_buffer = [bytes('0','utf-8')]*1000
+    msg_buffer = [bytes('','utf-8')]*1000
     MSG_BUFFER_SIZE = 1024
     while True:
         
@@ -217,7 +258,7 @@ def loop():
                             clear_bool = current_socket.recv(1024)
                             current_socket.sendall(msg_buffer[msg[1]])
                             if clear_bool.decode('utf-8') == 'True':
-                                msg_buffer[msg[1]] = bytes('0','utf-8')
+                                msg_buffer[msg[1]] = bytes('','utf-8')
                             
                             # print('Send data:')
                             continue

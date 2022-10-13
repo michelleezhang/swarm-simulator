@@ -77,6 +77,7 @@ class Coachbot:
         # type: (int, int, int) -> None
         """ Sets the color of the onboard LED.
         Note:
+            Function number  - 2
             This function **does not accept values between 0-255**. Allowable
             values are between 0 - 100.
         Parameters:
@@ -92,6 +93,7 @@ class Coachbot:
     def delay(self, delay_time=200):
         # type: (float) -> None
         """Waits some milliseconds (default 200).
+        Function number  - 3
         Parameters:
             millis: The amount of time to wait.
         """
@@ -154,6 +156,7 @@ class Coachbot:
         # type: (str) -> bool
         """Attempts to transmit the given message returning whether it was
         successful.
+        Function number  - 4
         Parameters:
             msg (str): The message to attempt to transmit. This message must be
             of size ``coach_os.custom_net.MSG_LEN - 8`` or shorter. Longer
@@ -170,6 +173,7 @@ class Coachbot:
         Reads up to ``custom_net.talk.MAX_MSG_NUM`` messages since the last
         invokation. If this function does not have any new updates to send, it
         will return an empty list.
+        Function number  - 5
         Parameters:
             clear (bool): Whether to clear the message buffer after reading.
         Returns:
