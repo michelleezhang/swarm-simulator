@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 from robot_class import Coachbot
-from user import usr
+from firefly import usr
 
 robot = Coachbot((0,0,0))
 

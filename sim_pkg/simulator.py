@@ -152,62 +152,20 @@ def initialize_robots():
     """
     Initialize the number of robots
     """
-
-
-    return None
-
-def loop():
-    """
-    Loop through to get data from bot classes
-    """
-    rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
-    # serversocket, address = s.accept()
-    # msg = s.recv(1024)
-    # print(msg.decode("utf-8"))
-    robot_id = -1*np.ones((10000))
-    
-    fd_to_id_map = {}
-    sim_time_start = time.time()
-    num_of_robot = 0
-    (width, height) = (1500, 1000)
-    # screen = pygame.display.set_mode((width, height))
-    # pygame.display.flip()
-    notslept = 0
-    real_time_factor = 1
-    T_real = 0.0001
-    T_sim = real_time_factor*T_real
-    
-    # sim_ticks = 0 
-    # sim_time_or = time.time()
-    sim_time_curr = 0
-    robot = BotSim(id=0,usr_led=(100,100,100),clk=sim_time_curr)
-    robot_state = [robot]*10000
+    flag = True
     vis_fd = -1
     vis_socket = None
-    delta_vis = 0
-    real_time_curr = 0
-    msg_buffer = [bytes('0','utf-8')]*1000
-    MSG_BUFFER_SIZE = 1024
-
-    while True:
-        
-        real_time_now_start = time.time()
+    fd_to_id_map = {}
+    num_of_robot = 0
+    real_time_factor = 1
+    robot = BotSim(id=0,usr_led=(0,0,0),clk=0)
+    robot_state = [robot]*(NUM_OF_ROBOTS+1)
+    robot_id = -1*np.ones((NUM_OF_ROBOTS+1))
+    id_to_socket_map = {}
+    while flag:
         try:
             rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
-            # sim_time_real = time.time()
-            # print(rlist)
-            for current_socket in rlist: # sockets that can be read
-                
-                if current_socket.fileno() == vis_fd:
-                    # print(vis_socket)
-                    continue
-
-                if current_socket.fileno() in fd_to_id_map.keys():
-                    
-                    if robot_state[fd_to_id_map[current_socket.fileno()]].clk > sim_time_curr:
-                        continue
-                    # print(current_socket.fileno())
-
+            for current_socket in rlist: 
                 if current_socket is server_socket: # if there is a new client
                     (new_socket, address) = server_socket.accept() 
                     try:
@@ -224,12 +182,13 @@ def loop():
                             
                             num_of_robot += 1
                             # print(fd_to_id_map)
-                            msg1 = str(bin(num_of_robot))
+                            id_to_socket_map[num_of_robot] = new_socket
+                            # msg1 = str(bin(num_of_robot))
                             fd_to_id_map[new_socket.fileno()] = num_of_robot
-                            new_socket.sendall(msg1.encode('utf-8'))
-                            robot_state[num_of_robot] = BotSim(id=num_of_robot,usr_led=(0,0,0),clk=sim_time_curr)
+                            # new_socket.sendall(msg1.encode('utf-8'))
+                            robot_state[num_of_robot] = BotSim(id=num_of_robot,usr_led=(50,50,50),clk=0)
                             robot_id[num_of_robot] = num_of_robot
-                        elif int(msg,2) == 5: 
+                        elif int(msg,2) == 5:
                             vis_fd = new_socket.fileno()
                             vis_socket = new_socket
                             msg1 = str(real_time_factor)
@@ -240,48 +199,112 @@ def loop():
                             msg1 = str(bin(-1))
                             new_socket.sendall(msg.encode('utf-8'))
                     open_client_sockets.append(new_socket) # clients list
+                
+                
+                
+        except Exception:
+            continue
+        if num_of_robot == NUM_OF_ROBOTS and vis_fd>0:
+            print("DONE")
+            flag = False
+    
+    for key, curr_socket in id_to_socket_map.items():
+        msg1 = str(bin(key))
+        # fd_to_id_map[new_socket.fileno()] = num_of_robot
+        curr_socket.sendall(msg1.encode('utf-8'))
+    
+    # print(id_to_socket_map)
+
+
+    return vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id
+
+def loop():
+    """
+    Loop through to get data from bot classes
+    """
+    # rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
+    # serversocket, address = s.accept()
+    # msg = s.recv(1024)
+    # print(msg.decode("utf-8"))
+    
+    
+    
+    sim_time_start = time.time()
+    notslept = 0
+    real_time_factor = 1
+    T_real = 0.0001
+    T_sim = real_time_factor*T_real
+    
+    # sim_ticks = 0 
+    # sim_time_or = time.time()
+    sim_time_curr = 0.0001
+    # robot = BotSim(id=0,usr_led=(0,0,0),clk=sim_time_curr)
+    # robot_state = [robot]*NUM_OF_ROBOTS
+    
+    delta_vis = 0
+    real_time_curr = 0
+    msg_buffer = [bytes('0','utf-8')]*1000
+    MSG_BUFFER_SIZE = 1024
+    num_of_robot = NUM_OF_ROBOTS
+    vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id = initialize_robots()
+    while True:
+        
+        real_time_now_start = time.time()
+        try:
+            rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
+            # sim_time_real = time.time()
+            # print(rlist)
+            for current_socket in rlist: # sockets that can be read
+                # print("In Loop")
+                if current_socket.fileno() == vis_fd:
+                    # print(vis_socket)
+                    continue
+
+                if current_socket.fileno() in fd_to_id_map.keys():
+                    
+                    if robot_state[fd_to_id_map[current_socket.fileno()]].clk > sim_time_curr:
+                        continue
+                    # print(current_socket.fileno())
+                data = current_socket.recv(4*1024)
+                if len(data) == 0:
+                    gibberish = 0
+                    print("Gibberish")
                 else:
-                    data = current_socket.recv(4*1024)
-                    val_for_vis = '0b101'
-                    if len(data) == 0:
-                        gibberish = 0
-                        print("Gibberish")
-                    else:
-                       
-                        # broadcast_message(current_socket, "\r" + '<' + data + '> ')
-                        msg = msg_decode(data)
-                        if msg[2] == 3:
-                            robot_state[int(msg[1])].clk += (msg[3]/1000)
-                            data_string = '0b1'
-                            current_socket.sendall(data_string.encode('utf-8'))
-                            continue
-                        elif msg[2] == 4:
-                            # print('Message sent:',msg[3])
-                            data_string = '0b1'
-                            current_socket.sendall(data_string.encode('utf-8'))
-                            msg_for_buffer = bytes(msg[3],'utf-8')
-                            random_bool = np.random.uniform() < PACKET_SUCCESS_PERC
-                            if random_bool is True:
-                                msg_buffer = update_msg_buffer(msg_buffer,MSG_BUFFER_SIZE,num_of_robot,msg_for_buffer,msg[1],robot_state)
-                            # print("New msg buffer:", msg_buffer)
-                            continue
-                        elif msg[2] == 5:
-                            data_string = '0b1'
-                            current_socket.sendall(data_string.encode('utf-8'))
-                            # print(type(msg_buffer))
-                            clear_bool = current_socket.recv(1024)
-                            current_socket.sendall(msg_buffer[msg[1]])
-                            if clear_bool.decode('utf-8') == 'True':
-                                msg_buffer[msg[1]] = bytes('0','utf-8')
-                            
-                            # print('Send data:')
-                            continue
-                        elif msg[2] == 2:
-                            data_string = '0b1'
-                            current_socket.sendall(data_string.encode('utf-8'))
-                            if msg[1] in robot_id:
-                                usr_led_ = (msg[3],msg[4],msg[5])
-                                robot_state[int(msg[1])].usr_led = usr_led_
+                    
+                    # broadcast_message(current_socket, "\r" + '<' + data + '> ')
+                    msg = msg_decode(data)
+                    if msg[2] == 3:
+                        robot_state[int(msg[1])].clk += (msg[3]/1000)
+                        data_string = '0b1'
+                        current_socket.sendall(data_string.encode('utf-8'))
+                        continue
+                    elif msg[2] == 4:
+                        # print('Message sent:',msg[3])
+                        data_string = '0b1'
+                        current_socket.sendall(data_string.encode('utf-8'))
+                        msg_for_buffer = bytes(msg[3],'utf-8')
+                        random_bool = np.random.uniform() < PACKET_SUCCESS_PERC
+                        if random_bool is True:
+                            msg_buffer = update_msg_buffer(msg_buffer,MSG_BUFFER_SIZE,num_of_robot,msg_for_buffer,msg[1],robot_state)
+                        # print("New msg buffer:", msg_buffer)
+                        continue
+                    elif msg[2] == 5:
+                        data_string = '0b1'
+                        current_socket.sendall(data_string.encode('utf-8'))
+                        # print(type(msg_buffer))
+                        clear_bool = current_socket.recv(1024)
+                        current_socket.sendall(msg_buffer[msg[1]])
+                        if clear_bool.decode('utf-8') == 'True':
+                            msg_buffer[msg[1]] = bytes('0','utf-8')
+                        
+                        # print('Send data:')
+                        continue
+                    elif msg[2] == 2:
+                        data_string = '0b1'
+                        current_socket.sendall(data_string.encode('utf-8'))
+                        if msg[1] in robot_id:
+                            usr_led_ = (msg[3],msg[4],msg[5])
+                            robot_state[int(msg[1])].usr_led = usr_led_
                             # else:
                             #     print("FLAG")
                             #     robot_id[int(msg[1])] = msg[1]

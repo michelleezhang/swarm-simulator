@@ -18,8 +18,8 @@ class Coachbot:
         """
         Initializes coachbot
         """
-        self.id = id_n
-        self.usr_led = (100,0,0)
+        self.id_ = id_n
+        self.usr_led = (0,0,0)
         self.pos_x = 3
         self.pos_y = 3
         self.clk = 0        
@@ -28,6 +28,66 @@ class Coachbot:
         self.client_socket.connect((socket.gethostname(), 1245))
         self.set_id()
     
+    @property
+    def id(self):  # pylint: disable=invalid-name
+        # type: () -> int
+        """
+        Facility for fetching the identification number of the current robot.
+        Warning:
+            For legacy reasons, this property is settable, however, you should
+            never do this! **Under no circumstance** should you be modifying
+            this variable in user code.
+        You can use this property to return the current robot id, for example:
+        .. code-block:: python
+            # Set the color of bot 3 to red and others to green.
+            robot.set_led(*((100, 0, 0) if robot.id == 3 else (0, 100, 0)))
+        Returns:
+            int: The id number of self.
+        """
+        return self.id_
+
+    @property
+    def units(self):
+        """
+        A convenience property for fetching the functions available in
+        `coach_os.units <coach_os.html#module-coach_os.units>`_.
+        Example:
+        .. code-block:: python
+           robot.units.convert_distance(1, 'm', 'cm')  # Returns 100
+        Returns:
+            module: All functions in units.
+        """
+        # return units
+        raise NotImplementedError
+
+    @property
+    def coordinates(self):
+        """A convenience property for fetching the functions available in
+        `coach_os.coordinates <coach_os.html#module-coach-os.coordinates>`_.
+        Example:
+        .. code-block:: python
+           robot.coordinates.bot_in_bounds(np.ndarray([[0, 0], [0, 0]]))
+        Returns:
+            module: All functions in coordinates.
+        """
+        # return coordinates
+        raise NotImplementedError
+
+    @property
+    def configuration(self):
+        """
+        A convenience property for fetching the functions available in
+        `coach_os.configuration
+        <coach_os.html#module-coach_os.configuration>`_.
+        Example:
+        .. code-block:: python
+           robot.configuration.get_is_debug()
+        Returns:
+            module: All functions in configuration.
+        """
+        raise NotImplementedError
+        # return configuration
+
     def set_id(self):
         """
         Sets id during initialization
@@ -37,14 +97,14 @@ class Coachbot:
         data = self.client_socket.recv(1024)
         msg = int(data.decode('utf-8'),2)
         if msg>0:
-            self.id = msg
+            self.id_ = msg
 
     def msg_encode(self,fnc_num, data):
         """
         Encodes data
         """
         client = str(bin(2))
-        robot_id = str((bin(self.id)))
+        robot_id = str((bin(self.id_)))
         fnc = str(bin(fnc_num))
         packet = client+robot_id+fnc+data
         return packet.encode('utf-8')

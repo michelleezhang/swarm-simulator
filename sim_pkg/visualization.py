@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
-Visualization 
-
+Visualization
 """
 import socket
 import sys
@@ -111,7 +110,7 @@ class visualization:
             self.update_states(msg)
             self.update_time_msg(real_time,sim_time)
             # gn = self.client_socket.recv(1024)
-            # print('loop')
+            # print('Visual loop')
 
 def main():
     try:
