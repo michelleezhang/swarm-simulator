@@ -1,7 +1,7 @@
 #!/usr/bin/env python2
 from robot_class import Coachbot
 
-robot = Coachbot((0,0,0))
+robot = Coachbot()
 
 def usr(robot):
 

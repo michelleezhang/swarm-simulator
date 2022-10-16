@@ -3,13 +3,13 @@
 Main Server for Swarm Simulation 
 """
 
-from filecmp import clear_cache
 import socket
 import sys
 import json
 import select
 import time
 import re
+from matplotlib.pyplot import flag
 import numpy as np
 import csv
 from itertools import chain
@@ -22,6 +22,9 @@ server_socket.listen(1)
 open_client_sockets = [] # current clients handler
 messages_to_send = [] # future message send handler
 elapsedDIffList = []
+
+RADIUS_OF_VISIBILITY = 20
+PACKET_SUCCESS_PERC = 0.7
 
 class BotDiffDrive:
     """
@@ -93,8 +96,8 @@ class BotSim:
     def __init__(self, id, usr_led,clk,delay=0):
         self.id = id
         self.usr_led = usr_led
-        self.pos_x = 3
-        self.pos_y = 3
+        self.pos_x = 3+id*12
+        self.pos_y = 3+id*12
         self.delay = delay
         self.clk = clk
 
@@ -118,11 +121,12 @@ def update_time(robot_state:list, num_of_robot:int, sim_time:float)-> list:
     
     return robot_state
 
-def update_msg_buffer(msg_buffer:list, MSG_BUFFER_SIZE:int, num_of_robot:int,msg:bytes, robot_id:int)->list:
+def update_msg_buffer(msg_buffer:list, MSG_BUFFER_SIZE:int, num_of_robot:int,msg:bytes, robot_id:int,robot_states:list)->list:
     """
     Update Message Buffer
     """
-    
+    ref_x = robot_states[robot_id].pos_x
+    ref_y = robot_states[robot_id].pos_y
     # print("In update_msg_buffer")
 
     if robot_id == num_of_robot:
@@ -131,9 +135,13 @@ def update_msg_buffer(msg_buffer:list, MSG_BUFFER_SIZE:int, num_of_robot:int,msg
         range_of_val = chain(range(1,robot_id),range(robot_id+1,num_of_robot+1))
     # print("Range of val:", range_of_val)
     for i in range_of_val:
-        msg_buffer[i] = msg_buffer[i]+ msg
-        if len(msg_buffer[i]) > MSG_BUFFER_SIZE:
-            msg_buffer[i] = msg_buffer[i][-MSG_BUFFER_SIZE:]
+        curr_pos_x = robot_states[i].pos_x
+        curr_pos_y = robot_states[i].pos_y
+        d = np.sqrt((ref_x - curr_pos_x)**2 + (ref_y - curr_pos_y)**2)
+        if d < RADIUS_OF_VISIBILITY:
+            msg_buffer[i] = msg_buffer[i]+ msg
+            if len(msg_buffer[i]) > MSG_BUFFER_SIZE:
+                msg_buffer[i] = msg_buffer[i][-MSG_BUFFER_SIZE:]
     # print(type(msg_buffer[2]))
     return msg_buffer
 
@@ -167,7 +175,7 @@ def loop():
     vis_socket = None
     delta_vis = 0
     real_time_curr = 0
-    msg_buffer = [bytes('','utf-8')]*1000
+    msg_buffer = [bytes('0','utf-8')]*1000
     MSG_BUFFER_SIZE = 1024
     while True:
         
@@ -208,6 +216,7 @@ def loop():
                             fd_to_id_map[new_socket.fileno()] = num_of_robot
                             new_socket.sendall(msg1.encode('utf-8'))
                             robot_state[num_of_robot] = BotSim(id=num_of_robot,usr_led=(0,0,0),clk=sim_time_curr)
+                            robot_id[num_of_robot] = num_of_robot
                         elif int(msg,2) == 5: 
                             vis_fd = new_socket.fileno()
                             vis_socket = new_socket
@@ -225,15 +234,6 @@ def loop():
                     if len(data) == 0:
                         gibberish = 0
                         print("Gibberish")
-                        # open_client_sockets.remove(current_socket) # remove user if he quit.
-                        # print("Connection with client closed.")
-                        # send_waiting_messages(wlist) # send message to specfic client
-                    # elif len(data) == 5:
-                    #         print("enter this part")
-                    #         msg1 = conv_to_json(robot_state, num_of_robot)
-                    #         new_socket.send(json.dumps(msg1))
-                    #         print("sent to vis")
-                            # msg1 = pickle.dumps(robot_state[:num_of_robot])
                     else:
                        
                         # broadcast_message(current_socket, "\r" + '<' + data + '> ')
@@ -248,7 +248,9 @@ def loop():
                             data_string = '0b1'
                             current_socket.sendall(data_string.encode('utf-8'))
                             msg_for_buffer = bytes(msg[3],'utf-8')
-                            msg_buffer = update_msg_buffer(msg_buffer,MSG_BUFFER_SIZE,num_of_robot,msg_for_buffer,msg[1])
+                            random_bool = np.random.uniform() < PACKET_SUCCESS_PERC
+                            if random_bool is True:
+                                msg_buffer = update_msg_buffer(msg_buffer,MSG_BUFFER_SIZE,num_of_robot,msg_for_buffer,msg[1],robot_state)
                             # print("New msg buffer:", msg_buffer)
                             continue
                         elif msg[2] == 5:
@@ -258,26 +260,22 @@ def loop():
                             clear_bool = current_socket.recv(1024)
                             current_socket.sendall(msg_buffer[msg[1]])
                             if clear_bool.decode('utf-8') == 'True':
-                                msg_buffer[msg[1]] = bytes('','utf-8')
+                                msg_buffer[msg[1]] = bytes('0','utf-8')
                             
                             # print('Send data:')
                             continue
-                        data_string = '0b1'
-                        current_socket.sendall(data_string.encode('utf-8'))
-                        if len(msg)>1:
-                            # print(msg)
-                        # print(msg)
-                        # led = msg.led()
-                            # if msg !=1:
-                            # print(msg)
+                        elif msg[2] == 2:
+                            data_string = '0b1'
+                            current_socket.sendall(data_string.encode('utf-8'))
                             if msg[1] in robot_id:
-                                robot = BotSim(id=msg[1],usr_led=(msg[3],msg[4],msg[5]),clk=sim_time_curr)
-                                robot_state[int(msg[1])] = robot
-                            else:
-                                robot_id[int(msg[1])] = msg[1]
-                                robot = BotSim(id=msg[1],usr_led=(msg[3],msg[4],msg[5]),clk=sim_time_curr)
-                                robot_state[int(msg[1])] = robot
-                # data_csv = [sim_ticks,time.time()-sim_time_or]
+                                usr_led_ = (msg[3],msg[4],msg[5])
+                                robot_state[int(msg[1])].usr_led = usr_led_
+                            # else:
+                            #     print("FLAG")
+                            #     robot_id[int(msg[1])] = msg[1]
+                            #     robot = BotSim(id=msg[1],usr_led=(msg[3],msg[4],msg[5]),clk=sim_time_curr)
+                            #     robot_state[int(msg[1])] = robot
+                    # data_csv = [sim_ticks,time.time()-sim_time_or]
                 # writer.writerow(data_csv)
             # sim_time = time.time() - sim_time_start
             

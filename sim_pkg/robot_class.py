@@ -14,12 +14,12 @@ class Coachbot:
     """
     Represents the base Coachbot
     """
-    def __init__(self, usr_led, id_n = -1):
+    def __init__(self, id_n = -1):
         """
         Initializes coachbot
         """
         self.id = id_n
-        self.usr_led = usr_led
+        self.usr_led = (100,0,0)
         self.pos_x = 3
         self.pos_y = 3
         self.clk = 0        
