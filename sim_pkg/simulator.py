@@ -9,7 +9,6 @@ import json
 import select
 import time
 import re
-from matplotlib.pyplot import flag
 import numpy as np
 import csv
 from itertools import chain
@@ -23,8 +22,12 @@ open_client_sockets = [] # current clients handler
 messages_to_send = [] # future message send handler
 elapsedDIffList = []
 
-RADIUS_OF_VISIBILITY = 20
-PACKET_SUCCESS_PERC = 0.7
+with open('config.json', 'r') as myfile:
+    data=myfile.read()
+config_var = json.loads(data)
+RADIUS_OF_VISIBILITY = config_var["RADIUS_OF_VISIBILITY"]
+PACKET_SUCCESS_PERC = config_var["PACKET_SUCCESS_PERC"]
+NUM_OF_ROBOTS = config_var["number_of_robots"]
 
 class BotDiffDrive:
     """
@@ -145,6 +148,14 @@ def update_msg_buffer(msg_buffer:list, MSG_BUFFER_SIZE:int, num_of_robot:int,msg
     # print(type(msg_buffer[2]))
     return msg_buffer
 
+def initialize_robots():
+    """
+    Initialize the number of robots
+    """
+
+
+    return None
+
 def loop():
     """
     Loop through to get data from bot classes
@@ -177,6 +188,7 @@ def loop():
     real_time_curr = 0
     msg_buffer = [bytes('0','utf-8')]*1000
     MSG_BUFFER_SIZE = 1024
+
     while True:
         
         real_time_now_start = time.time()

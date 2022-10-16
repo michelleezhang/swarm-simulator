@@ -1,10 +1,13 @@
 import subprocess
 import time
 from pathlib import Path
+import json
 def main():
     path = str(Path(__file__).parent)
-    print("Enter the number of robots to launch")
-    num = input()
+    with open('config.json', 'r') as myfile:
+        data=myfile.read()
+    config_var = json.loads(data)
+    num = config_var["number_of_robots"]
     # print(path)
     subprocess.Popen(['python3', 'simulator.py'],close_fds=True,cwd=path)
     time.sleep(1)
