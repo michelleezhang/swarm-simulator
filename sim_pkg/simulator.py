@@ -205,7 +205,7 @@ def initialize_robots():
         except Exception:
             continue
         if num_of_robot == NUM_OF_ROBOTS and vis_fd>0:
-            print("DONE")
+            # print("DONE")
             flag = False
     
     for key, curr_socket in id_to_socket_map.items():

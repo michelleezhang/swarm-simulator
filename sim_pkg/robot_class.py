@@ -249,7 +249,10 @@ class Coachbot:
         msg = self.client_socket.recv(4*1024)
         # msg = data.decode('utf-8')
         # print(msg)
-        return [msg]
+        if len(msg)>0:
+            return [msg[1:]]
+        else:
+            return []
 
 
     def get_pose(self):
