@@ -2,6 +2,7 @@
 from robot_class import Coachbot
 # from firefly import usr
 from radius_comm import usr
+# from user import usr
 
 robot = Coachbot((0,0,0))
 

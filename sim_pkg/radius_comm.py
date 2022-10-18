@@ -15,8 +15,8 @@ def usr(robot):
             robot.set_led(100,100,0)
             robot.send_msg("(100,100,0)")
             robot.delay(2000)
-            robot.set_led(0,60,50)
-            robot.send_msg("(0,60,50)")
+            robot.set_led(100,100,100)
+            robot.send_msg("(100,100,100)")
             robot.delay(2000)
 
         else:
@@ -31,8 +31,8 @@ def usr(robot):
             elif val[0] == "(100,0,0)":
                 robot.set_led(100,0,0)
                 robot.delay()
-            elif val[0] == "(0,60,50)":
-                robot.set_led(0,60,50)
+            elif val[0] == "(100,100,100)":
+                robot.set_led(100,100,100)
                 robot.delay()
                 
             else:

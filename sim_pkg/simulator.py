@@ -142,9 +142,11 @@ def update_msg_buffer(msg_buffer:list, MSG_BUFFER_SIZE:int, num_of_robot:int,msg
         curr_pos_y = robot_states[i].pos_y
         d = np.sqrt((ref_x - curr_pos_x)**2 + (ref_y - curr_pos_y)**2)
         if d < RADIUS_OF_VISIBILITY:
-            msg_buffer[i] = msg_buffer[i]+ msg
-            if len(msg_buffer[i]) > MSG_BUFFER_SIZE:
-                msg_buffer[i] = msg_buffer[i][-MSG_BUFFER_SIZE:]
+            random_bool = np.random.uniform() < PACKET_SUCCESS_PERC
+            if random_bool:
+                msg_buffer[i] = msg_buffer[i]+ msg
+                if len(msg_buffer[i]) > MSG_BUFFER_SIZE:
+                    msg_buffer[i] = msg_buffer[i][-MSG_BUFFER_SIZE:]
     # print(type(msg_buffer[2]))
     return msg_buffer
 
@@ -283,9 +285,7 @@ def loop():
                         data_string = '0b1'
                         current_socket.sendall(data_string.encode('utf-8'))
                         msg_for_buffer = bytes(msg[3],'utf-8')
-                        random_bool = np.random.uniform() < PACKET_SUCCESS_PERC
-                        if random_bool is True:
-                            msg_buffer = update_msg_buffer(msg_buffer,MSG_BUFFER_SIZE,num_of_robot,msg_for_buffer,msg[1],robot_state)
+                        msg_buffer = update_msg_buffer(msg_buffer,MSG_BUFFER_SIZE,num_of_robot,msg_for_buffer,msg[1],robot_state)
                         # print("New msg buffer:", msg_buffer)
                         continue
                     elif msg[2] == 5:
