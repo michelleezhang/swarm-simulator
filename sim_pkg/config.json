@@ -1,5 +1,6 @@
 {
-    "number_of_robots": 10,
-    "RADIUS_OF_VISIBILITY": 20, 
-    "PACKET_SUCCESS_PERC": 1.0
+    "number_of_robots": 20,
+    "RADIUS_OF_VISIBILITY": 50, 
+    "PACKET_SUCCESS_PERC": 1.0, 
+    "REAL_TIME_FACTOR": 1
 }

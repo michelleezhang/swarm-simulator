@@ -207,10 +207,19 @@ class Coachbot:
     def get_clock(self):
         # type: () -> float
         """
+        Function number 6
         Returns:
             float: The time elapsed since the program started in seconds.
         """
-        raise NotImplementedError
+        info = '0btime'
+        # print("In recv_msg")
+        self.send_data(6,info)
+        data_string = str("sim_time")
+        self.client_socket.sendall(data_string.encode('utf-8'))
+        msg = self.client_socket.recv(4*1024)
+        msg = msg.decode('utf-8')
+        msg = float(msg)
+        return msg
 
     def send_msg(self, msg):
         # type: (str) -> bool

@@ -157,7 +157,7 @@ def initialize_robots():
     vis_socket = None
     fd_to_id_map = {}
     num_of_robot = 0
-    real_time_factor = 1
+    real_time_factor = config_var["REAL_TIME_FACTOR"]
     robot = BotSim(id=0,usr_led=(0,0,0),clk=0)
     robot_state = [robot]*(NUM_OF_ROBOTS+1)
     robot_id = -1*np.ones((NUM_OF_ROBOTS+1))
@@ -231,7 +231,7 @@ def loop():
     
     sim_time_start = time.time()
     notslept = 0
-    real_time_factor = 1
+    real_time_factor = config_var["REAL_TIME_FACTOR"]
     T_real = 0.0001
     T_sim = real_time_factor*T_real
     
@@ -296,9 +296,15 @@ def loop():
                         current_socket.sendall(msg_buffer[msg[1]])
                         if clear_bool.decode('utf-8') == 'True':
                             msg_buffer[msg[1]] = bytes('0','utf-8')
-                        
                         # print('Send data:')
                         continue
+                    elif msg[2] == 6:
+                        data_string = '0b1'
+                        current_socket.sendall(data_string.encode('utf-8'))
+                        type_time = current_socket.recv(1024)
+                        time_val = robot_state[int(msg[1])].clk
+                        time_val = str(round(time_val,4))
+                        current_socket.sendall(time_val.encode('utf-8'))
                     elif msg[2] == 2:
                         data_string = '0b1'
                         current_socket.sendall(data_string.encode('utf-8'))

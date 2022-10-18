@@ -3,8 +3,7 @@ def usr(robot):
     while True:
 
         robot.delay()
-        id = robot.id
-
+        id = robot.id        
         if id == 3:
             robot.set_led(0,100,0)
             robot.send_msg("(0,100,0)")
@@ -35,6 +34,7 @@ def usr(robot):
             elif val[0] == "(0,60,50)":
                 robot.set_led(0,60,50)
                 robot.delay()
+                
             else:
                 continue
         
