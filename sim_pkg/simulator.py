@@ -242,11 +242,11 @@ def loop():
     sim_time_curr = 0.0001
     # robot = BotSim(id=0,usr_led=(0,0,0),clk=sim_time_curr)
     # robot_state = [robot]*NUM_OF_ROBOTS
-    
+    buffer_list_size = 16
     delta_vis = 0
     real_time_curr = 0
     msg_buffer = [bytes('0','utf-8')]*1000
-    MSG_BUFFER_SIZE = 1024
+    MSG_BUFFER_SIZE = 64
     num_of_robot = NUM_OF_ROBOTS
     vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id = initialize_robots()
     while True:
