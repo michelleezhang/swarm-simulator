@@ -5,6 +5,7 @@ Define Robot class that will act as an API
 
 import socket
 import re
+import json
 
 class BotModel:
     def __init__(self):
@@ -255,11 +256,13 @@ class Coachbot:
         # print("Sent data. Now waiting for msg")
         data_string = str(clear)
         self.client_socket.sendall(data_string.encode('utf-8'))
-        msg = self.client_socket.recv(4*1024)
-        # msg = data.decode('utf-8')
+        msg = self.client_socket.recv(16*1024)
+        msg = msg.decode('utf-8')
+        msg = json.loads(msg)
+       
         # print(msg)
         if len(msg)>0:
-            return [msg[1:]]
+            return msg
         else:
             return []
 

@@ -4,7 +4,7 @@ from robot_class import Coachbot
 from radius_comm import usr
 # from user import usr
 
-robot = Coachbot((0,0,0))
+robot = Coachbot()
 
 if __name__ == "__main__":
     usr(robot)

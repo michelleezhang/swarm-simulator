@@ -22,18 +22,19 @@ def usr(robot):
         else:
             val = robot.recv_msg(clear=True)
             # print(val)
-            if val[0] == "(100,100,0)":
-                robot.set_led(100,100,0)
-                robot.delay()
-            elif val[0] == "(0,100,0)":
-                robot.set_led(0,100,0)
-                robot.delay()
-            elif val[0] == "(100,0,0)":
-                robot.set_led(100,0,0)
-                robot.delay()
-            elif val[0] == "(100,100,100)":
-                robot.set_led(100,100,100)
-                robot.delay()
+            if len(val)> 0:
+                if val[0] == "(100,100,0)":
+                    robot.set_led(100,100,0)
+                    robot.delay()
+                elif val[0] == "(0,100,0)":
+                    robot.set_led(0,100,0)
+                    robot.delay()
+                elif val[0] == "(100,0,0)":
+                    robot.set_led(100,0,0)
+                    robot.delay()
+                elif val[0] == "(100,100,100)":
+                    robot.set_led(100,100,100)
+                    robot.delay()
                 
             else:
                 continue

@@ -28,6 +28,7 @@ config_var = json.loads(data)
 RADIUS_OF_VISIBILITY = config_var["RADIUS_OF_VISIBILITY"]
 PACKET_SUCCESS_PERC = config_var["PACKET_SUCCESS_PERC"]
 NUM_OF_ROBOTS = config_var["number_of_robots"]
+NUM_OF_MSGS = 16
 
 class BotDiffDrive:
     """
@@ -88,7 +89,7 @@ def msg_decode(msg: bytes) -> list:
             num = int(num,2)
             data_arr.append(num) 
         else:
-            data_arr.append(num[2:])  
+            data_arr.append(num[2:])
     # print(data_arr)
     return data_arr
 
@@ -124,7 +125,7 @@ def update_time(robot_state:list, num_of_robot:int, sim_time:float)-> list:
     
     return robot_state
 
-def update_msg_buffer(msg_buffer:list, MSG_BUFFER_SIZE:int, num_of_robot:int,msg:bytes, robot_id:int,robot_states:list)->list:
+def update_msg_buffer(msg_buffer:list, MSG_BUFFER_SIZE:int, num_of_robot:int,msg:str, robot_id:int,robot_states:list)->list:
     """
     Update Message Buffer
     """
@@ -144,9 +145,12 @@ def update_msg_buffer(msg_buffer:list, MSG_BUFFER_SIZE:int, num_of_robot:int,msg
         if d < RADIUS_OF_VISIBILITY:
             random_bool = np.random.uniform() < PACKET_SUCCESS_PERC
             if random_bool:
-                msg_buffer[i] = msg_buffer[i]+ msg
-                if len(msg_buffer[i]) > MSG_BUFFER_SIZE:
-                    msg_buffer[i] = msg_buffer[i][-MSG_BUFFER_SIZE:]
+                if len(msg) > MSG_BUFFER_SIZE:
+                    msg = msg[:MSG_BUFFER_SIZE]
+                msg_buffer[i].append(msg)
+                if len(msg_buffer[i])> NUM_OF_MSGS:
+                    msg_buffer[i] = msg_buffer[i][-NUM_OF_MSGS:]
+                
     # print(type(msg_buffer[2]))
     return msg_buffer
 
@@ -245,8 +249,9 @@ def loop():
     buffer_list_size = 16
     delta_vis = 0
     real_time_curr = 0
-    msg_buffer = [bytes('0','utf-8')]*1000
-    MSG_BUFFER_SIZE = 64
+    
+    msg_buffer = [[]]*(NUM_OF_ROBOTS+1)
+    MSG_BUFFER_SIZE = 1024
     num_of_robot = NUM_OF_ROBOTS
     vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id = initialize_robots()
     while True:
@@ -284,7 +289,7 @@ def loop():
                         # print('Message sent:',msg[3])
                         data_string = '0b1'
                         current_socket.sendall(data_string.encode('utf-8'))
-                        msg_for_buffer = bytes(msg[3],'utf-8')
+                        msg_for_buffer = msg[3]
                         msg_buffer = update_msg_buffer(msg_buffer,MSG_BUFFER_SIZE,num_of_robot,msg_for_buffer,msg[1],robot_state)
                         # print("New msg buffer:", msg_buffer)
                         continue
@@ -293,9 +298,10 @@ def loop():
                         current_socket.sendall(data_string.encode('utf-8'))
                         # print(type(msg_buffer))
                         clear_bool = current_socket.recv(1024)
-                        current_socket.sendall(msg_buffer[msg[1]])
+                        data = json.dumps(msg_buffer[msg[1]])
+                        current_socket.sendall(data.encode('utf-8'))
                         if clear_bool.decode('utf-8') == 'True':
-                            msg_buffer[msg[1]] = bytes('0','utf-8')
+                            msg_buffer[msg[1]] = []
                         # print('Send data:')
                         continue
                     elif msg[2] == 6:

@@ -22,7 +22,7 @@ def usr(robot):
             val = robot.recv_msg(clear=True)
             if len(val[0]) > 1:
                 txt = val[0]
-                print(val)
+                # print(val)
                 sub_str = 'delay'
                 res = [i for i in range(len(txt)) if txt.startswith(sub_str, i)]
 
