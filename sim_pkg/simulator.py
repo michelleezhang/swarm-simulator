@@ -29,6 +29,9 @@ RADIUS_OF_VISIBILITY = config_var["RADIUS_OF_VISIBILITY"]
 PACKET_SUCCESS_PERC = config_var["PACKET_SUCCESS_PERC"]
 NUM_OF_ROBOTS = config_var["NUMBER_OF_ROBOTS"]
 NUM_OF_MSGS = config_var["NUM_OF_MSGS"]
+motor_rpm = 180 
+motor_full_speed = motor_rpm* 2*np.pi / 60
+
 
 class BotDiffDrive:
     """
@@ -44,8 +47,8 @@ class BotDiffDrive:
         self.pos_angle = 0 
         self.left_wheel_angle = 0
         self.right_wheel_angle = 0 
-        self.radius_of_wheel = 0.5
-        self.distance_between_wheel = 0.5
+        self.radius_of_wheel = 0.015
+        self.distance_between_wheel = 0.08
         
 
     def integrate(self,u_left, u_right, delta_time):
@@ -253,6 +256,7 @@ def loop():
     msg_buffer = [[]]*(NUM_OF_ROBOTS+1)
     MSG_BUFFER_SIZE = 1024
     num_of_robot = NUM_OF_ROBOTS
+    wheel_vel_arr  = [np.array([0,0])]*(NUM_OF_ROBOTS+1)
     vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id = initialize_robots()
     while True:
         
@@ -315,6 +319,16 @@ def loop():
                         time_val = robot_state[int(msg[1])].clk
                         time_val = str(round(time_val,4))
                         current_socket.sendall(time_val.encode('utf-8'))
+                    elif msg[2] == 7:
+                        data_string = '0b1'
+                        current_socket.sendall(data_string.encode('utf-8'))
+                        # print(msg)
+                        wheel_pow = np.array([msg[3],msg[4]])
+                        # print("Wheel power:", wheel_pow)
+                        # print("motor_full_speed", motor_full_speed)
+                        wheel_vel = motor_full_speed*wheel_pow
+                        wheel_vel_arr[int(msg[1])] = wheel_vel
+                        # print("Wheel velocity:",wheel_vel)
                     elif msg[2] == 2:
                         # set_led
                         data_string = '0b1'

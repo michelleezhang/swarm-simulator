@@ -171,11 +171,13 @@ class Coachbot:
         # type: (int|float, int|float) -> None
         """
         Sets the speed for the left and right wheel in percentage values.
+        Function Number 7
         Parameters:
             left (int): The left motor speed (-100 - 100)
             right (int): The right motor speed (-100 - 100)
         """
-        raise NotImplementedError
+        info = str(bin(left))+ str(bin(right))
+        self.send_data(7,info)
 
     def rotate_with_power(self, power):
         # type: (int) -> None
