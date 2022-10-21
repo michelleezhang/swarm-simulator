@@ -27,8 +27,8 @@ with open('config.json', 'r') as myfile:
 config_var = json.loads(data)
 RADIUS_OF_VISIBILITY = config_var["RADIUS_OF_VISIBILITY"]
 PACKET_SUCCESS_PERC = config_var["PACKET_SUCCESS_PERC"]
-NUM_OF_ROBOTS = config_var["number_of_robots"]
-NUM_OF_MSGS = 16
+NUM_OF_ROBOTS = config_var["NUMBER_OF_ROBOTS"]
+NUM_OF_MSGS = config_var["NUM_OF_MSGS"]
 
 class BotDiffDrive:
     """
@@ -281,11 +281,13 @@ def loop():
                     # broadcast_message(current_socket, "\r" + '<' + data + '> ')
                     msg = msg_decode(data)
                     if msg[2] == 3:
+                        # delay
                         robot_state[int(msg[1])].clk += (msg[3]/1000)
                         data_string = '0b1'
                         current_socket.sendall(data_string.encode('utf-8'))
                         continue
                     elif msg[2] == 4:
+                        # send_msg
                         # print('Message sent:',msg[3])
                         data_string = '0b1'
                         current_socket.sendall(data_string.encode('utf-8'))
@@ -294,6 +296,7 @@ def loop():
                         # print("New msg buffer:", msg_buffer)
                         continue
                     elif msg[2] == 5:
+                        # recv_msg
                         data_string = '0b1'
                         current_socket.sendall(data_string.encode('utf-8'))
                         # print(type(msg_buffer))
@@ -305,6 +308,7 @@ def loop():
                         # print('Send data:')
                         continue
                     elif msg[2] == 6:
+                        # get_clock
                         data_string = '0b1'
                         current_socket.sendall(data_string.encode('utf-8'))
                         type_time = current_socket.recv(1024)
@@ -312,6 +316,7 @@ def loop():
                         time_val = str(round(time_val,4))
                         current_socket.sendall(time_val.encode('utf-8'))
                     elif msg[2] == 2:
+                        # set_led
                         data_string = '0b1'
                         current_socket.sendall(data_string.encode('utf-8'))
                         if msg[1] in robot_id:

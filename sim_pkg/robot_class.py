@@ -7,6 +7,12 @@ import socket
 import re
 import json
 
+with open('config.json', 'r') as myfile:
+    data=myfile.read()
+config_var = json.loads(data)
+NUM_OF_MSGS = config_var["NUM_OF_MSGS"]
+
+
 class BotModel:
     def __init__(self):
         pass
@@ -256,7 +262,7 @@ class Coachbot:
         # print("Sent data. Now waiting for msg")
         data_string = str(clear)
         self.client_socket.sendall(data_string.encode('utf-8'))
-        msg = self.client_socket.recv(16*1024)
+        msg = self.client_socket.recv(int(NUM_OF_MSGS*1024))
         msg = msg.decode('utf-8')
         msg = json.loads(msg)
        

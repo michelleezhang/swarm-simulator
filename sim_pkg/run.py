@@ -7,7 +7,7 @@ def main():
     with open('config.json', 'r') as myfile:
         data=myfile.read()
     config_var = json.loads(data)
-    num = config_var["number_of_robots"]
+    num = config_var["NUMBER_OF_ROBOTS"]
     # print(path)
     subprocess.Popen(['python3', 'simulator.py'],close_fds=True,cwd=path)
     time.sleep(1)
