@@ -2,7 +2,7 @@
 """
 Main Server for Swarm Simulation 
 """
-
+import random
 import socket
 import sys
 import json
@@ -29,6 +29,8 @@ RADIUS_OF_VISIBILITY = config_var["RADIUS_OF_VISIBILITY"]
 PACKET_SUCCESS_PERC = config_var["PACKET_SUCCESS_PERC"]
 NUM_OF_ROBOTS = config_var["NUMBER_OF_ROBOTS"]
 NUM_OF_MSGS = config_var["NUM_OF_MSGS"]
+ARENA_LENGTH = config_var["LENGTH"]
+ARENA_WIDTH = config_var["WIDTH"]
 motor_rpm = 180 
 motor_full_speed = motor_rpm* 2*np.pi / 60
 
@@ -37,18 +39,21 @@ class BotDiffDrive:
     """
     Bot Diff Drive robot with all the math
     """
-    def __init__(self):
+    def __init__(self, id_=0, pos_x_=0.0, pos_y_=0.0, pos_angle_=0.0, clk_=0, usr_led_=(0,0,0)):
         """
         Define base variables. 
         All values are expected in metres, seconds and radians. 
         """
-        self.pos_x = 0 
-        self.pos_y = 0 
-        self.pos_angle = 0 
+        self.id = id_
+        self.pos_x = pos_x_
+        self.pos_y = pos_y_
+        self.pos_angle = pos_angle_
         self.left_wheel_angle = 0
         self.right_wheel_angle = 0 
         self.radius_of_wheel = 0.015
         self.distance_between_wheel = 0.08
+        self.clk = clk_
+        self.usr_led = usr_led_
         
 
     def integrate(self,u_left, u_right, delta_time):
@@ -70,7 +75,6 @@ class BotDiffDrive:
         self.pos_y += delta_pos[0][2]
         self.left_wheel_angle += delta_pos[0][3]
         self.right_wheel_angle += delta_pos[0][4]
-
         
 
 
@@ -98,15 +102,15 @@ def msg_decode(msg: bytes) -> list:
 
 class BotSim:
     """
-    Defines Bot Class for simulation    
+    Defines Bot Class for simulation visualization   
     """
-    def __init__(self, id, usr_led,clk,delay=0):
+    def __init__(self, id):
         self.id = id
-        self.usr_led = usr_led
-        self.pos_x = 3+id*12
-        self.pos_y = 3+id*12
-        self.delay = delay
-        self.clk = clk
+        self.usr_led = (0,0,0)
+        self.pos_x = 0
+        self.pos_y = 0
+        self.angle = 0
+
 
 def conv_to_json(robot_state, num_of_robot:int)->dict:
     """
@@ -114,7 +118,12 @@ def conv_to_json(robot_state, num_of_robot:int)->dict:
     """
     json_dict = {}
     for i in range(1,num_of_robot+1):
-        json_dict[i] = robot_state[i].__dict__
+        robot = BotSim(id=robot_state[i].id)
+        robot.pos_x = robot_state[i].pos_x
+        robot.pos_y = robot_state[i].pos_y
+        robot.angle = robot_state[i].pos_angle
+        robot.usr_led = robot_state[i].usr_led
+        json_dict[i] = robot.__dict__
     # print(json_dict)
     return json_dict
 
@@ -167,7 +176,7 @@ def initialize_robots():
     fd_to_id_map = {}
     num_of_robot = 0
     real_time_factor = config_var["REAL_TIME_FACTOR"]
-    robot = BotSim(id=0,usr_led=(0,0,0),clk=0)
+    robot = BotDiffDrive(id_=0)
     robot_state = [robot]*(NUM_OF_ROBOTS+1)
     robot_id = -1*np.ones((NUM_OF_ROBOTS+1))
     id_to_socket_map = {}
@@ -195,7 +204,11 @@ def initialize_robots():
                             # msg1 = str(bin(num_of_robot))
                             fd_to_id_map[new_socket.fileno()] = num_of_robot
                             # new_socket.sendall(msg1.encode('utf-8'))
-                            robot_state[num_of_robot] = BotSim(id=num_of_robot,usr_led=(50,50,50),clk=0)
+                            robot_state[num_of_robot] = BotDiffDrive(id_=num_of_robot)
+                            robot_state[num_of_robot].pos_x = random.uniform(0.1, ARENA_LENGTH-0.1)
+                            robot_state[num_of_robot].pos_y = random.uniform(0.1, ARENA_WIDTH-0.1)
+                            robot_state[num_of_robot].usr_led = (50,50,50)
+                            robot_state[num_of_robot].clk = 0
                             robot_id[num_of_robot] = num_of_robot
                         elif int(msg,2) == 5:
                             vis_fd = new_socket.fileno()

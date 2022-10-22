@@ -3,5 +3,7 @@
     "RADIUS_OF_VISIBILITY": 50, 
     "PACKET_SUCCESS_PERC": 0.7, 
     "REAL_TIME_FACTOR": 1,
-    "NUM_OF_MSGS": 100
+    "NUM_OF_MSGS": 100, 
+    "WIDTH": 0.9, 
+    "LENGTH": 1.5
 }

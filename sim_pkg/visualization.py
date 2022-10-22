@@ -8,23 +8,33 @@ import traceback
 import json
 import pygame
 
+with open('config.json', 'r') as myfile:
+    data=myfile.read()
+config_var = json.loads(data)
+
+ARENA_LENGTH = config_var["LENGTH"]
+ARENA_WIDTH = config_var["WIDTH"]
 
 class Dict2Class(object):
     """
+
     """
     def __init__(self,my_dict):
         for key in my_dict:
             setattr(self,key,my_dict[key])
 
 
-class bot_sim:
-    def __init__(self, id, usr_led,clk,delay=0):
-        self.id = id
-        self.usr_led = usr_led
-        self.pos_x = 3
-        self.pos_y = 3
-        self.clk = clk
-        self.delay = delay
+# class bot_sim:
+#     """
+    
+#     """
+#     def __init__(self, id, usr_led,clk,delay=0):
+#         self.id = id
+#         self.usr_led = usr_led
+#         self.pos_x = 3
+#         self.pos_y = 3
+#         self.clk = clk
+#         self.delay = delay
 
 class visualization:
 
@@ -32,8 +42,11 @@ class visualization:
         """
         """
         pygame.init()
-        (width, height) = (1500, 900)
-        self.screen = pygame.display.set_mode((width, height))
+        (length, width) = (1500, 900)
+        
+        self.x_fac = length/ARENA_LENGTH
+        self.y_fac = width/ARENA_WIDTH
+        self.screen = pygame.display.set_mode((length, width))
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_socket.connect((socket.gethostname(), 1245))
         self.set_vis_id()
@@ -72,7 +85,9 @@ class visualization:
             robo = robot_state[i]
             # print(robo.usr_led)
             colour = robo.usr_led #green
-            circle_x_y = (robo.pos_x, robo.pos_y)
+            pos_x = robo.pos_x*self.x_fac
+            pos_y = robo.pos_y*self.y_fac
+            circle_x_y = (int(pos_x), int(pos_y))
             circle_radius = 12
             border_width = 2 #0 = filled circle
             pygame.draw.circle(self.screen, colour, circle_x_y, circle_radius, border_width)
