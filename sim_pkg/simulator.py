@@ -50,7 +50,7 @@ class BotDiffDrive:
         self.pos_angle = pos_angle_
         self.left_wheel_angle = 0
         self.right_wheel_angle = 0 
-        self.radius_of_wheel = 0.015
+        self.radius_of_wheel = 0.015/2
         self.distance_between_wheel = 0.08
         self.clk = clk_
         self.usr_led = usr_led_
@@ -70,13 +70,18 @@ class BotDiffDrive:
 
         delta_pos = state_matrix@velocity_vector * delta_time
 
-        print(delta_pos[0][0])
+        
 
         self.pos_angle += delta_pos[0][0]
-        self.pos_x += delta_pos[0][1]
-        self.pos_y += delta_pos[0][2]
-        self.left_wheel_angle += delta_pos[0][3]
-        self.right_wheel_angle += delta_pos[0][4]
+        self.pos_x += delta_pos[1][0]
+        self.pos_y += delta_pos[2][0]
+        self.left_wheel_angle += delta_pos[3][0]
+        self.right_wheel_angle += delta_pos[4][0]
+
+        if u_left>0:
+            # print(delta_pos)
+            print("Pos x:", self.pos_x)
+            print("Pos y:", self.pos_y)
         
 
 
@@ -398,7 +403,7 @@ def loop():
             # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
             
             delta_time = T_sim
-            # robot_state = integrate_world(robot_state, num_of_robot, wheel_vel_arr, delta_time)
+            robot_state = integrate_world(robot_state, num_of_robot, wheel_vel_arr, delta_time)
 
             real_time_now_end = time.time()
             elapsed_time_diff = real_time_now_end - real_time_now_start
