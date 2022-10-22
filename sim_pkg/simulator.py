@@ -70,6 +70,8 @@ class BotDiffDrive:
 
         delta_pos = state_matrix@velocity_vector * delta_time
 
+        print(delta_pos[0][0])
+
         self.pos_angle += delta_pos[0][0]
         self.pos_x += delta_pos[0][1]
         self.pos_y += delta_pos[0][2]
@@ -240,6 +242,18 @@ def initialize_robots():
 
     return vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id
 
+def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, delta_time:float):
+    """ 
+    Integrates the world
+    """
+    for i in range(1, num_of_robot+1):
+        wheel_vel = wheel_vel_arr[i]
+        u_l = wheel_vel[0]
+        u_r = wheel_vel[1]
+        robot_states[i].integrate(u_l,u_r,delta_time)
+
+    return robot_states
+
 def loop():
     """
     Loop through to get data from bot classes
@@ -383,6 +397,9 @@ def loop():
             # sim_time_curr += delta_t
             # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
             
+            delta_time = T_sim
+            # robot_state = integrate_world(robot_state, num_of_robot, wheel_vel_arr, delta_time)
+
             real_time_now_end = time.time()
             elapsed_time_diff = real_time_now_end - real_time_now_start
             # print("Elapsed time diff:",elapsed_time_diff)
