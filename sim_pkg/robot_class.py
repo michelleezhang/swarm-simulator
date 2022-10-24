@@ -299,7 +299,7 @@ class Coachbot:
         self.client_socket.sendall(data_string.encode('utf-8'))
         msg = self.client_socket.recv(int(NUM_OF_MSGS*1024))
         msg = msg.decode('utf-8')
-        msg = tuple(msg)
+        msg = json.loads(msg)
         return msg
         
 

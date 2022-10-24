@@ -382,12 +382,13 @@ def loop():
                         wheel_vel_arr[int(msg[1])] = wheel_vel
                         # print("Wheel velocity:",wheel_vel)
                     elif msg[2] == 8:
+                        # get_pose
                         data_string = '0b1'
                         current_socket.sendall(data_string.encode('utf-8'))
                         pose_type = current_socket.recv(1024)
                         local_id = int(msg[1])
-                        pos_tuple = (robot_state[local_id].pos_x, robot_state[local_id].pos_y, robot_state[local_id].pos_angle)
-                        pos_tuple = str(pos_tuple)
+                        pos_tuple = [robot_state[local_id].pos_x, robot_state[local_id].pos_y, robot_state[local_id].pos_angle]
+                        pos_tuple = json.dumps(pos_tuple)
                         current_socket.sendall(pos_tuple.encode('utf-8'))
 
                     elif msg[2] == 2:
