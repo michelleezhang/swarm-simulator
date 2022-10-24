@@ -1,9 +1,9 @@
 {
     "NUMBER_OF_ROBOTS": 20,
-    "RADIUS_OF_VISIBILITY": 50, 
+    "RADIUS_OF_VISIBILITY": 3, 
     "PACKET_SUCCESS_PERC": 0.7, 
     "REAL_TIME_FACTOR": 1,
     "NUM_OF_MSGS": 100, 
-    "WIDTH": 0.9, 
-    "LENGTH": 1.5
+    "WIDTH": 3.5, 
+    "LENGTH": 7.0
 }

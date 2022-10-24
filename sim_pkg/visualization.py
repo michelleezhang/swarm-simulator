@@ -14,7 +14,7 @@ config_var = json.loads(data)
 
 ARENA_LENGTH = config_var["LENGTH"]
 ARENA_WIDTH = config_var["WIDTH"]
-
+RADIUS_OF_ROBOT = 0.105/2
 class Dict2Class(object):
     """
 
@@ -88,7 +88,7 @@ class visualization:
             pos_x = robo.pos_x*self.x_fac
             pos_y = robo.pos_y*self.y_fac
             circle_x_y = (int(pos_x), int(pos_y))
-            circle_radius = 12
+            circle_radius = int(RADIUS_OF_ROBOT*self.x_fac)
             border_width = 2 #0 = filled circle
             pygame.draw.circle(self.screen, colour, circle_x_y, circle_radius, border_width)
      

@@ -31,6 +31,8 @@ NUM_OF_ROBOTS = config_var["NUMBER_OF_ROBOTS"]
 NUM_OF_MSGS = config_var["NUM_OF_MSGS"]
 ARENA_LENGTH = config_var["LENGTH"]
 ARENA_WIDTH = config_var["WIDTH"]
+RADIUS_OF_ROBOT = 0.105/2
+
 motor_rpm = 180 
 motor_full_speed = motor_rpm* 2*np.pi / 60
 
@@ -50,7 +52,7 @@ class BotDiffDrive:
         self.pos_angle = pos_angle_
         self.left_wheel_angle = 0
         self.right_wheel_angle = 0 
-        self.radius_of_wheel = 0.015/2
+        self.radius_of_wheel = 0.015
         self.distance_between_wheel = 0.08
         self.clk = clk_
         self.usr_led = usr_led_
@@ -256,6 +258,16 @@ def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, del
         u_l = wheel_vel[0]
         u_r = wheel_vel[1]
         robot_states[i].integrate(u_l,u_r,delta_time)
+        if robot_states[i].pos_x - RADIUS_OF_ROBOT  < 0:
+           robot_states[i].pos_x = RADIUS_OF_ROBOT
+        elif robot_states[i].pos_x + RADIUS_OF_ROBOT > ARENA_LENGTH:
+            robot_states[i].pos_x = ARENA_LENGTH - RADIUS_OF_ROBOT
+        
+        if robot_states[i].pos_y - RADIUS_OF_ROBOT < 0:
+           robot_states[i].pos_y = RADIUS_OF_ROBOT
+        elif robot_states[i].pos_y + RADIUS_OF_ROBOT > ARENA_WIDTH:
+            robot_states[i].pos_y = ARENA_WIDTH - RADIUS_OF_ROBOT
+
 
     return robot_states
 
