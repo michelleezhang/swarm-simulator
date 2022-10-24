@@ -7,6 +7,7 @@ import socket
 import sys
 import json
 import select
+from threading import local
 import time
 import re
 import numpy as np
@@ -80,10 +81,11 @@ class BotDiffDrive:
         self.left_wheel_angle += delta_pos[3][0]
         self.right_wheel_angle += delta_pos[4][0]
 
-        if u_left>0:
+        # if u_left!=0.0:
             # print(delta_pos)
-            print("Pos x:", self.pos_x)
-            print("Pos y:", self.pos_y)
+            # print("Pos x:", self.pos_x)
+            # print("Pos y:", self.pos_y)
+            # print("Pos angle:", self.pos_angle)
         
 
 
@@ -364,15 +366,30 @@ def loop():
                         time_val = str(round(time_val,4))
                         current_socket.sendall(time_val.encode('utf-8'))
                     elif msg[2] == 7:
+                        # Set wheel velocity
                         data_string = '0b1'
                         current_socket.sendall(data_string.encode('utf-8'))
-                        # print(msg)
-                        wheel_pow = np.array([msg[3],msg[4]])
+                        vel = current_socket.recv(1024)
+                        data_string = '0b1'
+                        current_socket.sendall(data_string.encode('utf-8'))
+                        vel = vel.decode('utf-8')
+                        vel = json.loads(vel)
+                        # print(vel)
+                        wheel_pow = np.array([vel[0],vel[1]])
                         # print("Wheel power:", wheel_pow)
                         # print("motor_full_speed", motor_full_speed)
                         wheel_vel = motor_full_speed*wheel_pow
                         wheel_vel_arr[int(msg[1])] = wheel_vel
                         # print("Wheel velocity:",wheel_vel)
+                    elif msg[2] == 8:
+                        data_string = '0b1'
+                        current_socket.sendall(data_string.encode('utf-8'))
+                        pose_type = current_socket.recv(1024)
+                        local_id = int(msg[1])
+                        pos_tuple = (robot_state[local_id].pos_x, robot_state[local_id].pos_y, robot_state[local_id].pos_angle)
+                        pos_tuple = str(pos_tuple)
+                        current_socket.sendall(pos_tuple.encode('utf-8'))
+
                     elif msg[2] == 2:
                         # set_led
                         data_string = '0b1'

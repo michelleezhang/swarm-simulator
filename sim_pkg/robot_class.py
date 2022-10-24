@@ -12,7 +12,6 @@ with open('config.json', 'r') as myfile:
 config_var = json.loads(data)
 NUM_OF_MSGS = config_var["NUM_OF_MSGS"]
 
-
 class BotModel:
     def __init__(self):
         pass
@@ -176,8 +175,15 @@ class Coachbot:
             left (int): The left motor speed (-100 - 100)
             right (int): The right motor speed (-100 - 100)
         """
-        info = str(bin(left))+ str(bin(right))
+        # info = str(bin(left))+ str(bin(right))
+        info = "0bset_val"
         self.send_data(7,info)
+        val = [left, right]
+        val = json.dumps(val)
+        self.client_socket.sendall(val.encode('utf-8'))
+        msg = self.client_socket.recv(1024)
+        
+
 
     def rotate_with_power(self, power):
         # type: (int) -> None
@@ -280,12 +286,21 @@ class Coachbot:
         """
         This function retrieves the pose of the robot, if it can. If it can't
         it returns None.
+        Function number - 8
         Returns:
             tuple[float, float, float] | None: The global pose as a tuple (x,
             y, theta) if new data available since last invokation, None
             otherwise.
         """
-        raise NotImplementedError
+        info = '0bpose'
+        # print("In recv_msg")
+        self.send_data(8,info)
+        data_string = 'new_pose'
+        self.client_socket.sendall(data_string.encode('utf-8'))
+        msg = self.client_socket.recv(int(NUM_OF_MSGS*1024))
+        msg = msg.decode('utf-8')
+        msg = tuple(msg)
+        return msg
         
 
     def get_pose_blocking(self, delay_millis=200.0):

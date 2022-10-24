@@ -7,6 +7,7 @@ import sys
 import traceback
 import json
 import pygame
+import numpy as np
 
 with open('config.json', 'r') as myfile:
     data=myfile.read()
@@ -17,24 +18,70 @@ ARENA_WIDTH = config_var["WIDTH"]
 RADIUS_OF_ROBOT = 0.105/2
 class Dict2Class(object):
     """
-
+    Convert a dict to a class. 
     """
     def __init__(self,my_dict):
         for key in my_dict:
             setattr(self,key,my_dict[key])
 
 
-# class bot_sim:
-#     """
-    
-#     """
-#     def __init__(self, id, usr_led,clk,delay=0):
-#         self.id = id
-#         self.usr_led = usr_led
-#         self.pos_x = 3
-#         self.pos_y = 3
-#         self.clk = clk
-#         self.delay = delay
+def draw_arrow(
+        surface: pygame.Surface,
+        start: pygame.Vector2,
+        end: pygame.Vector2,
+        color: pygame.Color,
+        body_width: int = 2,
+        head_width: int = 4,
+        head_height: int = 2,
+    ):
+    """Draw an arrow between start and end with the arrow head at the end.
+
+    Args:
+        surface (pygame.Surface): The surface to draw on
+        start (pygame.Vector2): Start position
+        end (pygame.Vector2): End position
+        color (pygame.Color): Color of the arrow
+        body_width (int, optional): Defaults to 2.
+        head_width (int, optional): Defaults to 4.
+        head_height (float, optional): Defaults to 2.
+    """
+    arrow = start - end
+    angle = arrow.angle_to(pygame.Vector2(0, -1))
+    body_length = arrow.length() - head_height
+
+    # Create the triangle head around the origin
+    head_verts = [
+        pygame.Vector2(0, int(head_height / 2)),  # Center
+        pygame.Vector2(int(head_width / 2), int(-head_height / 2)),  # Bottomright
+        pygame.Vector2(int(-head_width / 2), int(-head_height / 2)),  # Bottomleft
+    ]
+    # Rotate and translate the head into place
+    translation = pygame.Vector2(0, int(arrow.length() - (head_height / 2))).rotate(-angle)
+    for i in range(len(head_verts)):
+        head_verts[i].rotate_ip(-angle)
+        head_verts[i] += translation
+        head_verts[i] += start
+        
+
+    pygame.draw.polygon(surface, color, head_verts)
+
+    # Stop weird shapes when the arrow is shorter than arrow head
+    if arrow.length() >= head_height:
+        # Calculate the body rect, rotate and translate into place
+        body_verts = [
+            pygame.Vector2(-body_width / 2, body_length / 2),  # Topleft
+            pygame.Vector2(body_width / 2, body_length / 2),  # Topright
+            pygame.Vector2(body_width / 2, -body_length / 2),  # Bottomright
+            pygame.Vector2(-body_width / 2, -body_length / 2),  # Bottomleft
+        ]
+        translation = pygame.Vector2(0, body_length / 2).rotate(-angle)
+        for i in range(len(body_verts)):
+            body_verts[i].rotate_ip(-angle)
+            body_verts[i] += translation
+            body_verts[i] += start
+
+        pygame.draw.polygon(surface, color, body_verts)
+
 
 class visualization:
 
@@ -66,6 +113,7 @@ class visualization:
     
     def update_states(self, data):
         """
+        Update the states
         """
         num_of_robot = len(data) +1
         robot_state = [0]*num_of_robot
@@ -79,6 +127,7 @@ class visualization:
 
     def update(self, robot_state, num_of_robot):
         """
+        Update the screen
         """
         self.screen.fill((0,0,0)) #clear screen
         for i in range(1,num_of_robot):
@@ -87,10 +136,16 @@ class visualization:
             colour = robo.usr_led #green
             pos_x = robo.pos_x*self.x_fac
             pos_y = robo.pos_y*self.y_fac
+            angle = robo.angle
             circle_x_y = (int(pos_x), int(pos_y))
             circle_radius = int(RADIUS_OF_ROBOT*self.x_fac)
             border_width = 2 #0 = filled circle
             pygame.draw.circle(self.screen, colour, circle_x_y, circle_radius, border_width)
+
+            # draw an arrow
+            center = pygame.Vector2(pos_x,pos_y)
+            end = pygame.Vector2(int(pos_x+circle_radius*np.cos(angle)), int(pos_y+circle_radius*np.sin(angle)))
+            draw_arrow(self.screen, center, end, pygame.Color("dodgerblue"), 2, 4, 2)
      
     
     def update_time_msg(self,real_time, sim_time):
