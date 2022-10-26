@@ -1,6 +1,16 @@
 #!/usr/bin/env python3
 """
 Main Server for Swarm Simulation 
+
+__author__ = 'Devesh Bhura <devbhura@gmail.com>'
+__copyright__ = 'Copyright 2022, Northwestern University'
+__credits__ = ['Marko Vejnovic', 'Lin Liu']
+__license__ = 'Proprietary'
+__version__ = '0.5.0'
+__maintainer__ = 'Devesh Bhura'
+__email__ = 'devbhura@gmail.com'
+__status__ = 'Research'
+
 """
 import random
 import socket
@@ -34,7 +44,7 @@ ARENA_LENGTH = config_var["LENGTH"]
 ARENA_WIDTH = config_var["WIDTH"]
 RADIUS_OF_ROBOT = 0.105
 
-motor_rpm = 60 
+motor_rpm = 80 
 motor_full_speed = motor_rpm* 2*np.pi / 60
 
 
@@ -76,10 +86,13 @@ class BotDiffDrive:
         
 
         self.pos_angle += delta_pos[0][0]
+        self.pos_angle = (self.pos_angle + np.pi) % (2 * np.pi) - np.pi
         self.pos_x += delta_pos[1][0]
         self.pos_y += delta_pos[2][0]
         self.left_wheel_angle += delta_pos[3][0]
+        self.left_wheel_angle = (self.left_wheel_angle + np.pi) % (2 * np.pi) - np.pi
         self.right_wheel_angle += delta_pos[4][0]
+        self.right_wheel_angle = (self.right_wheel_angle + np.pi) % (2 * np.pi) - np.pi
 
         # if u_left!=0.0:
             # print(delta_pos)
@@ -87,7 +100,18 @@ class BotDiffDrive:
             # print("Pos y:", self.pos_y)
             # print("Pos angle:", self.pos_angle)
         
+def transform_from_map_to_base(pos_x:float, pos_y:float, angle:float):
+    """
+    Transform from map frame to base
+    """
+    vec_m = np.array([[pos_x],[pos_y], [1]])
+    T_bm = np.array([[1, 0, -ARENA_LENGTH/2],
+                    [0, 1, -ARENA_WIDTH/2],
+                    [0, 0, 1]])
 
+    vec_b = T_bm@vec_m
+
+    return vec_b[0][0], vec_b[1][0], angle
 
 def msg_decode(msg: bytes) -> list:
     """
@@ -388,6 +412,8 @@ def loop():
                         pose_type = current_socket.recv(1024)
                         local_id = int(msg[1])
                         pos_tuple = [robot_state[local_id].pos_x, robot_state[local_id].pos_y, robot_state[local_id].pos_angle]
+                        x_, y_, theta_ = transform_from_map_to_base(pos_tuple[0], pos_tuple[1], pos_tuple[2])
+                        pos_tuple = [x_,y_,theta_]
                         pos_tuple = json.dumps(pos_tuple)
                         current_socket.sendall(pos_tuple.encode('utf-8'))
 

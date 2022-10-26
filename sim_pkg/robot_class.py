@@ -1,11 +1,14 @@
 #!/usr/bin/env python2
 """
 Define Robot class that will act as an API
+
+
 """
 
 import socket
 import re
 import json
+from . import math_utils
 
 with open('config.json', 'r') as myfile:
     data=myfile.read()
@@ -51,6 +54,20 @@ class Coachbot:
             int: The id number of self.
         """
         return self.id_
+
+    @property
+    def math(self):
+        """A convenience property for fetching the functions available in
+        `coach_os.math_utils <coach_os.html#module-coach_os.math_utils>`_.
+        For example, you can do:
+        .. code-block:: python
+           pos, theta = robot.get_pose_blocking()
+           robot.logger.info(
+                'My position is: %s' % (robot.math.clamp_angle(theta)))
+        Returns:
+            module: All functions in math_utils.
+        """
+        return math_utils
 
     @property
     def units(self):

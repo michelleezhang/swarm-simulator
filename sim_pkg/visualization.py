@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 """
-Visualization
+Visualization 
+
+__author__ = 'Devesh Bhura <devbhura@gmail.com>'
+__copyright__ = 'Copyright 2022, Northwestern University'
+__credits__ = ['Marko Vejnovic', 'Lin Liu']
+__license__ = 'Proprietary'
+__version__ = '0.5.0'
+__maintainer__ = 'Devesh Bhura'
+__email__ = 'devbhura@gmail.com'
+__status__ = 'Research'
 """
 import socket
 import sys
