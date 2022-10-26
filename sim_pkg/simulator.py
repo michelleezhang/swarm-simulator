@@ -32,9 +32,9 @@ NUM_OF_ROBOTS = config_var["NUMBER_OF_ROBOTS"]
 NUM_OF_MSGS = config_var["NUM_OF_MSGS"]
 ARENA_LENGTH = config_var["LENGTH"]
 ARENA_WIDTH = config_var["WIDTH"]
-RADIUS_OF_ROBOT = 0.105/2
+RADIUS_OF_ROBOT = 0.105
 
-motor_rpm = 180 
+motor_rpm = 60 
 motor_full_speed = motor_rpm* 2*np.pi / 60
 
 
