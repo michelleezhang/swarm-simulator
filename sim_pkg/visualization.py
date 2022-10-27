@@ -153,7 +153,7 @@ class visualization:
 
             # draw an arrow
             center = pygame.Vector2(pos_x,pos_y)
-            end = pygame.Vector2(int(pos_x+circle_radius*np.cos(angle)), int(pos_y+circle_radius*np.sin(angle)))
+            end = pygame.Vector2(int(pos_x+circle_radius*np.sin(angle)), int(pos_y+circle_radius*np.cos(angle)))
             draw_arrow(self.screen, center, end, pygame.Color("dodgerblue"), 2, 4, 2)
      
     
