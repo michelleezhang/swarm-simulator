@@ -143,8 +143,8 @@ class visualization:
             robo = robot_state[i]
             # print(robo.usr_led)
             colour = robo.usr_led #green
-            pos_x = robo.pos_x*self.x_fac
-            pos_y = robo.pos_y*self.y_fac
+            pos_x =(robo.pos_y + ARENA_LENGTH/2)*self.x_fac
+            pos_y = (robo.pos_x + ARENA_WIDTH/2)*self.y_fac
             angle = robo.angle
             circle_x_y = (int(pos_x), int(pos_y))
             circle_radius = int(RADIUS_OF_ROBOT*self.x_fac)

@@ -42,7 +42,7 @@ NUM_OF_ROBOTS = config_var["NUMBER_OF_ROBOTS"]
 NUM_OF_MSGS = config_var["NUM_OF_MSGS"]
 ARENA_LENGTH = config_var["LENGTH"]
 ARENA_WIDTH = config_var["WIDTH"]
-RADIUS_OF_ROBOT = 0.105
+RADIUS_OF_ROBOT = 0.105/2
 
 motor_rpm = 80 
 motor_full_speed = motor_rpm* 2*np.pi / 60
@@ -62,7 +62,7 @@ class BotDiffDrive:
         self.pos_y = pos_y_
         self.pos_angle = pos_angle_
         self.left_wheel_angle = 0
-        self.right_wheel_angle = 0 
+        self.right_wheel_angle = 0
         self.radius_of_wheel = 0.015
         self.distance_between_wheel = 0.08
         self.clk = clk_
@@ -240,8 +240,8 @@ def initialize_robots():
                             fd_to_id_map[new_socket.fileno()] = num_of_robot
                             # new_socket.sendall(msg1.encode('utf-8'))
                             robot_state[num_of_robot] = BotDiffDrive(id_=num_of_robot)
-                            robot_state[num_of_robot].pos_x = random.uniform(0.1, ARENA_LENGTH-0.1)
-                            robot_state[num_of_robot].pos_y = random.uniform(0.1, ARENA_WIDTH-0.1)
+                            robot_state[num_of_robot].pos_y = random.uniform(-(ARENA_LENGTH-0.1)/2, (ARENA_LENGTH-0.1)/2)
+                            robot_state[num_of_robot].pos_x = random.uniform(-(ARENA_WIDTH-0.1)/2, (ARENA_WIDTH-0.1)/2)
                             robot_state[num_of_robot].usr_led = (50,50,50)
                             robot_state[num_of_robot].clk = 0
                             robot_id[num_of_robot] = num_of_robot
@@ -284,14 +284,14 @@ def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, del
         u_l = wheel_vel[0]
         u_r = wheel_vel[1]
         robot_states[i].integrate(u_l,u_r,delta_time)
-        if robot_states[i].pos_x - RADIUS_OF_ROBOT  < 0:
-           robot_states[i].pos_x = RADIUS_OF_ROBOT
-        elif robot_states[i].pos_x + RADIUS_OF_ROBOT > ARENA_LENGTH:
-            robot_states[i].pos_x = ARENA_LENGTH - RADIUS_OF_ROBOT
+        if robot_states[i].pos_x - RADIUS_OF_ROBOT  < -ARENA_WIDTH/2:
+           robot_states[i].pos_x = -ARENA_WIDTH/2 + RADIUS_OF_ROBOT
+        elif robot_states[i].pos_x + RADIUS_OF_ROBOT > ARENA_WIDTH/2:
+            robot_states[i].pos_x = ARENA_WIDTH/2 - RADIUS_OF_ROBOT
         
-        if robot_states[i].pos_y - RADIUS_OF_ROBOT < 0:
+        if robot_states[i].pos_y - RADIUS_OF_ROBOT < -ARENA_LENGTH/2:
            robot_states[i].pos_y = RADIUS_OF_ROBOT
-        elif robot_states[i].pos_y + RADIUS_OF_ROBOT > ARENA_WIDTH:
+        elif robot_states[i].pos_y + RADIUS_OF_ROBOT > ARENA_LENGTH/2:
             robot_states[i].pos_y = ARENA_WIDTH - RADIUS_OF_ROBOT
 
 
@@ -412,8 +412,8 @@ def loop():
                         pose_type = current_socket.recv(1024)
                         local_id = int(msg[1])
                         pos_tuple = [robot_state[local_id].pos_x, robot_state[local_id].pos_y, robot_state[local_id].pos_angle]
-                        x_, y_, theta_ = transform_from_map_to_base(pos_tuple[0], pos_tuple[1], pos_tuple[2])
-                        pos_tuple = [x_,y_,theta_]
+                        # x_, y_, theta_ = transform_from_map_to_base(pos_tuple[0], pos_tuple[1], pos_tuple[2])
+                        # pos_tuple = [x_,y_,theta_]
                         pos_tuple = json.dumps(pos_tuple)
                         current_socket.sendall(pos_tuple.encode('utf-8'))
 
