@@ -36,7 +36,7 @@ elapsedDIffList = []
 with open('config.json', 'r') as myfile:
     data=myfile.read()
 config_var = json.loads(data)
-RADIUS_OF_VISIBILITY = config_var["RADIUS_OF_VISIBILITY"]
+RADIUS_OF_VISIBILITY = config_var["COMM_RANGE"]
 PACKET_SUCCESS_PERC = config_var["PACKET_SUCCESS_PERC"]
 NUM_OF_ROBOTS = config_var["NUMBER_OF_ROBOTS"]
 NUM_OF_MSGS = config_var["NUM_OF_MSGS"]
@@ -480,7 +480,7 @@ def loop():
                 robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
                 elapsedDIffList.append(elapsed_time_diff)
                 notslept += 1
-                # print(notslept)
+                print(notslept)
             # visualisation(screen, robot_id, robot_state)
             # print("Sim time:",sim_time_curr)
             # print("real time:", time.time())

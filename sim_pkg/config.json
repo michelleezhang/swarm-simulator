@@ -1,6 +1,6 @@
 {
     "NUMBER_OF_ROBOTS": 20,
-    "RADIUS_OF_VISIBILITY": 3, 
+    "COMM_RANGE": 3, 
     "PACKET_SUCCESS_PERC": 0.7, 
     "REAL_TIME_FACTOR": 1,
     "NUM_OF_MSGS": 100, 

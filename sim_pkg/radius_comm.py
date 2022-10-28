@@ -12,9 +12,9 @@ def usr(robot):
             robot.set_led(100,0,0)
             robot.send_msg("(100,0,0)")
             robot.delay(2000)
-            robot.set_vel(10,-10)
+            robot.set_vel(10,12)
             pose = robot.get_pose()
-            print("Pose:", pose)
+            # print("Pose:", pose)
 
         elif id == 10:
             robot.set_led(100,100,0)
@@ -23,6 +23,7 @@ def usr(robot):
             robot.set_led(100,100,100)
             robot.send_msg("(100,100,100)")
             robot.delay(2000)
+            robot.set_vel(12,10)
 
         else:
             val = robot.recv_msg(clear=True)

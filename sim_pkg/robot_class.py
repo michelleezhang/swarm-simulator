@@ -2,13 +2,13 @@
 """
 Define Robot class that will act as an API
 
-
 """
 
 import socket
 import re
 import json
-# from . import math_utils
+import numpy as np
+import math_utils
 
 with open('config.json', 'r') as myfile:
     data=myfile.read()
@@ -333,3 +333,38 @@ class Coachbot:
             tuple[Vec2, float]: The pos_x, pos_y, theta of the robot.
         """
         raise NotImplementedError
+    
+    def rotate_with_power(self, power):
+        # type: (int) -> None
+        """Rotates the Coachbot in place with power. Positive power rotates
+        CCW, while negative power rotates CW.
+        Parameters:
+            power (int): The amount of power to rotate to Coachbot with.
+        """
+        self.set_vel(-power, power)
+
+    def rotate_to_theta(self, theta, max_error=1e-1,
+                        pid_coeffs=(100.0, 10.0, 1.0)):
+        # type: (float, float, Tuple[float, float, float]) -> None
+        """Rotates the Coachbot in place to a target theta. Blocks.
+        Parameters:
+            theta (float): The target theta to rotate to.
+            max_error (float): The maximum acceptable error.
+        """
+        _, current_theta = self.get_pose_blocking()
+
+        controller = PIDController(pid_coeffs, current_theta, theta,
+                                   circle_max=np.pi)
+        controller.max_value = 100.0
+
+        while abs(controller.last_error) > max_error:
+            _, current_theta = self.get_pose_blocking(10.0)
+
+            power = controller.step(current_theta)
+
+            self.logger.debug('rotate_to_theta: Rotating from %s to %s; '
+                              'power: %s; error: %s',
+                              current_theta, theta, power,
+                              controller.last_error)
+
+            self.rotate_with_power(int(power))
