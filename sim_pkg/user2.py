@@ -1,20 +1,17 @@
-#!/usr/bin/env python2
-from robot_class import Coachbot
-
-robot = Coachbot()
-
 def usr(robot):
 
     while True:
         # val = robot.recv_msg()
         
-        robot.set_led(100,0,0)
-        robot.delay(1000)
-        robot.set_led(0,100,0)
-        robot.delay(1000)
-        val = robot.recv_msg(clear=True)
-        print(val)
-        robot.delay(1000)
+        # robot.delay()
+        id = robot.id
 
-if __name__ == "__main__":
-    usr(robot)
+        if id == 3:
+            robot.send_msg("(0,100,0)")
+            robot.delay(50)
+            
+        elif id == 4:
+            robot.delay(10000)
+            val = robot.recv_msg(clear=True)
+            print(val)
+            print("length:", len(val))
