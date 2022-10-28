@@ -1,5 +1,11 @@
 def usr(robot):
 
+    a = 's'
+    st = ''
+
+    for i in range(1024):
+        st += a
+
     while True:
         # val = robot.recv_msg()
         
@@ -8,11 +14,11 @@ def usr(robot):
 
         if id == 3:
             robot.delay(50)
-            robot.send_msg("(0,100,0)")
+            robot.send_msg(st)
             
             
         elif id == 4:
-            robot.delay(5000)
+            robot.delay(6000)
             val = robot.recv_msg(clear=True)
             print(val)
             print("length:", len(val))

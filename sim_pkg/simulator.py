@@ -100,6 +100,13 @@ class BotDiffDrive:
             # print("Pos x:", self.pos_x)
             # print("Pos y:", self.pos_y)
             # print("Pos angle:", self.pos_angle)
+
+def convert_list_to_dict(lst):
+    """
+    Converts a list to dictionary    
+    """
+    res_dct = {str(i): lst[i] for i in range(0, len(lst))}
+    return res_dct
         
 def transform_from_map_to_base(pos_x:float, pos_y:float, angle:float):
     """
@@ -379,8 +386,13 @@ def loop():
                         current_socket.sendall(data_string.encode('utf-8'))
                         # print(type(msg_buffer))
                         clear_bool = current_socket.recv(1024)
-                        data = json.dumps(msg_buffer[msg[1]])
-                        current_socket.sendall(data.encode('utf-8'))
+                        data_send = convert_list_to_dict(msg_buffer[msg[1]])
+                        data = json.dumps(data_send)
+                        print(data)
+                        try:
+                            current_socket.sendall(data.encode('utf-8'))
+                        except Exception as e:
+                            print(e)
                         if clear_bool.decode('utf-8') == 'True':
                             msg_buffer[msg[1]] = []
                         # print('Send data:')

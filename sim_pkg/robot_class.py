@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 """
 Define Robot class that will act as an API
 
@@ -9,6 +9,7 @@ import re
 import json
 import numpy as np
 import math_utils
+from control import MotorController, PIDController
 
 with open('config.json', 'r') as myfile:
     data=myfile.read()
@@ -287,15 +288,15 @@ class Coachbot:
         # print("Sent data. Now waiting for msg")
         data_string = str(clear)
         self.client_socket.sendall(data_string.encode('utf-8'))
-        msg = self.client_socket.recv(int(NUM_OF_MSGS*1024+ 1024*4))
+        msg = self.client_socket.recv(205000)
         msg = msg.decode('utf-8')
+        print(msg)
         msg = json.loads(msg)
-       
-        # print(msg)
-        if len(msg)>0:
-            return msg
-        else:
-            return []
+        lst = []
+        for key in msg:
+            lst.append(msg[key])
+
+        return lst
 
 
     def get_pose(self):
@@ -362,9 +363,9 @@ class Coachbot:
 
             power = controller.step(current_theta)
 
-            self.logger.debug('rotate_to_theta: Rotating from %s to %s; '
-                              'power: %s; error: %s',
-                              current_theta, theta, power,
-                              controller.last_error)
+            # self.logger.debug('rotate_to_theta: Rotating from %s to %s; '
+            #                   'power: %s; error: %s',
+            #                   current_theta, theta, power,
+            #                   controller.last_error)
 
             self.rotate_with_power(int(power))
