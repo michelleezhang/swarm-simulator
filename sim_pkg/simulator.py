@@ -153,7 +153,7 @@ def conv_to_json(robot_state, num_of_robot:int)->dict:
     Convert data to dict so that it can be json dumped
     """
     json_dict = {}
-    for i in range(1,num_of_robot+1):
+    for i in range(0,num_of_robot):
         robot = BotSim(id=robot_state[i].id)
         robot.pos_x = robot_state[i].pos_x
         robot.pos_y = robot_state[i].pos_y
@@ -167,7 +167,7 @@ def update_time(robot_state:list, num_of_robot:int, sim_time:float)-> list:
     """
     Updates time of robot clocks
     """
-    for i in range(1,num_of_robot+1):
+    for i in range(0,num_of_robot):
         if robot_state[i].clk < sim_time:
            robot_state[i].clk = sim_time
     
@@ -181,10 +181,10 @@ def update_msg_buffer(msg_buffer:list, MSG_BUFFER_SIZE:int, num_of_robot:int,msg
     ref_y = robot_states[robot_id].pos_y
     # print("In update_msg_buffer")
 
-    if robot_id == num_of_robot:
-        range_of_val = range(1,robot_id+1)
+    if robot_id == num_of_robot-1:
+        range_of_val = range(0,robot_id)
     else:
-        range_of_val = chain(range(1,robot_id),range(robot_id+1,num_of_robot+1))
+        range_of_val = chain(range(0,robot_id-1),range(robot_id,num_of_robot))
     # print("Range of val:", range_of_val)
     for i in range_of_val:
         curr_pos_x = robot_states[i].pos_x
@@ -213,8 +213,8 @@ def initialize_robots():
     num_of_robot = 0
     real_time_factor = config_var["REAL_TIME_FACTOR"]
     robot = BotDiffDrive(id_=0)
-    robot_state = [robot]*(NUM_OF_ROBOTS+1)
-    robot_id = -1*np.ones((NUM_OF_ROBOTS+1))
+    robot_state = [robot]*(NUM_OF_ROBOTS)
+    robot_id = -1*np.ones((NUM_OF_ROBOTS))
     id_to_socket_map = {}
     while flag:
         try:
@@ -234,7 +234,7 @@ def initialize_robots():
                         # print(msg)
                         if int(msg,2) ==7:
                             
-                            num_of_robot += 1
+                            
                             # print(fd_to_id_map)
                             id_to_socket_map[num_of_robot] = new_socket
                             # msg1 = str(bin(num_of_robot))
@@ -246,6 +246,7 @@ def initialize_robots():
                             robot_state[num_of_robot].usr_led = (50,50,50)
                             robot_state[num_of_robot].clk = 0
                             robot_id[num_of_robot] = num_of_robot
+                            num_of_robot += 1
                         elif int(msg,2) == 5:
                             vis_fd = new_socket.fileno()
                             vis_socket = new_socket
@@ -281,7 +282,7 @@ def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, cur
     Integrates the world
     """
     delta_time = real_time_factor*(curr_time - prev_time)
-    for i in range(1, num_of_robot+1):
+    for i in range(0, num_of_robot):
         wheel_vel = wheel_vel_arr[i]
         u_l = wheel_vel[0]
         u_r = wheel_vel[1]
@@ -325,10 +326,10 @@ def loop():
     delta_vis = 0
     real_time_curr = 0
     
-    msg_buffer = [[]]*(NUM_OF_ROBOTS+1)
+    msg_buffer = [[]]*(NUM_OF_ROBOTS)
     MSG_BUFFER_SIZE = 1024
     num_of_robot = NUM_OF_ROBOTS
-    wheel_vel_arr  = [np.array([0,0])]*(NUM_OF_ROBOTS+1)
+    wheel_vel_arr  = [np.array([0,0])]*(NUM_OF_ROBOTS)
     vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id = initialize_robots()
     real_time_now_start = time.time()
     while True:

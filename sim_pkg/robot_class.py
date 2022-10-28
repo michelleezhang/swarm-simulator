@@ -119,7 +119,7 @@ class Coachbot:
         self.client_socket.sendall(data.encode('utf-8'))
         data = self.client_socket.recv(1024)
         msg = int(data.decode('utf-8'),2)
-        if msg>0:
+        if msg>-1:
             self.id_ = msg
 
     def msg_encode(self,fnc_num, data):
@@ -287,7 +287,7 @@ class Coachbot:
         # print("Sent data. Now waiting for msg")
         data_string = str(clear)
         self.client_socket.sendall(data_string.encode('utf-8'))
-        msg = self.client_socket.recv(int(NUM_OF_MSGS*1024))
+        msg = self.client_socket.recv(int(NUM_OF_MSGS*1024+ 1024*4))
         msg = msg.decode('utf-8')
         msg = json.loads(msg)
        

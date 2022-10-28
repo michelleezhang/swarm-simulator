@@ -124,9 +124,9 @@ class visualization:
         """
         Update the states
         """
-        num_of_robot = len(data) +1
+        num_of_robot = len(data)
         robot_state = [0]*num_of_robot
-        i=1
+        i=0
         for key in data:
             robot_state[i] = Dict2Class(data[key])
             # print(robot_state[i].id)
@@ -139,7 +139,7 @@ class visualization:
         Update the screen
         """
         self.screen.fill((0,0,0)) #clear screen
-        for i in range(1,num_of_robot):
+        for i in range(0,num_of_robot):
             robo = robot_state[i]
             # print(robo.usr_led)
             colour = robo.usr_led #green
