@@ -11,6 +11,7 @@ import numpy as np
 import math_utils
 from control import MotorController, PIDController
 
+
 with open('config.json', 'r') as myfile:
     data=myfile.read()
 config_var = json.loads(data)
@@ -200,28 +201,6 @@ class Coachbot:
         val = json.dumps(val)
         self.client_socket.sendall(val.encode('utf-8'))
         msg = self.client_socket.recv(1024)
-        
-
-
-    def rotate_with_power(self, power):
-        # type: (int) -> None
-        """Rotates the Coachbot in place with power. Positive power rotates
-        CCW, while negative power rotates CW.
-        Parameters:
-            power (int): The amount of power to rotate to Coachbot with.
-        """
-        raise NotImplementedError
-        
-
-    def rotate_to_theta(self, theta, max_error=1e-1,
-                        pid_coeffs=(100.0, 10.0, 1.0)):
-        # type: (float, float, Tuple[float, float, float]) -> None
-        """Rotates the Coachbot in place to a target theta. Blocks.
-        Parameters:
-            theta (float): The target theta to rotate to.
-            max_error (float): The maximum acceptable error.
-        """
-        raise NotImplementedError
 
     def move_meters(self, position, max_error=1e-1):
         # type: (Vec2, float) -> None
@@ -340,7 +319,7 @@ class Coachbot:
         Returns:
             tuple[Vec2, float]: The pos_x, pos_y, theta of the robot.
         """
-        raise NotImplementedError
+        return self.get_pose()
     
     def rotate_with_power(self, power):
         # type: (int) -> None

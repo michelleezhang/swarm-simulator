@@ -17,7 +17,6 @@ import socket
 import sys
 import json
 import select
-from threading import local
 import time
 import re
 import numpy as np
@@ -46,7 +45,7 @@ ARENA_WIDTH = config_var["WIDTH"]
 RADIUS_OF_ROBOT = 0.105/2
 
 real_time_factor = config_var["REAL_TIME_FACTOR"]
-motor_rpm = 80 
+motor_rpm = 40 
 motor_full_speed = motor_rpm* 2*np.pi / 60
 
 
@@ -66,7 +65,7 @@ class BotDiffDrive:
         self.left_wheel_angle = 0
         self.right_wheel_angle = 0
         self.radius_of_wheel = 0.015
-        self.distance_between_wheel = 0.08
+        self.distance_between_wheel = 0.04
         self.clk = clk_
         self.usr_led = usr_led_
         
