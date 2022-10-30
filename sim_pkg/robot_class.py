@@ -284,18 +284,25 @@ class Coachbot:
         """
         info = '0bdata'
         # print("In recv_msg")
-        self.send_data(5,info)
+        data_string = self.msg_encode(5,info)
+        self.client_socket.sendall(data_string)
+        num = self.client_socket.recv(1024)
+        num = int(num.decode('utf-8'))
         # print("Sent data. Now waiting for msg")
         data_string = str(clear)
         self.client_socket.sendall(data_string.encode('utf-8'))
-        msg = self.client_socket.recv(205000)
-        msg = msg.decode('utf-8')
-        print(msg)
-        msg = json.loads(msg)
         lst = []
-        for key in msg:
-            lst.append(msg[key])
-
+        for j in range(num):
+            msg = self.client_socket.recv(102400)
+            msg = msg.decode('utf-8')
+            
+            msg = json.loads(msg)
+            
+            for key in msg:
+                lst.append(msg[key])
+            data_string = '0b1'
+            self.client_socket.sendall(data_string.encode('utf-8'))
+        # print(lst)
         return lst
 
 

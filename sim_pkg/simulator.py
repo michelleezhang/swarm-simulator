@@ -23,6 +23,7 @@ import re
 import numpy as np
 import csv
 from itertools import chain
+import math
 # import pygame
 # file = open('time.csv','w')
 # writer = csv.writer(file)
@@ -382,17 +383,27 @@ def loop():
                         continue
                     elif msg[2] == 5:
                         # recv_msg
-                        data_string = '0b1'
+                        arr = msg_buffer[msg[1]]
+                        
+                        len_ = len(arr)
+                        size_ = math.ceil(len_/20)
+                        data_string = str(size_)
                         current_socket.sendall(data_string.encode('utf-8'))
                         # print(type(msg_buffer))
                         clear_bool = current_socket.recv(1024)
-                        data_send = convert_list_to_dict(msg_buffer[msg[1]])
-                        data = json.dumps(data_send)
-                        print(data)
-                        try:
+                        start_j = 0
+                        end_j = 20
+
+                        for j in range(size_):
+                            
+                            data_send = convert_list_to_dict(arr[start_j:end_j])
+                            start_j+=20
+                            end_j = min(end_j+20, len_)
+                            data = json.dumps(data_send)
+                            # print(data)
                             current_socket.sendall(data.encode('utf-8'))
-                        except Exception as e:
-                            print(e)
+                            data = current_socket.recv(1024)
+
                         if clear_bool.decode('utf-8') == 'True':
                             msg_buffer[msg[1]] = []
                         # print('Send data:')
