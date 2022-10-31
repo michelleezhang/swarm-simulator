@@ -1,11 +1,11 @@
 def usr(robot):
-    
+    robot.delay()
     while True:
 
-        robot.delay()
+        
         id = robot.id    
         
-        if id == 3:
+        if id == 0:
             robot.set_led(0,100,0)
             robot.send_msg("(0,100,0)")
             robot.delay(1000)
@@ -13,10 +13,10 @@ def usr(robot):
             robot.send_msg("(100,0,0)")
             robot.delay(2000)
             robot.set_vel(10,12)
-            pose = robot.get_pose()
+            # pose = robot.get_pose()
             # print("Pose:", pose)
 
-        elif id == 10:
+        elif id == 5:
             robot.set_led(100,100,0)
             robot.send_msg("(100,100,0)")
             robot.delay(2000)
@@ -27,8 +27,10 @@ def usr(robot):
 
         else:
             val = robot.recv_msg(clear=True)
-            # print(val)
+            
+            # print("Robot id:", id)
             if len(val)> 0:
+                # print(val)
                 if val[0] == "(100,100,0)":
                     robot.set_led(100,100,0)
                     robot.delay()

@@ -188,7 +188,7 @@ def update_msg_buffer(msg_buffer:list, MSG_BUFFER_SIZE:int, num_of_robot:int,msg
     ref_y = robot_states[robot_id].pos_y
     # print("In update_msg_buffer")
 
-    if robot_id == num_of_robot-1:
+    if robot_id == num_of_robot:
         range_of_val = range(0,robot_id)
     else:
         range_of_val = chain(range(0,robot_id-1),range(robot_id,num_of_robot))
@@ -300,9 +300,9 @@ def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, cur
             robot_states[i].pos_x = ARENA_WIDTH/2 - RADIUS_OF_ROBOT
         
         if robot_states[i].pos_y - RADIUS_OF_ROBOT < -ARENA_LENGTH/2:
-           robot_states[i].pos_y = RADIUS_OF_ROBOT
+           robot_states[i].pos_y = -ARENA_LENGTH/2 + RADIUS_OF_ROBOT
         elif robot_states[i].pos_y + RADIUS_OF_ROBOT > ARENA_LENGTH/2:
-            robot_states[i].pos_y = ARENA_WIDTH - RADIUS_OF_ROBOT
+            robot_states[i].pos_y = ARENA_LENGTH/2 - RADIUS_OF_ROBOT
 
 
     return robot_states
@@ -390,18 +390,19 @@ def loop():
                         current_socket.sendall(data_string.encode('utf-8'))
                         # print(type(msg_buffer))
                         clear_bool = current_socket.recv(1024)
+                        data_string = '0b1'
+                        current_socket.sendall(data_string.encode('utf-8'))
                         start_j = 0
                         end_j = 20
 
                         for j in range(size_):
-                            
+                            check_data_ = current_socket.recv(1024)
                             data_send = convert_list_to_dict(arr[start_j:end_j])
                             start_j+=20
                             end_j = min(end_j+20, len_)
                             data = json.dumps(data_send)
                             # print(data)
                             current_socket.sendall(data.encode('utf-8'))
-                            data = current_socket.recv(1024)
 
                         if clear_bool.decode('utf-8') == 'True':
                             msg_buffer[msg[1]] = []

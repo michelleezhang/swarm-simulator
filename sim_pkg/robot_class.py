@@ -271,16 +271,21 @@ class Coachbot:
         data_string = str(clear)
         self.client_socket.sendall(data_string.encode('utf-8'))
         lst = []
+        check_data_ = self.client_socket.recv(4*1024)
+       
+
         for j in range(num):
-            msg = self.client_socket.recv(102400)
+            data_string = '0b1'
+            self.client_socket.sendall(data_string.encode('utf-8'))
+            
+            msg = self.client_socket.recv(20400)
             msg = msg.decode('utf-8')
             
             msg = json.loads(msg)
             
             for key in msg:
                 lst.append(msg[key])
-            data_string = '0b1'
-            self.client_socket.sendall(data_string.encode('utf-8'))
+            
         # print(lst)
         return lst
 
