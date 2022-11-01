@@ -1,4 +1,5 @@
 {
+    "TIME_ASYNC": 1,
     "NUMBER_OF_ROBOTS": 20,
     "COMM_RANGE": 20, 
     "PACKET_SUCCESS_PERC": 1.0, 

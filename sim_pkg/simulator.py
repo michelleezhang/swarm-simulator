@@ -43,6 +43,7 @@ NUM_OF_MSGS = config_var["NUM_OF_MSGS"]
 ARENA_LENGTH = config_var["LENGTH"]
 ARENA_WIDTH = config_var["WIDTH"]
 RADIUS_OF_ROBOT = 0.105/2
+TIME_ASYNC = config_var["TIME_ASYNC"]
 
 real_time_factor = config_var["REAL_TIME_FACTOR"]
 motor_rpm = 40 
@@ -370,7 +371,11 @@ def initialize_robots():
                             robot_state[num_of_robot].pos_y = random.uniform(-(ARENA_LENGTH-0.1)/2, (ARENA_LENGTH-0.1)/2)
                             robot_state[num_of_robot].pos_x = random.uniform(-(ARENA_WIDTH-0.1)/2, (ARENA_WIDTH-0.1)/2)
                             robot_state[num_of_robot].usr_led = (50,50,50)
-                            robot_state[num_of_robot].clk = 0
+                            if TIME_ASYNC ==  1:
+                                val_ = random.uniform(0,1)*0.001
+                                robot_state[num_of_robot].clk = val_
+                            else:
+                                robot_state[num_of_robot].clk = 0
                             robot_id[num_of_robot] = num_of_robot
                             num_of_robot += 1
                         elif int(msg,2) == 5:
@@ -403,11 +408,12 @@ def initialize_robots():
 
     return vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id
 
-def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, curr_time, prev_time):
+def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, curr_time, prev_time, dt):
     """ 
     Integrates the world
     """
-    delta_time = real_time_factor*(curr_time - prev_time)
+    # delta_time = real_time_factor*(curr_time - prev_time)
+    delta_time = dt
     for i in range(0, num_of_robot):
         wheel_vel = wheel_vel_arr[i]
         u_l = wheel_vel[0]
@@ -440,7 +446,7 @@ def loop():
     sim_time_start = time.time()
     notslept = 0
     real_time_factor = config_var["REAL_TIME_FACTOR"]
-    T_real = 0.0001
+    T_real = 0.002
     T_sim = real_time_factor*T_real
     
     # sim_ticks = 0 
@@ -451,7 +457,7 @@ def loop():
     buffer_list_size = 16
     delta_vis = 0
     real_time_curr = 0
-    
+    sim_time_delt = 0.0
     msg_buffer = [[]]*(NUM_OF_ROBOTS)
     MSG_BUFFER_SIZE = 1024
     num_of_robot = NUM_OF_ROBOTS
@@ -610,7 +616,8 @@ def loop():
             # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
             
             delta_time = T_sim
-            robot_state = integrate_world(robot_state, num_of_robot, wheel_vel_arr, curr_time = time.time(), prev_time = real_time_now_start)
+            if sim_time_delt != 0.0:
+                robot_state = integrate_world(robot_state, num_of_robot, wheel_vel_arr, curr_time = time.time(), prev_time = real_time_now_start, dt = sim_time_delt)
 
             real_time_now_end = time.time()
             elapsed_time_diff = real_time_now_end - real_time_now_start
@@ -621,6 +628,7 @@ def loop():
             if elapsed_time_diff < T_real:
                 real_time_now_loop_start = time.time()
                 sim_time_curr += T_sim
+                sim_time_delt = T_sim
                 real_time_curr += T_real
                 robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
                 
@@ -632,6 +640,7 @@ def loop():
                 # print("sleep")
             else:
                 sim_time_curr += real_time_factor*elapsed_time_diff
+                sim_time_delt = real_time_factor*elapsed_time_diff
                 real_time_curr += elapsed_time_diff
                 robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
                 elapsedDIffList.append(elapsed_time_diff)

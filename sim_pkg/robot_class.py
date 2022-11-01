@@ -222,7 +222,41 @@ class Coachbot:
             position (Vec2): The vector describing the displacement of the
             Coachbot.
         """
-        raise NotImplementedError
+        current_pos, current_theta = self.get_pose_blocking()
+        target_pos = current_pos + position
+        # self.logger.debug('move_meters: My target position is %s', target_pos)
+
+        # This vector represents the vector from the current position to the
+        # target position.
+        delta_pos = target_pos - current_pos
+
+        self.rotate_to_theta(position.angle())
+
+        angle_controller = PIDController((1.0, 2.0, 1e-1),
+                                         current_theta, delta_pos.angle(),
+                                         circle_max=np.pi)
+        distance_controller = PIDController((-80.0, -40.0, 0.0),
+                                            abs(delta_pos), 0.0)
+
+        while abs(distance_controller.last_error) > max_error:
+            current_pos, current_theta = self.get_pose_blocking(10.0)
+            delta_pos = target_pos - current_pos
+
+            speed = distance_controller.step(abs(delta_pos))
+
+            angle_controller.set_point = delta_pos.angle()
+            angle = angle_controller.step(current_theta)
+
+            pow_l, pow_r = \
+                MotorController.power_from_relative_angle_speed(angle, speed)
+
+            # self.logger.debug('move_meters: current_pos: %s; '
+            #                   'current_theta: %s; delta_pos: %s; speed: %s; '
+            #                   'angle: %s; pow_l: %s; pow_r: %s',
+            #                   current_pos, current_theta, delta_pos, speed,
+            #                   angle, pow_l, pow_r)
+
+            self.set_vel(pow_l, pow_r)
 
     def get_clock(self):
         # type: () -> float

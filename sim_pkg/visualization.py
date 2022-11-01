@@ -109,6 +109,7 @@ class visualization:
         # pygame.display.set_caption("Swarm Simulation Visualization ")
         pygame.display.flip()
         self.font = pygame.font.SysFont('samanata', 24)
+        self.font_num = pygame.font.SysFont('samanata', 18)
 
     
     def set_vis_id(self):
@@ -142,23 +143,34 @@ class visualization:
         for i in range(0,num_of_robot):
             robo = robot_state[i]
             # print(robo.usr_led)
+            # Print number
+            data_string = str(i)
+            text = self.font_num.render(data_string,True,(255,255,255))
+            textRect = text.get_rect()
+            
             colour = robo.usr_led #green
+            colour = (int(colour[0]*2.55), int(colour[1]*2.55), int(colour[2]*2.55))
             pos_x =(robo.pos_y + ARENA_LENGTH/2)*self.x_fac
             pos_y = (robo.pos_x + ARENA_WIDTH/2)*self.y_fac
             angle = robo.angle
+            
             circle_x_y = (int(pos_x), int(pos_y))
+            textRect.center = circle_x_y
+            
             # if i == 4:
             #     print("Circle x y", circle_x_y)
             #     print("Robo x y", robo.pos_x, robo.pos_y)
             circle_radius = int(RADIUS_OF_ROBOT*self.x_fac)
             border_width = 2 #0 = filled circle
-            pygame.draw.circle(self.screen, (80,80,80,25), circle_x_y, circle_radius)
+            pygame.draw.circle(self.screen, (128,0,128,25), circle_x_y, circle_radius)
             pygame.draw.circle(self.screen, colour, circle_x_y, circle_radius, border_width)
             
             # draw an arrow
             center = pygame.Vector2(pos_x,pos_y)
             end = pygame.Vector2(int(pos_x+circle_radius*np.sin(angle)), int(pos_y+circle_radius*np.cos(angle)))
             draw_arrow(self.screen, center, end, pygame.Color("dodgerblue"), 4, 6, 4)
+            # Show the number 
+            # self.screen.blit(text, textRect)
      
     
     def update_time_msg(self,real_time, sim_time):
