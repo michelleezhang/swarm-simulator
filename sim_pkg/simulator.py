@@ -74,32 +74,150 @@ class BotDiffDrive:
         """
         Integrate the state of robot
         """
-        state_matrix = np.array([[-self.radius_of_wheel/(2*self.distance_between_wheel), self.radius_of_wheel/(2*self.distance_between_wheel)], 
-                                 [self.radius_of_wheel*np.cos(self.pos_angle)/2, self.radius_of_wheel*np.cos(self.pos_angle)/2], 
-                                 [self.radius_of_wheel*np.sin(self.pos_angle)/2, self.radius_of_wheel*np.sin(self.pos_angle)/2],
-                                 [1, 0],
-                                 [0, 1] ])
+        
         
         velocity_vector = np.array([[u_left],[u_right]])
 
-        delta_pos = state_matrix@velocity_vector * delta_time
+        # Forward Kinematics from SLAM 
+        pos = self.ForwardKinematics2(velocity_vector*delta_time)
+        self.pos_angle  = pos[0]
+        self.pos_angle = (self.pos_angle + np.pi) % (2 * np.pi) - np.pi
+        self.pos_x = pos[1]
+        self.pos_y = pos[2]
+        self.left_wheel_angle += u_left*delta_time
+        self.left_wheel_angle = (self.left_wheel_angle + np.pi) % (2 * np.pi) - np.pi
+        self.right_wheel_angle += u_right*delta_time
+        self.right_wheel_angle = (self.right_wheel_angle + np.pi) % (2 * np.pi) - np.pi
 
+
+        # state_vec = np.array([[self.pos_angle],[self.pos_x],[self.pos_y],[self.left_wheel_angle],[self.right_wheel_angle]])
+
+        # k1 = self.dynamics(velocity_vector,state_vec[0][0])* delta_time
+        
+        # k2 = self.dynamics(velocity_vector,state_vec[0][0]+k1[0][0]/2.)*delta_time
+        
+        # k3 = self.dynamics(velocity_vector,state_vec[0][0]+k2[0][0]/2.)*delta_time
+
+        # k4 = self.dynamics(velocity_vector,state_vec[0][0]+k3[0][0])*delta_time
+        
+        # delta_pos = (1/6.0)*(k1+2.0*k2+2.0+k3+k4)
+        # delta_pos =  self.dynamics(velocity_vector, state_vec[0][0])* delta_time
+        # delta_pos =  self.dynamics(velocity_vector, state_vec[0][0], delta_time)
         
 
-        self.pos_angle += delta_pos[0][0]
-        self.pos_angle = (self.pos_angle + np.pi) % (2 * np.pi) - np.pi
-        self.pos_x += delta_pos[1][0]
-        self.pos_y += delta_pos[2][0]
-        self.left_wheel_angle += delta_pos[3][0]
-        self.left_wheel_angle = (self.left_wheel_angle + np.pi) % (2 * np.pi) - np.pi
-        self.right_wheel_angle += delta_pos[4][0]
-        self.right_wheel_angle = (self.right_wheel_angle + np.pi) % (2 * np.pi) - np.pi
+        # print("Delta pos:", delta_pos)
+        # Euler integration update
+        # self.pos_angle += delta_pos[0][0]
+        # self.pos_angle = (self.pos_angle + np.pi) % (2 * np.pi) - np.pi
+        # self.pos_x += delta_pos[1][0]
+        # self.pos_y += delta_pos[2][0]
+        # self.left_wheel_angle += delta_pos[3][0]
+        # self.left_wheel_angle = (self.left_wheel_angle + np.pi) % (2 * np.pi) - np.pi
+        # self.right_wheel_angle += delta_pos[4][0]
+        # self.right_wheel_angle = (self.right_wheel_angle + np.pi) % (2 * np.pi) - np.pi
 
         # if u_left!=0.0:
             # print(delta_pos)
             # print("Pos x:", self.pos_x)
             # print("Pos y:", self.pos_y)
             # print("Pos angle:", self.pos_angle)
+        
+    def dynamics(self, vel_vector, angle , dt):
+        """
+        State dynamic model 
+        """
+        pos_angle_ = angle
+    
+        state_matrix = np.array([[-self.radius_of_wheel/(2.0*self.distance_between_wheel), self.radius_of_wheel/(2.0*self.distance_between_wheel)], 
+                                 [self.radius_of_wheel*np.cos(pos_angle_)/2.0, self.radius_of_wheel*np.cos(pos_angle_)/2.0], 
+                                 [self.radius_of_wheel*np.sin(pos_angle_)/2.0, self.radius_of_wheel*np.sin(pos_angle_)/2.0],
+                                 [1.0, 0.0],
+                                 [0.0, 1.0] ])
+        
+        pos = state_matrix@vel_vector
+
+        return pos
+    
+    def ForwardKinematics2(self, wheel_vel):
+        """
+        As per Modern Robotics 
+        """
+        r = self.radius_of_wheel
+        d = self.distance_between_wheel
+        u_x = wheel_vel[0][0]
+        u_y = wheel_vel[1][0]
+        # thetadot xdot ydot
+        V = np.array([-r*u_x/(2.0*d)+r*u_y/(2.0*d), r*u_x/2.0 + r*u_y/2.0, 0])
+
+        delq_b = [0, 0, 0]
+        if V[0]==0.0:
+            delq_b[0] = 0
+            delq_b[1] = V[1]
+            delq_b[2] = V[2]
+            
+        else:
+            delq_b[0] = V[0]
+            delq_b[1] = (V[1]*np.sin(V[0])+V[2]*(np.cos(V[0])-1))/V[0]
+            delq_b[2] = (V[2]*np.sin(V[0])+V[1]*(1 - np.cos(V[0])))/V[0]
+
+        phi = self.pos_angle
+        x = self.pos_x
+        y = self.pos_y
+        mult_mat = np.array([[1, 0, 0], [0, np.cos(phi), -np.sin(phi)], [0, np.sin(phi), np.cos(phi)]])
+        delq = mult_mat@np.array([[delq_b[0]], [delq_b[1]], [delq_b[2]]])
+        pos = np.array([phi+delq[0][0], x+delq[1][0], y+delq[2][0]])
+        return pos
+    
+    def ForwardKinematics(self, wheel_vel):
+        """
+        As per SLAM
+        """
+        r = self.radius_of_wheel
+        d = self.distance_between_wheel
+        u_x = wheel_vel[0][0]
+        u_y = wheel_vel[1][0]
+        # thetadot xdot ydot
+        V = np.array([-r*u_x/(2.0*d)+r*u_y/(2.0*d), r*u_x/2.0 + r*u_y/2.0, 0])
+
+        Tbbhat = self.integrate_twist(V)
+
+        q_x = self.pos_x
+        q_theta = self.pos_angle
+        q_y = self.pos_y
+        Twb = np.array([[np.cos(q_theta), -np.sin(q_theta), q_x], [np.sin(q_theta), np.cos(q_theta), q_y], [0, 0, 1]])
+
+        Twbhat = Twb@Tbbhat
+
+        pos = np.array([np.arccos(Twbhat[0][0]), Twbhat[0][2], Twbhat[1][2]])
+
+        return pos
+    
+    def integrate_twist(self, V):
+        """
+        As per SLAM
+        """
+        if V[0]==0.0:
+            v = [0, 0]
+            v[0] = V[1]
+            v[1] = V[2]
+            Tbb_hat = np.array([[1, 0, v[0]],[0, 1, v[1]], [0, 0, 1]])
+            
+            return Tbb_hat
+        
+        theta_s = V[0]
+        v = [0, 0]
+        v[0] = V[1]/theta_s
+        v[1] = -V[2]/theta_s
+
+
+        Tsb = np.array([[1, 0, v[0]],[0, 1, v[1]], [0, 0, 1]])
+        Tss_hat = np.array([[np.cos(theta_s), -np.sin(theta_s), 0], [np.sin(theta_s), np.cos(theta_s), 0], [0, 0, 1]])
+        Tbs = np.array([[1, 0, -v[0]],[0, 1, -v[1]], [0, 0, 1]])
+       
+        Tbb_hat = Tbs@Tss_hat@Tsb
+        return Tbb_hat
+        
+
 
 def convert_list_to_dict(lst):
     """
@@ -165,6 +283,7 @@ def conv_to_json(robot_state, num_of_robot:int)->dict:
         robot.pos_x = robot_state[i].pos_x
         robot.pos_y = robot_state[i].pos_y
         robot.angle = robot_state[i].pos_angle
+        robot.angle = (robot.angle + np.pi) % (2 * np.pi) - np.pi
         robot.usr_led = robot_state[i].usr_led
         json_dict[i] = robot.__dict__
     # print(json_dict)
@@ -180,7 +299,7 @@ def update_time(robot_state:list, num_of_robot:int, sim_time:float)-> list:
     
     return robot_state
 
-def update_msg_buffer(msg_buffer:list, MSG_BUFFER_SIZE:int, num_of_robot:int,msg:str, robot_id:int,robot_states:list)->list:
+def update_msg_buffer(msg_buffer:list, MSG_BUFFER_SIZE:int, num_of_robot:int,msg:bytes, robot_id:int,robot_states:list)->list:
     """
     Update Message Buffer
     """
@@ -376,7 +495,10 @@ def loop():
                         # print('Message sent:',msg[3])
                         data_string = '0b1'
                         current_socket.sendall(data_string.encode('utf-8'))
-                        msg_for_buffer = msg[3]
+                        msg_for_buffer = current_socket.recv(1024*4)
+                        data_string = '0b1'
+                        current_socket.sendall(data_string.encode('utf-8'))
+                        msg_type = msg[3]
                         msg_buffer = update_msg_buffer(msg_buffer,MSG_BUFFER_SIZE,num_of_robot,msg_for_buffer,msg[1],robot_state)
                         # print("New msg buffer:", msg_buffer)
                         continue
@@ -385,24 +507,26 @@ def loop():
                         arr = msg_buffer[msg[1]]
                         
                         len_ = len(arr)
-                        size_ = math.ceil(len_/20)
+                        size_ = len_
                         data_string = str(size_)
                         current_socket.sendall(data_string.encode('utf-8'))
                         # print(type(msg_buffer))
                         clear_bool = current_socket.recv(1024)
                         data_string = '0b1'
                         current_socket.sendall(data_string.encode('utf-8'))
-                        start_j = 0
-                        end_j = 20
+                        # start_j = 0
+                        # end_j = 20
 
-                        for j in range(size_):
+                        for j in range(len_):
                             check_data_ = current_socket.recv(1024)
-                            data_send = convert_list_to_dict(arr[start_j:end_j])
-                            start_j+=20
-                            end_j = min(end_j+20, len_)
-                            data = json.dumps(data_send)
+                            # data_send = convert_list_to_dict(arr[j])
+                            data = arr[j]
+                            # print(type(data))
+                            # start_j+=20
+                            # end_j = min(end_j+20, len_)
+                            # data = json.dumps(data_send)
                             # print(data)
-                            current_socket.sendall(data.encode('utf-8'))
+                            current_socket.sendall(data)
 
                         if clear_bool.decode('utf-8') == 'True':
                             msg_buffer[msg[1]] = []

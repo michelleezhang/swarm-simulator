@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 """
 Define Robot class that will act as an API
 
@@ -197,6 +197,14 @@ class Coachbot:
         # info = str(bin(left))+ str(bin(right))
         info = "0bset_val"
         self.send_data(7,info)
+        if left > 100:
+            left = 100
+        elif left < -100:
+            left = -100
+        if right > 100:
+            right = 100
+        elif right < -100:
+            right = -100
         val = [left, right]
         val = json.dumps(val)
         self.client_socket.sendall(val.encode('utf-8'))
@@ -234,21 +242,29 @@ class Coachbot:
         return msg
 
     def send_msg(self, msg):
-        # type: (str) -> bool
+        # type: (bytes) -> bool
         """Attempts to transmit the given message returning whether it was
         successful.
         Function number  - 4
         Parameters:
-            msg (str): The message to attempt to transmit. This message must be
+            msg (bytes): The message to attempt to transmit. This message must be
             of size ``coach_os.custom_net.MSG_LEN - 8`` or shorter. Longer
             messages are trimmed. The ``-8`` is here due to being a legacy bug.
         """
-        info = '0b'+msg
+        
+        if type(msg) == str:
+            info = 'str'
+            # msg = msg.encode('utf-8')
+        else:
+            info = 'bytes'
+        info = '0b'+info
         self.send_data(4,info)
+        self.client_socket.sendall(msg)
+        msg = self.client_socket.recv(1024)
         return True
 
 
-    def recv_msg(self, clear=False):
+    def recv_msg(self, clear=True):
         # type: (bool) -> list
         """
         Reads up to ``custom_net.talk.MAX_MSG_NUM`` messages since the last
@@ -277,14 +293,14 @@ class Coachbot:
         for j in range(num):
             data_string = '0b1'
             self.client_socket.sendall(data_string.encode('utf-8'))
+
+            msg = self.client_socket.recv(4*1024)
+            # msg = msg.decode('utf-8')
             
-            msg = self.client_socket.recv(20400)
-            msg = msg.decode('utf-8')
+            # msg = json.loads(msg)
             
-            msg = json.loads(msg)
             
-            for key in msg:
-                lst.append(msg[key])
+            lst.append(msg)
             
         # print(lst)
         return lst

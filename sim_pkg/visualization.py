@@ -147,14 +147,18 @@ class visualization:
             pos_y = (robo.pos_x + ARENA_WIDTH/2)*self.y_fac
             angle = robo.angle
             circle_x_y = (int(pos_x), int(pos_y))
+            # if i == 4:
+            #     print("Circle x y", circle_x_y)
+            #     print("Robo x y", robo.pos_x, robo.pos_y)
             circle_radius = int(RADIUS_OF_ROBOT*self.x_fac)
             border_width = 2 #0 = filled circle
+            pygame.draw.circle(self.screen, (80,80,80,25), circle_x_y, circle_radius)
             pygame.draw.circle(self.screen, colour, circle_x_y, circle_radius, border_width)
-
+            
             # draw an arrow
             center = pygame.Vector2(pos_x,pos_y)
             end = pygame.Vector2(int(pos_x+circle_radius*np.sin(angle)), int(pos_y+circle_radius*np.cos(angle)))
-            draw_arrow(self.screen, center, end, pygame.Color("dodgerblue"), 2, 4, 2)
+            draw_arrow(self.screen, center, end, pygame.Color("dodgerblue"), 4, 6, 4)
      
     
     def update_time_msg(self,real_time, sim_time):
