@@ -20,7 +20,7 @@ def usr(robot):
         robot.delay(1000)
 
 ```
-T_real - 0.001 seconds; real time factor - 1 \
+<!-- T_real - 0.001 seconds; real time factor - 1 \
 ![T_real - 0.001 seconds; real time factor - 1](T_real_0.001_c_1.gif) 
 
 T_real - 0.001 seconds; real time factor - 2 \
@@ -36,8 +36,11 @@ T_real - 0.0001 seconds; real time factor - 2 \
 ![T_real - 0.0001 seconds; real time factor - 2](T_real_0.0001_c_2.gif)
 
 T_real - 0.0001 seconds; real time factor - 0.5 \
-![T_real - 0.0001 seconds; real time factor - 0.5](T_real_0.0001_c_0.5.gif)
+![T_real - 0.0001 seconds; real time factor - 0.5](T_real_0.0001_c_0.5.gif) -->
 
+Firefly \ 
+
+[Firefly](firefly.gif)
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
