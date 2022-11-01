@@ -4,22 +4,33 @@ def usr(robot):
 
     T = random.randint(800,1300)
     print(T)
+    id = robot.id
+
+    pose = robot.get_pose()
+    print(id, pose)
+    if id == 5:
+        robot.delay(4000)
     while True:        
-        id = robot.id
+        
+        if id == 4:
+            continue
 
         if id == 5:
             robot.set_led(0,100,0)
-            robot.delay(100)
+            robot.delay(200)
             curr_time = robot.get_clock()
             curr_time = round(curr_time, 2)
             msg = "time:"+ str(curr_time)+';'
             robot.send_msg("led:(0,100,0);delay:500;"+msg)
             robot.set_led(0,0,0)
             robot.delay(500)
+            
 
         else:
             val = robot.recv_msg(clear=True)
+            
             if len(val)>0:
+                # print(val)
                 if len(val[0]) > 1:
                     txt = val[0]
                     # print(val)
@@ -54,23 +65,22 @@ def usr(robot):
                     next_time = time_val + delay_val/1000
                     # print("Next time:",next_time)
                     T = delay_val
-                    del_Sleep = next_time - curr_time -0.05
+                    del_Sleep = next_time - curr_time - 0.05
                     # print("Del Sleep:",del_Sleep)
                     if del_Sleep> 0:
-                        robot.delay(int(del_Sleep))
+                        robot.delay(int(del_Sleep*1000))
                     
                     
                     
-                r, g, b = (0, 100, 0)
-                robot.set_led(r,g,b)
-                robot.delay(100)
-                T = int(T)
-                curr_time = robot.get_clock()
-                msg_time = "time:"+ str(curr_time)+';'
-                msg = "led:("+ str(r)+","+str(g)+","+str(b)+");" + "delay:"+ str(T)+";" + msg_time
-                robot.send_msg(msg)
-                robot.set_led(0,0,0)
-                robot.delay(T)
-            else: 
-                continue
+                
+            r, g, b = (0, 100, 0)
+            robot.set_led(r,g,b)
+            robot.delay(200)
+            T = int(T)
+            curr_time = robot.get_clock()
+            msg_time = "time:"+ str(curr_time)+';'
+            msg = "led:("+ str(r)+","+str(g)+","+str(b)+");" + "delay:"+ str(T)+";" + msg_time
+            # robot.send_msg(msg)
+            robot.set_led(0,0,0)
+            robot.delay(T)
         
