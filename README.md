@@ -40,7 +40,7 @@ T_real - 0.0001 seconds; real time factor - 0.5 \
 
 Firefly \ 
 
-[Firefly](firefly.gif)
+![Firefly](firefly.gif)
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
