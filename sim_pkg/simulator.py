@@ -81,14 +81,14 @@ class BotDiffDrive:
 
         # Forward Kinematics from SLAM 
         pos = self.ForwardKinematics2(velocity_vector*delta_time)
-        self.pos_angle  = pos[0]
-        self.pos_angle = (self.pos_angle + np.pi) % (2 * np.pi) - np.pi
-        self.pos_x = pos[1]
-        self.pos_y = pos[2]
-        self.left_wheel_angle += u_left*delta_time
-        self.left_wheel_angle = (self.left_wheel_angle + np.pi) % (2 * np.pi) - np.pi
-        self.right_wheel_angle += u_right*delta_time
-        self.right_wheel_angle = (self.right_wheel_angle + np.pi) % (2 * np.pi) - np.pi
+        pos[0] = (pos[0]+ np.pi) % (2 * np.pi) - np.pi
+        # self.pos_angle  = pos[0]
+        # self.pos_x = pos[1]
+        # self.pos_y = pos[2]
+        # self.left_wheel_angle += u_left*delta_time
+        # self.left_wheel_angle = (self.left_wheel_angle + np.pi) % (2 * np.pi) - np.pi
+        # self.right_wheel_angle += u_right*delta_time
+        # self.right_wheel_angle = (self.right_wheel_angle + np.pi) % (2 * np.pi) - np.pi
 
 
         # state_vec = np.array([[self.pos_angle],[self.pos_x],[self.pos_y],[self.left_wheel_angle],[self.right_wheel_angle]])
@@ -122,6 +122,7 @@ class BotDiffDrive:
             # print("Pos x:", self.pos_x)
             # print("Pos y:", self.pos_y)
             # print("Pos angle:", self.pos_angle)
+        return pos
         
     def dynamics(self, vel_vector, angle , dt):
         """
@@ -418,7 +419,23 @@ def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, cur
         wheel_vel = wheel_vel_arr[i]
         u_l = wheel_vel[0]
         u_r = wheel_vel[1]
-        robot_states[i].integrate(u_l,u_r,delta_time)
+        pos = robot_states[i].integrate(u_l,u_r,delta_time)
+        range_of_val = chain(range(0,i),range(i+1,num_of_robot))
+
+        # check for collision with robots
+        collision_flag_ = True
+        for j in range_of_val:
+            x1_ = robot_states[j].pos_x
+            y1_ = robot_states[j].pos_y
+            d = np.sqrt((x1_-pos[1])**2 + (y1_ - pos[2])**2)
+            if d <= 2*RADIUS_OF_ROBOT:
+                collision_flag_ = False
+        robot_states[i].pos_angle = pos[0]
+        if collision_flag_ == True:
+            robot_states[i].pos_x = pos[1]
+            robot_states[i].pos_y = pos[2]
+
+        # check for collision with walls
         if robot_states[i].pos_x - RADIUS_OF_ROBOT  < -ARENA_WIDTH/2:
            robot_states[i].pos_x = -ARENA_WIDTH/2 + RADIUS_OF_ROBOT
         elif robot_states[i].pos_x + RADIUS_OF_ROBOT > ARENA_WIDTH/2:
