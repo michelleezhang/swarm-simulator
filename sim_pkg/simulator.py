@@ -46,7 +46,7 @@ RADIUS_OF_ROBOT = 0.105/2
 TIME_ASYNC = config_var["TIME_ASYNC"]
 
 real_time_factor = config_var["REAL_TIME_FACTOR"]
-motor_rpm = 40 
+motor_rpm = 10 
 motor_full_speed = motor_rpm* 2*np.pi / 60
 
 

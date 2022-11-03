@@ -374,7 +374,8 @@ class Coachbot:
         Returns:
             tuple[Vec2, float]: The pos_x, pos_y, theta of the robot.
         """
-        return self.get_pose()
+        pos_x_, pos_y_, angle =  self.get_pose()
+        return (math_utils.Vec2(pos_x_,pos_y_), angle)
     
     def rotate_with_power(self, power):
         # type: (int) -> None
