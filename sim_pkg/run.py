@@ -24,7 +24,7 @@ def run():
         r_process = subprocess.Popen(['python2','bootloader.py'],close_fds=True,cwd=path)
         robot_processes_.append(r_process)
     # subprocess.Popen(['python2','user2.py'],close_fds=True,cwd=path)
-    vis_processes_ = subprocess.run(['python3','visualization.py'],cwd=path)
+    vis_processes_ = subprocess.Popen(['python3','visualization.py'],close_fds=True,cwd=path)
 
     return sim_process_, robot_processes_, vis_processes_
 
@@ -42,20 +42,20 @@ def main():
             # Kill the processes. Currently kills the robot subprocess and everything seems to die.
             
             for process_ in robot_processes_:
-                subprocess.Popen.kill(process_)
+                subprocess.Popen.terminate(process_)
             try:
-                subprocess.Popen.kill(sim_process_)
+                subprocess.Popen.terminate(sim_process_)
             except:
                 pass
             
             try:
-                subprocess.Popen.kill(vis_processes_)
+                subprocess.Popen.terminate(vis_processes_)
             except:
                 pass
 
             flag = False
             print('Interrupted')
-            sys.exit(0)
+            sys.exit(1)
 
 
 if __name__ == '__main__':

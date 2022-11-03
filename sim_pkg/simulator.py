@@ -23,6 +23,7 @@ import numpy as np
 import csv
 from itertools import chain
 import math
+import signal
 # import pygame
 # file = open('time.csv','w')
 # writer = csv.writer(file)
@@ -46,9 +47,20 @@ RADIUS_OF_ROBOT = 0.105/2
 TIME_ASYNC = config_var["TIME_ASYNC"]
 
 real_time_factor = config_var["REAL_TIME_FACTOR"]
-motor_rpm = 10 
+motor_rpm = 180 
 motor_full_speed = motor_rpm* 2*np.pi / 60
 
+class GracefulKiller:
+    """
+    Kills the process
+    """
+    kill_now = False
+    def __init__(self):
+        signal.signal(signal.SIGINT, self.exit_gracefully)
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
+
+    def exit_gracefully(self, *args):
+        self.kill_now = True
 
 class BotDiffDrive:
     """
@@ -481,7 +493,11 @@ def loop():
     wheel_vel_arr  = [np.array([0,0])]*(NUM_OF_ROBOTS)
     vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id = initialize_robots()
     real_time_now_start = time.time()
-    while True:
+
+    
+
+    killer = GracefulKiller()
+    while not killer.kill_now:
         
         
         try:
@@ -576,7 +592,7 @@ def loop():
                         wheel_pow = np.array([vel[0],vel[1]])
                         # print("Wheel power:", wheel_pow)
                         # print("motor_full_speed", motor_full_speed)
-                        wheel_vel = motor_full_speed*wheel_pow
+                        wheel_vel = motor_full_speed*wheel_pow/100
                         wheel_vel_arr[int(msg[1])] = wheel_vel
                         # print("Wheel velocity:",wheel_vel)
                     elif msg[2] == 8:
@@ -674,10 +690,18 @@ def loop():
     server_socket.close()
 
 def main():
+
+
     try:
        loop()
     except KeyboardInterrupt:
         print("Shutdown requested...exiting")
+        server_socket.close()
+    except BaseException:
+        print("BaseException")
+        # server_socket.close()
+    
+
     sys.exit(0)
 
 

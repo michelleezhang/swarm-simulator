@@ -212,8 +212,11 @@ def main():
         vis.loop()
     except KeyboardInterrupt:
         print("Shutdown requested...exiting")
+        vis.client_socket.close()
     except Exception:
         traceback.print_exc(file=sys.stdout)
+    except BaseException:
+        vis.client_socket.close()
     sys.exit(0)
 
 if __name__ == "__main__":
