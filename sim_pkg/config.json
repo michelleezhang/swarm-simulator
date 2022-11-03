@@ -3,7 +3,7 @@
     "NUMBER_OF_ROBOTS": 20,
     "COMM_RANGE": 20, 
     "PACKET_SUCCESS_PERC": 1.0, 
-    "REAL_TIME_FACTOR": 5.0,
+    "REAL_TIME_FACTOR": 1.0,
     "NUM_OF_MSGS": 100, 
     "WIDTH": 3.5, 
     "LENGTH": 7.0
