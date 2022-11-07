@@ -24,11 +24,15 @@ import csv
 from itertools import chain
 import math
 import signal
+import pandas as pd
 # import pygame
 # file = open('time.csv','w')
 # writer = csv.writer(file)
+socket_port_pandas = pd.read_csv("port.csv", header=None)
+socket_port_numpy = socket_port_pandas.to_numpy()
+socket_port_number = int(socket_port_numpy[0][0])
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # SOCK_STREAM is for TCP 
-server_socket.bind((socket.gethostname(),1245)) # Binds to port 1245
+server_socket.bind((socket.gethostname(),socket_port_number)) # Binds to port 1245
 server_socket.listen(1)
 open_client_sockets = [] # current clients handler
 messages_to_send = [] # future message send handler
@@ -45,10 +49,14 @@ ARENA_LENGTH = config_var["LENGTH"]
 ARENA_WIDTH = config_var["WIDTH"]
 RADIUS_OF_ROBOT = 0.105/2
 TIME_ASYNC = config_var["TIME_ASYNC"]
+USE_INIT_POS = 1
 
 real_time_factor = config_var["REAL_TIME_FACTOR"]
 motor_rpm = 180 
 motor_full_speed = motor_rpm* 2*np.pi / 60
+
+init_pandas = pd.read_csv("init.csv")
+INIT_POS = init_pandas.to_numpy()
 
 class GracefulKiller:
     """
@@ -381,8 +389,13 @@ def initialize_robots():
                             fd_to_id_map[new_socket.fileno()] = num_of_robot
                             # new_socket.sendall(msg1.encode('utf-8'))
                             robot_state[num_of_robot] = BotDiffDrive(id_=num_of_robot)
-                            robot_state[num_of_robot].pos_y = random.uniform(-(ARENA_LENGTH-0.1)/2, (ARENA_LENGTH-0.1)/2)
-                            robot_state[num_of_robot].pos_x = random.uniform(-(ARENA_WIDTH-0.1)/2, (ARENA_WIDTH-0.1)/2)
+                            if USE_INIT_POS == 1:
+                                robot_state[num_of_robot].pos_y = INIT_POS[num_of_robot][2]
+                                robot_state[num_of_robot].pos_x = INIT_POS[num_of_robot][1]
+                                robot_state[num_of_robot].pos_angle = INIT_POS[num_of_robot][3]
+                            else:
+                                robot_state[num_of_robot].pos_y = random.uniform(-(ARENA_LENGTH-0.1)/2, (ARENA_LENGTH-0.1)/2)
+                                robot_state[num_of_robot].pos_x = random.uniform(-(ARENA_WIDTH-0.1)/2, (ARENA_WIDTH-0.1)/2)
                             robot_state[num_of_robot].usr_led = (50,50,50)
                             if TIME_ASYNC ==  1:
                                 val_ = random.uniform(0,1)*0.001
@@ -686,6 +699,9 @@ def loop():
             # print("Some error")
             continue
         
+        except BaseException:
+            print("Client Shutdown requested...exiting")
+            break
         
     server_socket.close()
 
@@ -695,7 +711,7 @@ def main():
     try:
        loop()
     except KeyboardInterrupt:
-        print("Shutdown requested...exiting")
+        print("Client Shutdown requested...exiting")
         server_socket.close()
     except BaseException:
         print("BaseException")

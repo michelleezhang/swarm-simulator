@@ -17,10 +17,14 @@ import traceback
 import json
 import pygame
 import numpy as np
+import pandas as pd
 
 with open('config.json', 'r') as myfile:
     data=myfile.read()
 config_var = json.loads(data)
+socket_port_pandas = pd.read_csv("port.csv", header=None)
+socket_port_numpy = socket_port_pandas.to_numpy()
+SOCKET_PORT_NUMBER = int(socket_port_numpy[0][0])
 
 ARENA_LENGTH = config_var["LENGTH"]
 ARENA_WIDTH = config_var["WIDTH"]
@@ -104,7 +108,7 @@ class visualization:
         self.y_fac = width/ARENA_WIDTH
         self.screen = pygame.display.set_mode((length, width))
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.client_socket.connect((socket.gethostname(), 1245))
+        self.client_socket.connect((socket.gethostname(), SOCKET_PORT_NUMBER))
         self.set_vis_id()
         # pygame.display.set_caption("Swarm Simulation Visualization ")
         pygame.display.flip()

@@ -3,6 +3,9 @@ import time
 from pathlib import Path
 import json
 import sys
+import socketserver
+import csv
+
 # sim_process_ = 0 
 robot_processes_ = []
 # vis_processes_ = 0
@@ -11,7 +14,22 @@ def run():
     """
     Opens all the programs involved
     """
+    with socketserver.TCPServer(("localhost", 0), None) as s:
+        free_port = s.server_address[1]
 
+
+    f = open('port.csv', 'w')
+    num = [free_port]
+    with f:
+        # create the csv writer
+        writer = csv.writer(f)
+
+        # write a row to the csv file
+        writer.writerow(num)
+
+    # close the file
+    f.close()
+    
     path = str(Path(__file__).parent)
     with open('config.json', 'r') as myfile:
         data=myfile.read()

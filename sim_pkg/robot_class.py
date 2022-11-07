@@ -10,12 +10,19 @@ import json
 import numpy as np
 import math_utils
 from control import MotorController, PIDController
-
+import csv
 
 with open('config.json', 'r') as myfile:
     data=myfile.read()
 config_var = json.loads(data)
 NUM_OF_MSGS = config_var["NUM_OF_MSGS"]
+val = []
+with open('port.csv', 'r') as csvfile:
+    # creating a csv reader object
+    csvreader = csv.reader(csvfile)
+    for row in csvreader:
+        val.append(row)
+SOCKET_PORT_NUMBER = int(val[0][0])
 
 class BotModel:
     def __init__(self):
@@ -36,7 +43,7 @@ class Coachbot:
         self.clk = 0        
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.client_socket.settimeout(0.5)
-        self.client_socket.connect((socket.gethostname(), 1245))
+        self.client_socket.connect((socket.gethostname(), SOCKET_PORT_NUMBER))
         self.set_id()
     
     @property
