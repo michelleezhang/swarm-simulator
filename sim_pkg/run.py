@@ -37,7 +37,7 @@ def run():
     num = config_var["NUMBER_OF_ROBOTS"]
     # print(path)
     sim_process_ = subprocess.Popen(['python3', 'simulator.py'],close_fds=True,cwd=path)
-    time.sleep(1)
+    time.sleep(2)
     for i in range(int(num)):
         r_process = subprocess.Popen(['python2','bootloader.py'],close_fds=True,cwd=path)
         robot_processes_.append(r_process)

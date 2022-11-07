@@ -3,7 +3,6 @@
 Define Robot class that will act as an API
 
 """
-
 import socket
 import re
 import json
@@ -23,10 +22,6 @@ with open('port.csv', 'r') as csvfile:
     for row in csvreader:
         val.append(row)
 SOCKET_PORT_NUMBER = int(val[0][0])
-
-class BotModel:
-    def __init__(self):
-        pass
 
 class Coachbot:
     """
@@ -126,8 +121,9 @@ class Coachbot:
         """
         data = '0b111'
         self.client_socket.sendall(data.encode('utf-8'))
-        data = self.client_socket.recv(1024)
-        msg = int(data.decode('utf-8'),2)
+        data_get = self.client_socket.recv(1024)
+        # print(data_get)
+        msg = int(data_get.decode('utf-8'),2)
         if msg>-1:
             self.id_ = msg
 

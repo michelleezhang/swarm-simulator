@@ -31,6 +31,7 @@ import pandas as pd
 socket_port_pandas = pd.read_csv("port.csv", header=None)
 socket_port_numpy = socket_port_pandas.to_numpy()
 socket_port_number = int(socket_port_numpy[0][0])
+print(socket_port_number)
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # SOCK_STREAM is for TCP 
 server_socket.bind((socket.gethostname(),socket_port_number)) # Binds to port 1245
 server_socket.listen(1)
@@ -49,7 +50,7 @@ ARENA_LENGTH = config_var["LENGTH"]
 ARENA_WIDTH = config_var["WIDTH"]
 RADIUS_OF_ROBOT = 0.105/2
 TIME_ASYNC = config_var["TIME_ASYNC"]
-USE_INIT_POS = 1
+USE_INIT_POS = 0
 
 real_time_factor = config_var["REAL_TIME_FACTOR"]
 motor_rpm = 180 
@@ -95,8 +96,6 @@ class BotDiffDrive:
         """
         Integrate the state of robot
         """
-        
-        
         velocity_vector = np.array([[u_left],[u_right]])
 
         # Forward Kinematics from SLAM 
@@ -417,21 +416,37 @@ def initialize_robots():
                     open_client_sockets.append(new_socket) # clients list
                 
                 
-                
+            
         except Exception:
-            continue
+            pass
         if num_of_robot == NUM_OF_ROBOTS and vis_fd>0:
             # print("DONE")
             flag = False
-    
+    print("While loop done")   
     for key, curr_socket in id_to_socket_map.items():
-        msg1 = str(bin(key))
+        msg1 = str(bin(int(key)))
+        # print(msg1)
         # fd_to_id_map[new_socket.fileno()] = num_of_robot
         curr_socket.sendall(msg1.encode('utf-8'))
     
     # print(id_to_socket_map)
-
-
+    
+    # Make sure no robot is over another
+    for i in range(0, num_of_robot):
+        x1 = robot_state[i].pos_x
+        y1 = robot_state[i].pos_y
+        range_of_val = chain(range(0,i),range(i+1,num_of_robot))
+        for j in range_of_val:
+            x1_ = robot_state[j].pos_x
+            y1_ = robot_state[j].pos_y
+            d = np.sqrt((x1_-x1)**2 + (y1_ - y1)**2)
+            if d <= 2*RADIUS_OF_ROBOT:
+                x1 = x1_ + (2*RADIUS_OF_ROBOT) + 0.02
+                y1 = y1_ + (2*RADIUS_OF_ROBOT) + 0.02
+            
+        robot_state[i].pos_x = x1
+        robot_state[i].pos_y = y1
+    
     return vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id
 
 def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, curr_time, prev_time, dt):
@@ -531,7 +546,7 @@ def loop():
                 data = current_socket.recv(4*1024)
                 if len(data) == 0:
                     gibberish = 0
-                    print("Gibberish")
+                    # print("Gibberish")
                 else:
                     
                     # broadcast_message(current_socket, "\r" + '<' + data + '> ')
