@@ -61,25 +61,25 @@ def usr(robot):
 	while True:
 		# locally propagating gradient step
 		# seed robots initiates gradient, non seed robots have id 0
-		if robot.assigned_id != 0:
+		if robot.id != 0:
 			count = 1
 
 			# send message to neighbors within Com_Range with its count=1 and location (x,y) and robot assigned id
 			# location is known from a global position
 			# seed robot in bottom left corner
-			if robot.assigned_id == 1:
+			if robot.id == 1:
 				x1 = 0
 				y1 = 0
 				estx = x1
 				esty = y1
-				robot.send_msg(struct.pack('iffi', count,x1,y1,robot.assigned_id))
+				robot.send_msg(struct.pack('iffi', count,x1,y1,robot.id))
 			# seed robot in bottom right corner
-			if robot.assigned_id == 2:
+			if robot.id == 2:
 				x2 = 15
 				y2 = 0
 				estx = x2
 				esty = y2
-				robot.send_msg(struct.pack('iffi', count,x2,y2,robot.assigned_id))
+				robot.send_msg(struct.pack('iffi', count,x2,y2,robot.id))
 
 		else: # nonseed robots
 			msgs = robot.recv_msg()

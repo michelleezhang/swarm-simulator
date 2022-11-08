@@ -546,7 +546,7 @@ def loop():
                 data = current_socket.recv(4*1024)
                 if len(data) == 0:
                     gibberish = 0
-                    # print("Gibberish")
+                    print("Gibberish")
                 else:
                     
                     # broadcast_message(current_socket, "\r" + '<' + data + '> ')
