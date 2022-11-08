@@ -15,13 +15,14 @@ def usr(robot):
         #     robot.move_meters(vec)
 
         if id == 1:
-            robot.set_vel(100, 100)
+            robot.set_vel(90, 90)
             pose = robot.get_pose()
             robot.delay(1000)
             pose2 = robot.get_pose()
             
             vel = (pose2[0] - pose[0])/1
             print(vel)
+            robot.logger.info('Something happens')
 
 
             

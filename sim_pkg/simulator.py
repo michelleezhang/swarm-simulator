@@ -50,10 +50,10 @@ ARENA_LENGTH = config_var["LENGTH"]
 ARENA_WIDTH = config_var["WIDTH"]
 RADIUS_OF_ROBOT = 0.105/2
 TIME_ASYNC = config_var["TIME_ASYNC"]
-USE_INIT_POS = 0
+USE_INIT_POS = config_var["USE_INIT_POS"]
 
 real_time_factor = config_var["REAL_TIME_FACTOR"]
-motor_rpm = 180 
+motor_rpm = 180
 motor_full_speed = motor_rpm* 2*np.pi / 60
 
 init_pandas = pd.read_csv("init.csv")
@@ -653,7 +653,7 @@ def loop():
             
             # Only allows visualization every 0.005 seconds
             delta_vis += T_real
-            if delta_vis > 0.005: 
+            if delta_vis > 0.01: 
                 # print("call vis")
                 delta_vis = 0
                 if vis_fd>0:

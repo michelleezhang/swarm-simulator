@@ -6,6 +6,8 @@ Define Robot class that will act as an API
 import socket
 import re
 import json
+import logging
+logging.basicConfig(filename='bot.log',level=logging.INFO)
 import numpy as np
 import math_utils
 from control import MotorController, PIDController
@@ -40,6 +42,15 @@ class Coachbot:
         # self.client_socket.settimeout(0.5)
         self.client_socket.connect((socket.gethostname(), SOCKET_PORT_NUMBER))
         self.set_id()
+    
+    @property
+    def net(self):
+        """The networks that are exposed for use.
+        For example, in your user code:
+        .. code-block:: python
+           bot.net.signal('my-signal-name', {'my-field': 'my-value'})
+        """
+        return None
     
     @property
     def id(self):  # pylint: disable=invalid-name
@@ -85,7 +96,7 @@ class Coachbot:
             module: All functions in units.
         """
         # return units
-        raise NotImplementedError
+        return None
 
     @property
     def coordinates(self):
@@ -98,7 +109,7 @@ class Coachbot:
             module: All functions in coordinates.
         """
         # return coordinates
-        raise NotImplementedError
+        return None
 
     @property
     def configuration(self):
@@ -112,8 +123,33 @@ class Coachbot:
         Returns:
             module: All functions in configuration.
         """
-        raise NotImplementedError
+        return None
         # return configuration
+    
+    @property
+    def logger(self):
+        # type: () -> logging.Logger
+        """
+        Provides an interface for logging to the standard python logging
+        facility, enabling you to write logs. These logs will be output to
+        either the syslog of the controller machine or of the bot itself,
+        depending on the configuration values.
+        Note:
+            This logger avoids collisions with the system logger and is a
+            completely separate logger from it. Although the parent logger
+            for both the system and the user logger is the same, the user
+            logger and the system logger may have a different format. You
+            should always use the logger exposes by ``Coachbot`` in your code.
+        The logger can be used as any stdlib logger, for example:
+        .. code-block:: python
+            robot.logger.info('I am an informational message from userland.')
+            robot.logger.warning('This is a warning!')
+            robot.logger.error('This is a critical error!')
+            robot.logger.debug('This is a debug message.')
+        Returns:
+            logging.Logger: The userland logger.
+        """
+        return logging.getLogger('bot')
 
     def set_id(self):
         """
