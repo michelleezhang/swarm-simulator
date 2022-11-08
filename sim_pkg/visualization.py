@@ -215,7 +215,7 @@ def main():
         vis = visualization()
         vis.loop()
     except KeyboardInterrupt:
-        print("Shutdown requested...exiting")
+        print("Visualization Shutdown requested...exiting")
         vis.client_socket.close()
     except Exception:
         traceback.print_exc(file=sys.stdout)

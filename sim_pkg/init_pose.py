@@ -41,4 +41,11 @@ def init(swarmsize, x, y, theta, a_ids):
         y[i] = (i / 50 ) * 0.11
         a_ids[i] = i
         theta[i] = 0
+        # if i%3==0:
+		# 	a_ids[i]=1
+		# elif i%3==1:
+		# 	a_ids[i]=0
+		# else:
+		# 	a_ids[i]=2
+
     return x, y, theta, a_ids

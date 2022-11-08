@@ -69,6 +69,14 @@ class Coachbot:
             int: The id number of self.
         """
         return self.id_
+    
+    @id.setter
+    def id(self, new):  # pylint: disable=invalid-name
+        # type: (int) -> None
+        """
+        Do not use this. It does  nothing in simulation
+        """
+        pass
 
     @property
     def math(self):
