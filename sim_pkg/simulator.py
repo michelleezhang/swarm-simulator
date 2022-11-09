@@ -51,7 +51,7 @@ ARENA_WIDTH = config_var["WIDTH"]
 RADIUS_OF_ROBOT = 0.105/2
 TIME_ASYNC = config_var["TIME_ASYNC"]
 USE_INIT_POS = config_var["USE_INIT_POS"]
-
+SIM_TIME_STEP = config_var["SIM_TIME_STEP"]
 real_time_factor = config_var["REAL_TIME_FACTOR"]
 motor_rpm = 180
 motor_full_speed = motor_rpm* 2*np.pi / 60
@@ -503,9 +503,10 @@ def loop():
     sim_time_start = time.time()
     notslept = 0
     real_time_factor = config_var["REAL_TIME_FACTOR"]
-    T_real = 0.002
-    T_sim = real_time_factor*T_real
     
+    T_sim = SIM_TIME_STEP
+    # T_sim = real_time_factor*T_real
+    T_real = T_sim/real_time_factor
     # sim_ticks = 0 
     # sim_time_or = time.time()
     sim_time_curr = 0.0001
@@ -676,35 +677,42 @@ def loop():
             # sim_time_curr += delta_t
             # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
             
-            delta_time = T_sim
-            if sim_time_delt != 0.0:
-                robot_state = integrate_world(robot_state, num_of_robot, wheel_vel_arr, curr_time = time.time(), prev_time = real_time_now_start, dt = sim_time_delt)
-
+            # delta_time = T_sim
+            
+            robot_state = integrate_world(robot_state, num_of_robot, wheel_vel_arr, curr_time = time.time(), prev_time = real_time_now_start, dt = T_sim)
+            sim_time_curr += T_sim
+            robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
             real_time_now_end = time.time()
             elapsed_time_diff = real_time_now_end - real_time_now_start
+            
             # print("Elapsed time diff:",elapsed_time_diff)
             # print("T_real", T_real)
             real_time_now_start = time.time()
 
             if elapsed_time_diff < T_real:
-                real_time_now_loop_start = time.time()
-                sim_time_curr += T_sim
-                sim_time_delt = T_sim
-                real_time_curr += T_real
-                robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
+                # real_time_now_loop_start = time.time()
                 
-                real_time_now_loop_end = time.time()
-                elapsed_time_diff_loop = real_time_now_loop_end - real_time_now_loop_start
-                diff = T_real - elapsed_time_diff - elapsed_time_diff_loop
+                # sim_time_delt = T_sim
+                real_time_curr += T_real
+                # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
+                actual_rtf = T_sim/T_real
+                print(actual_rtf)
+                # real_time_now_loop_end = time.time()
+                # elapsed_time_diff_loop = real_time_now_loop_end - real_time_now_loop_start
+                diff = T_real - elapsed_time_diff
                 if diff>0:
-                    time.sleep(T_real - elapsed_time_diff)
+                    time.sleep(diff)
                 # print("sleep")
             else:
-                sim_time_curr += real_time_factor*elapsed_time_diff
-                sim_time_delt = real_time_factor*elapsed_time_diff
+                # sim_time_curr += real_time_factor*elapsed_time_diff
+                # sim_time_curr += T_sim
+                # sim_time_delt = real_time_factor*elapsed_time_diff
                 real_time_curr += elapsed_time_diff
-                robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
+                actual_rtf = T_sim/elapsed_time_diff
+                print(actual_rtf)
+                # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
                 elapsedDIffList.append(elapsed_time_diff)
+                
                 notslept += 1
                 # print(notslept)
             # visualisation(screen, robot_id, robot_state)
