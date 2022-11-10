@@ -18,6 +18,7 @@ import json
 import pygame
 import numpy as np
 import pandas as pd
+import time
 
 with open('config.json', 'r') as myfile:
     data=myfile.read()
@@ -177,10 +178,10 @@ class visualization:
             # self.screen.blit(text, textRect)
      
     
-    def update_time_msg(self,real_time, sim_time):
+    def update_time_msg(self,real_time, sim_time, rtf):
         """
         """
-        data_string = 'Real time factor '+self.rt_factor+ 'x |'+ 'Real time: ' + str(real_time) + 'seconds | ' + 'Sim time:' + str(sim_time) + 'seconds'
+        data_string = 'Real time factor '+str(rtf)+ 'x |'+ 'Real time: ' + str(real_time) + 'seconds | ' + 'Sim time:' + str(sim_time) + 'seconds'
         text = self.font.render(data_string,True,(255,255,255))
         textRect = text.get_rect()
         textRect.center = (750,900-25)
@@ -192,23 +193,33 @@ class visualization:
         while True:
             # print("Waiting for client to receive")
             msg = self.client_socket.recv(10*4096)
+            # _start_time_vis = time.time()
             msg = msg.decode('utf-8')
             msg = json.loads(msg)
             # print(msg)  
             data_send = '0b11'
             self.client_socket.sendall(data_send.encode())
-            time = self.client_socket.recv(4*1024)
-            time = time.decode('utf-8')
-            ctr = time.index('0b0')
-            sim_time = float(time[:ctr])
+            _time = self.client_socket.recv(4*1024)
+            _time = _time.decode('utf-8')
+            # ctr = time.index('0b0')
+            # sim_time = float(time[:ctr])
+            # sim_time = round(sim_time,2)
+            # real_time = float(time[ctr+3:])
+            # real_time = round(real_time,2)
+            _time = json.loads(_time)
+            sim_time = _time[0]
             sim_time = round(sim_time,2)
-            real_time = float(time[ctr+3:])
+            real_time = _time[1]
             real_time = round(real_time,2)
+            rtf = float(_time[2])
+            rtf = round(rtf,1)
             # print('Vis:',real_time)
             self.update_states(msg)
-            self.update_time_msg(real_time,sim_time)
-            # gn = self.client_socket.recv(1024)
-            # print('Visual loop')
+            self.update_time_msg(real_time,sim_time, rtf)
+            # _vis_time_delta = time.time() - _start_time_vis
+            # print("Visual time taken:",_vis_time_delta)
+
+            
 
 def main():
     try:

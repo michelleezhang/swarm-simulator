@@ -17,12 +17,12 @@ def usr(robot):
         if id == 1:
             robot.set_vel(90, 90)
             pose = robot.get_pose()
-            robot.delay(1000)
+            robot.delay(2000)
             pose2 = robot.get_pose()
             
             vel = (pose2[0] - pose[0])/1
-            print(vel)
-            robot.logger.info('Something happens')
+            # print(vel)
+            # robot.logger.info('Something happens')
 
 
             

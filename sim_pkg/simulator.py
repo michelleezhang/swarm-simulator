@@ -99,7 +99,7 @@ class BotDiffDrive:
         velocity_vector = np.array([[u_left],[u_right]])
 
         # Forward Kinematics from SLAM 
-        pos = self.ForwardKinematics2(velocity_vector*delta_time)
+        pos = self.dynamics(velocity_vector*delta_time)
         pos[0] = (pos[0]+ np.pi) % (2 * np.pi) - np.pi
         # self.pos_angle  = pos[0]
         # self.pos_x = pos[1]
@@ -143,20 +143,26 @@ class BotDiffDrive:
             # print("Pos angle:", self.pos_angle)
         return pos
         
-    def dynamics(self, vel_vector, angle , dt):
+    def dynamics(self, vel_vector):
         """
         State dynamic model 
         """
-        pos_angle_ = angle
-    
+        pos_angle_ = self.pos_angle
+        u_x = vel_vector[0][0]
+        u_y = vel_vector[1][0]
         state_matrix = np.array([[-self.radius_of_wheel/(2.0*self.distance_between_wheel), self.radius_of_wheel/(2.0*self.distance_between_wheel)], 
                                  [self.radius_of_wheel*np.cos(pos_angle_)/2.0, self.radius_of_wheel*np.cos(pos_angle_)/2.0], 
                                  [self.radius_of_wheel*np.sin(pos_angle_)/2.0, self.radius_of_wheel*np.sin(pos_angle_)/2.0],
                                  [1.0, 0.0],
                                  [0.0, 1.0] ])
-        
-        pos = state_matrix@vel_vector
+        # pos_del = np.array([state_matrix[0][0]*u_x + state_matrix[0][1]*u_y,
+        #                     state_matrix[1][0]*u_x + state_matrix[1][1]*u_y,
+        #                     state_matrix[2][0]*u_x + state_matrix[2][1]*u_y])
+        # pos = np.array([self.pos_angle+pos_del[0], self.pos_x+ pos_del[1], self.pos_y+ pos_del[2]])
+        pos = (state_matrix@vel_vector)
+        pos = np.array([self.pos_angle+pos[0][0], self.pos_x+ pos[1][0], self.pos_y+ pos[2][0]])
 
+        # print(pos)
         return pos
     
     def ForwardKinematics2(self, wheel_vel):
@@ -449,7 +455,7 @@ def initialize_robots():
     
     return vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id
 
-def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, curr_time, prev_time, dt):
+def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, curr_time, prev_time, dt, sim_time):
     """ 
     Integrates the world
     """
@@ -464,12 +470,12 @@ def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, cur
 
         # check for collision with robots
         collision_flag_ = True
-        for j in range_of_val:
-            x1_ = robot_states[j].pos_x
-            y1_ = robot_states[j].pos_y
-            d = np.sqrt((x1_-pos[1])**2 + (y1_ - pos[2])**2)
-            if d <= 2*RADIUS_OF_ROBOT:
-                collision_flag_ = False
+        # for j in range_of_val:
+        #     x1_ = robot_states[j].pos_x
+        #     y1_ = robot_states[j].pos_y
+        #     d = np.sqrt((x1_-pos[1])**2 + (y1_ - pos[2])**2)
+        #     if d <= 2*RADIUS_OF_ROBOT:
+        #         collision_flag_ = False
         robot_states[i].pos_angle = pos[0]
         if collision_flag_ == True:
             robot_states[i].pos_x = pos[1]
@@ -486,6 +492,8 @@ def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, cur
         elif robot_states[i].pos_y + RADIUS_OF_ROBOT > ARENA_LENGTH/2:
             robot_states[i].pos_y = ARENA_LENGTH/2 - RADIUS_OF_ROBOT
 
+        if robot_states[i].clk < sim_time:
+           robot_states[i].clk = sim_time
 
     return robot_states
 
@@ -523,13 +531,14 @@ def loop():
     vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id = initialize_robots()
     real_time_now_start = time.time()
 
-    
+    actual_rtf = real_time_factor
 
     killer = GracefulKiller()
     while not killer.kill_now:
         
         
         try:
+            _time_socket_start = time.time()
             rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
             # sim_time_real = time.time()
             # print(rlist)
@@ -651,6 +660,7 @@ def loop():
                     # data_csv = [sim_ticks,time.time()-sim_time_or]
                 # writer.writerow(data_csv)
             # sim_time = time.time() - sim_time_start
+            _time_socket_delta = time.time() - _time_socket_start 
             
             # Only allows visualization every 0.005 seconds
             delta_vis += T_real
@@ -667,8 +677,10 @@ def loop():
                     recv_msg = vis_socket.recv(1024)
                     
                     # Send time to visualization
-                    data_string = str(sim_time_curr) + '0b0' + str(real_time_curr)
-                    vis_socket.sendall(data_string.encode('utf-8'))
+                    # data_string = str(sim_time_curr) + '0b0' + str(real_time_curr)
+                    _data_arr = [sim_time_curr, real_time_curr, actual_rtf]
+                    _data_json = json.dumps(_data_arr)
+                    vis_socket.sendall(_data_json.encode('utf-8'))
                     # print(recv_msg.decode('utf-8'))
                 # visualisation(screen, robot_id, robot_state, num_of_robot)
                 # sim_time_start = time.time()
@@ -678,15 +690,16 @@ def loop():
             # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
             
             # delta_time = T_sim
-            
-            robot_state = integrate_world(robot_state, num_of_robot, wheel_vel_arr, curr_time = time.time(), prev_time = real_time_now_start, dt = T_sim)
+            _time_integrate_start = time.time()
             sim_time_curr += T_sim
-            robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
+            robot_state = integrate_world(robot_state, num_of_robot, wheel_vel_arr, curr_time = time.time(), prev_time = real_time_now_start, dt = T_sim, sim_time= sim_time_curr)
+            
+            # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
             real_time_now_end = time.time()
             elapsed_time_diff = real_time_now_end - real_time_now_start
-            
-            # print("Elapsed time diff:",elapsed_time_diff)
-            # print("T_real", T_real)
+            _time_integrate_delta = time.time() - _time_integrate_start
+            # print("Time to integrate:",_time_integrate_delta)
+            # print("Time for sockets", _time_socket_delta)
             real_time_now_start = time.time()
 
             if elapsed_time_diff < T_real:
@@ -696,7 +709,7 @@ def loop():
                 real_time_curr += T_real
                 # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
                 actual_rtf = T_sim/T_real
-                print(actual_rtf)
+                # print(actual_rtf)
                 # real_time_now_loop_end = time.time()
                 # elapsed_time_diff_loop = real_time_now_loop_end - real_time_now_loop_start
                 diff = T_real - elapsed_time_diff
@@ -709,7 +722,7 @@ def loop():
                 # sim_time_delt = real_time_factor*elapsed_time_diff
                 real_time_curr += elapsed_time_diff
                 actual_rtf = T_sim/elapsed_time_diff
-                print(actual_rtf)
+                # print(actual_rtf)
                 # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
                 elapsedDIffList.append(elapsed_time_diff)
                 
