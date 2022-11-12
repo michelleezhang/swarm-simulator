@@ -25,6 +25,7 @@ from itertools import chain
 import math
 import signal
 import pandas as pd
+import functiontrace
 # import pygame
 # file = open('time.csv','w')
 # writer = csv.writer(file)
@@ -97,50 +98,8 @@ class BotDiffDrive:
         Integrate the state of robot
         """
         velocity_vector = np.array([[u_left],[u_right]])
-
-        # Forward Kinematics from SLAM 
         pos = self.dynamics(velocity_vector*delta_time)
         pos[0] = (pos[0]+ np.pi) % (2 * np.pi) - np.pi
-        # self.pos_angle  = pos[0]
-        # self.pos_x = pos[1]
-        # self.pos_y = pos[2]
-        # self.left_wheel_angle += u_left*delta_time
-        # self.left_wheel_angle = (self.left_wheel_angle + np.pi) % (2 * np.pi) - np.pi
-        # self.right_wheel_angle += u_right*delta_time
-        # self.right_wheel_angle = (self.right_wheel_angle + np.pi) % (2 * np.pi) - np.pi
-
-
-        # state_vec = np.array([[self.pos_angle],[self.pos_x],[self.pos_y],[self.left_wheel_angle],[self.right_wheel_angle]])
-
-        # k1 = self.dynamics(velocity_vector,state_vec[0][0])* delta_time
-        
-        # k2 = self.dynamics(velocity_vector,state_vec[0][0]+k1[0][0]/2.)*delta_time
-        
-        # k3 = self.dynamics(velocity_vector,state_vec[0][0]+k2[0][0]/2.)*delta_time
-
-        # k4 = self.dynamics(velocity_vector,state_vec[0][0]+k3[0][0])*delta_time
-        
-        # delta_pos = (1/6.0)*(k1+2.0*k2+2.0+k3+k4)
-        # delta_pos =  self.dynamics(velocity_vector, state_vec[0][0])* delta_time
-        # delta_pos =  self.dynamics(velocity_vector, state_vec[0][0], delta_time)
-        
-
-        # print("Delta pos:", delta_pos)
-        # Euler integration update
-        # self.pos_angle += delta_pos[0][0]
-        # self.pos_angle = (self.pos_angle + np.pi) % (2 * np.pi) - np.pi
-        # self.pos_x += delta_pos[1][0]
-        # self.pos_y += delta_pos[2][0]
-        # self.left_wheel_angle += delta_pos[3][0]
-        # self.left_wheel_angle = (self.left_wheel_angle + np.pi) % (2 * np.pi) - np.pi
-        # self.right_wheel_angle += delta_pos[4][0]
-        # self.right_wheel_angle = (self.right_wheel_angle + np.pi) % (2 * np.pi) - np.pi
-
-        # if u_left!=0.0:
-            # print(delta_pos)
-            # print("Pos x:", self.pos_x)
-            # print("Pos y:", self.pos_y)
-            # print("Pos angle:", self.pos_angle)
         return pos
         
     def dynamics(self, vel_vector):
@@ -148,17 +107,11 @@ class BotDiffDrive:
         State dynamic model 
         """
         pos_angle_ = self.pos_angle
-        u_x = vel_vector[0][0]
-        u_y = vel_vector[1][0]
         state_matrix = np.array([[-self.radius_of_wheel/(2.0*self.distance_between_wheel), self.radius_of_wheel/(2.0*self.distance_between_wheel)], 
                                  [self.radius_of_wheel*np.cos(pos_angle_)/2.0, self.radius_of_wheel*np.cos(pos_angle_)/2.0], 
                                  [self.radius_of_wheel*np.sin(pos_angle_)/2.0, self.radius_of_wheel*np.sin(pos_angle_)/2.0],
                                  [1.0, 0.0],
                                  [0.0, 1.0] ])
-        # pos_del = np.array([state_matrix[0][0]*u_x + state_matrix[0][1]*u_y,
-        #                     state_matrix[1][0]*u_x + state_matrix[1][1]*u_y,
-        #                     state_matrix[2][0]*u_x + state_matrix[2][1]*u_y])
-        # pos = np.array([self.pos_angle+pos_del[0], self.pos_x+ pos_del[1], self.pos_y+ pos_del[2]])
         pos = (state_matrix@vel_vector)
         pos = np.array([self.pos_angle+pos[0][0], self.pos_x+ pos[1][0], self.pos_y+ pos[2][0]])
 
@@ -194,55 +147,6 @@ class BotDiffDrive:
         delq = mult_mat@np.array([[delq_b[0]], [delq_b[1]], [delq_b[2]]])
         pos = np.array([phi+delq[0][0], x+delq[1][0], y+delq[2][0]])
         return pos
-    
-    def ForwardKinematics(self, wheel_vel):
-        """
-        As per SLAM
-        """
-        r = self.radius_of_wheel
-        d = self.distance_between_wheel
-        u_x = wheel_vel[0][0]
-        u_y = wheel_vel[1][0]
-        # thetadot xdot ydot
-        V = np.array([-r*u_x/(2.0*d)+r*u_y/(2.0*d), r*u_x/2.0 + r*u_y/2.0, 0])
-
-        Tbbhat = self.integrate_twist(V)
-
-        q_x = self.pos_x
-        q_theta = self.pos_angle
-        q_y = self.pos_y
-        Twb = np.array([[np.cos(q_theta), -np.sin(q_theta), q_x], [np.sin(q_theta), np.cos(q_theta), q_y], [0, 0, 1]])
-
-        Twbhat = Twb@Tbbhat
-
-        pos = np.array([np.arccos(Twbhat[0][0]), Twbhat[0][2], Twbhat[1][2]])
-
-        return pos
-    
-    def integrate_twist(self, V):
-        """
-        As per SLAM
-        """
-        if V[0]==0.0:
-            v = [0, 0]
-            v[0] = V[1]
-            v[1] = V[2]
-            Tbb_hat = np.array([[1, 0, v[0]],[0, 1, v[1]], [0, 0, 1]])
-            
-            return Tbb_hat
-        
-        theta_s = V[0]
-        v = [0, 0]
-        v[0] = V[1]/theta_s
-        v[1] = -V[2]/theta_s
-
-
-        Tsb = np.array([[1, 0, v[0]],[0, 1, v[1]], [0, 0, 1]])
-        Tss_hat = np.array([[np.cos(theta_s), -np.sin(theta_s), 0], [np.sin(theta_s), np.cos(theta_s), 0], [0, 0, 1]])
-        Tbs = np.array([[1, 0, -v[0]],[0, 1, -v[1]], [0, 0, 1]])
-       
-        Tbb_hat = Tbs@Tss_hat@Tsb
-        return Tbb_hat
         
 
 
@@ -455,6 +359,21 @@ def initialize_robots():
     
     return vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id
 
+def check_collision(pos, robot_states, i, num_of_robot):
+    """
+    Checks for the collision of the robot
+    """
+    range_of_val = chain(range(0,i),range(i+1,num_of_robot))
+    collision_flag_ = True
+    for j in range_of_val:
+        x1_ = robot_states[j].pos_x
+        y1_ = robot_states[j].pos_y
+        d = np.sqrt((x1_-pos[1])**2 + (y1_ - pos[2])**2)
+        if d <= 2*RADIUS_OF_ROBOT:
+            collision_flag_ = False
+    
+    return collision_flag_
+
 def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, curr_time, prev_time, dt, sim_time):
     """ 
     Integrates the world
@@ -466,48 +385,149 @@ def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, cur
         u_l = wheel_vel[0]
         u_r = wheel_vel[1]
         pos = robot_states[i].integrate(u_l,u_r,delta_time)
-        range_of_val = chain(range(0,i),range(i+1,num_of_robot))
+        
 
         # check for collision with robots
-        collision_flag_ = True
-        # for j in range_of_val:
-        #     x1_ = robot_states[j].pos_x
-        #     y1_ = robot_states[j].pos_y
-        #     d = np.sqrt((x1_-pos[1])**2 + (y1_ - pos[2])**2)
-        #     if d <= 2*RADIUS_OF_ROBOT:
-        #         collision_flag_ = False
+        collision_flag_ = check_collision(pos, robot_states, i, num_of_robot)
         robot_states[i].pos_angle = pos[0]
+
         if collision_flag_ == True:
             robot_states[i].pos_x = pos[1]
             robot_states[i].pos_y = pos[2]
 
         # check for collision with walls
-        if robot_states[i].pos_x - RADIUS_OF_ROBOT  < -ARENA_WIDTH/2:
-           robot_states[i].pos_x = -ARENA_WIDTH/2 + RADIUS_OF_ROBOT
-        elif robot_states[i].pos_x + RADIUS_OF_ROBOT > ARENA_WIDTH/2:
-            robot_states[i].pos_x = ARENA_WIDTH/2 - RADIUS_OF_ROBOT
+        robot_states[i].pos_x = max(robot_states[i].pos_x, -ARENA_WIDTH/2 + RADIUS_OF_ROBOT)
+        robot_states[i].pos_x = min(robot_states[i].pos_x, ARENA_WIDTH/2 - RADIUS_OF_ROBOT)
+        # if robot_states[i].pos_x - RADIUS_OF_ROBOT  < -ARENA_WIDTH/2:
+        #    robot_states[i].pos_x = -ARENA_WIDTH/2 + RADIUS_OF_ROBOT
+        # elif robot_states[i].pos_x + RADIUS_OF_ROBOT > ARENA_WIDTH/2:
+        #     robot_states[i].pos_x = ARENA_WIDTH/2 - RADIUS_OF_ROBOT
         
-        if robot_states[i].pos_y - RADIUS_OF_ROBOT < -ARENA_LENGTH/2:
-           robot_states[i].pos_y = -ARENA_LENGTH/2 + RADIUS_OF_ROBOT
-        elif robot_states[i].pos_y + RADIUS_OF_ROBOT > ARENA_LENGTH/2:
-            robot_states[i].pos_y = ARENA_LENGTH/2 - RADIUS_OF_ROBOT
+        robot_states[i].pos_y = max(robot_states[i].pos_y, -ARENA_LENGTH/2 + RADIUS_OF_ROBOT)
+        robot_states[i].pos_y = min(robot_states[i].pos_y, ARENA_LENGTH/2 - RADIUS_OF_ROBOT)
+        # if robot_states[i].pos_y - RADIUS_OF_ROBOT < -ARENA_LENGTH/2:
+        #    robot_states[i].pos_y = -ARENA_LENGTH/2 + RADIUS_OF_ROBOT
+        # elif robot_states[i].pos_y + RADIUS_OF_ROBOT > ARENA_LENGTH/2:
+        #     robot_states[i].pos_y = ARENA_LENGTH/2 - RADIUS_OF_ROBOT
 
         if robot_states[i].clk < sim_time:
            robot_states[i].clk = sim_time
 
     return robot_states
 
+def send_data_to_vis(vis_socket, robot_state, num_of_robot, sim_time_curr, real_time_curr, actual_rtf)->None:
+    """
+    Send data to visualization
+    """
+    msg1 = conv_to_json(robot_state, num_of_robot)
+    vis_socket.sendall(json.dumps(msg1).encode('utf-8'))
+    recv_msg = vis_socket.recv(1024)
+    # Send time to visualization
+    _data_arr = [sim_time_curr, real_time_curr, actual_rtf]
+    _data_json = json.dumps(_data_arr)
+    vis_socket.sendall(_data_json.encode('utf-8'))
+
+def get_data(current_socket, msg, robot_state, robot_id, num_of_robot, MSG_BUFFER_SIZE, msg_buffer, wheel_vel_arr):
+    """
+    
+    """
+    if msg[2] == 3:
+        # delay
+        robot_state[int(msg[1])].clk += (msg[3]/1000)
+        data_string = '0b1'
+        current_socket.sendall(data_string.encode('utf-8'))
+    
+    elif msg[2] == 2:
+        # set_led
+        data_string = '0b1'
+        current_socket.sendall(data_string.encode('utf-8'))
+        if msg[1] in robot_id:
+            usr_led_ = (msg[3],msg[4],msg[5])
+            robot_state[int(msg[1])].usr_led = usr_led_
+
+    elif msg[2] == 4:
+        # send_msg
+        # print('Message sent:',msg[3])
+        data_string = '0b1'
+        current_socket.sendall(data_string.encode('utf-8'))
+        msg_for_buffer = current_socket.recv(1024*4)
+        data_string = '0b1'
+        current_socket.sendall(data_string.encode('utf-8'))
+        msg_type = msg[3]
+        msg_buffer = update_msg_buffer(msg_buffer,MSG_BUFFER_SIZE,num_of_robot,msg_for_buffer,msg[1],robot_state)
+        # print("New msg buffer:", msg_buffer)
+        
+    elif msg[2] == 5:
+        # recv_msg
+        arr = msg_buffer[msg[1]]
+        
+        len_ =len(arr)
+        size_ = len_
+        data_string = str(size_)
+        current_socket.sendall(data_string.encode('utf-8'))
+        # print(type(msg_buffer))
+        clear_bool = current_socket.recv(1024)
+        data_string = '0b1'
+        current_socket.sendall(data_string.encode('utf-8'))
+        # start_j = 0
+        # end_j = 20
+
+        for j in range(len_):
+            check_data_ = current_socket.recv(1024)
+            # data_send = convert_list_to_dict(arr[j])
+            data = arr[j]
+            # print(type(data))
+            # start_j+=20
+            # end_j = min(end_j+20, len_)
+            # data = json.dumps(data_send)
+            # print(data)
+            current_socket.sendall(data)
+
+        if clear_bool.decode('utf-8') == 'True':
+            msg_buffer[msg[1]] = []
+    elif msg[2] == 6:
+        # get_clock
+        data_string = '0b1'
+        current_socket.sendall(data_string.encode('utf-8'))
+        type_time = current_socket.recv(1024)
+        time_val = robot_state[int(msg[1])].clk
+        time_val = str(round(time_val,4))
+        current_socket.sendall(time_val.encode('utf-8'))
+    elif msg[2] == 7:
+        # Set wheel velocity
+        data_string = '0b1'
+        current_socket.sendall(data_string.encode('utf-8'))
+        vel = current_socket.recv(1024)
+        data_string = '0b1'
+        current_socket.sendall(data_string.encode('utf-8'))
+        vel = vel.decode('utf-8')
+        vel = json.loads(vel)
+        # print(vel)
+        wheel_pow = np.array([vel[0],vel[1]])
+        # print("Wheel power:", wheel_pow)
+        # print("motor_full_speed", motor_full_speed)
+        wheel_vel = motor_full_speed*wheel_pow/100
+        wheel_vel_arr[int(msg[1])] = wheel_vel
+        # print("Wheel velocity:",wheel_vel)
+    elif msg[2] == 8:
+        # get_pose
+        data_string = '0b1'
+        current_socket.sendall(data_string.encode('utf-8'))
+        pose_type = current_socket.recv(1024)
+        local_id = int(msg[1])
+        pos_tuple = [robot_state[local_id].pos_x, robot_state[local_id].pos_y, robot_state[local_id].pos_angle]
+        # x_, y_, theta_ = transform_from_map_to_base(pos_tuple[0], pos"Some error"_tuple[1], pos_tuple[2])
+        # pos_tuple = [x_,y_,theta_]
+        pos_tuple = json.dumps(pos_tuple)
+        current_socket.sendall(pos_tuple.encode('utf-8'))
+
+    return robot_state, msg_buffer, wheel_vel_arr
+    
+
 def loop():
     """
     Loop through to get data from bot classes
     """
-    # rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
-    # serversocket, address = s.accept()
-    # msg = s.recv(1024)
-    # print(msg.decode("utf-8"))
-    
-    
-    
     sim_time_start = time.time()
     notslept = 0
     real_time_factor = config_var["REAL_TIME_FACTOR"]
@@ -537,213 +557,73 @@ def loop():
     while not killer.kill_now:
         
         
-        try:
-            _time_socket_start = time.time()
-            rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
-            # sim_time_real = time.time()
-            # print(rlist)
-            for current_socket in rlist: # sockets that can be read
-                # print("In Loop")
-                if current_socket.fileno() == vis_fd:
-                    # print(vis_socket)
+       
+        _time_socket_start = time.time()
+        rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
+        # sim_time_real = time.time()
+        # print(rlist)
+        for current_socket in rlist: # sockets that can be read
+            # print("In Loop")
+            if current_socket.fileno() == vis_fd:
+                # print(vis_socket)
+                continue
+
+            if current_socket.fileno() in fd_to_id_map.keys():
+                
+                if robot_state[fd_to_id_map[current_socket.fileno()]].clk > sim_time_curr:
                     continue
-
-                if current_socket.fileno() in fd_to_id_map.keys():
-                    
-                    if robot_state[fd_to_id_map[current_socket.fileno()]].clk > sim_time_curr:
-                        continue
-                    # print(current_socket.fileno())
-                data = current_socket.recv(4*1024)
-                if len(data) == 0:
-                    gibberish = 0
-                    print("Gibberish")
-                else:
-                    
-                    # broadcast_message(current_socket, "\r" + '<' + data + '> ')
-                    msg = msg_decode(data)
-                    if msg[2] == 3:
-                        # delay
-                        robot_state[int(msg[1])].clk += (msg[3]/1000)
-                        data_string = '0b1'
-                        current_socket.sendall(data_string.encode('utf-8'))
-                        continue
-                    elif msg[2] == 4:
-                        # send_msg
-                        # print('Message sent:',msg[3])
-                        data_string = '0b1'
-                        current_socket.sendall(data_string.encode('utf-8'))
-                        msg_for_buffer = current_socket.recv(1024*4)
-                        data_string = '0b1'
-                        current_socket.sendall(data_string.encode('utf-8'))
-                        msg_type = msg[3]
-                        msg_buffer = update_msg_buffer(msg_buffer,MSG_BUFFER_SIZE,num_of_robot,msg_for_buffer,msg[1],robot_state)
-                        # print("New msg buffer:", msg_buffer)
-                        continue
-                    elif msg[2] == 5:
-                        # recv_msg
-                        arr = msg_buffer[msg[1]]
-                        
-                        len_ = len(arr)
-                        size_ = len_
-                        data_string = str(size_)
-                        current_socket.sendall(data_string.encode('utf-8'))
-                        # print(type(msg_buffer))
-                        clear_bool = current_socket.recv(1024)
-                        data_string = '0b1'
-                        current_socket.sendall(data_string.encode('utf-8'))
-                        # start_j = 0
-                        # end_j = 20
-
-                        for j in range(len_):
-                            check_data_ = current_socket.recv(1024)
-                            # data_send = convert_list_to_dict(arr[j])
-                            data = arr[j]
-                            # print(type(data))
-                            # start_j+=20
-                            # end_j = min(end_j+20, len_)
-                            # data = json.dumps(data_send)
-                            # print(data)
-                            current_socket.sendall(data)
-
-                        if clear_bool.decode('utf-8') == 'True':
-                            msg_buffer[msg[1]] = []
-                        # print('Send data:')
-                        continue
-                    elif msg[2] == 6:
-                        # get_clock
-                        data_string = '0b1'
-                        current_socket.sendall(data_string.encode('utf-8'))
-                        type_time = current_socket.recv(1024)
-                        time_val = robot_state[int(msg[1])].clk
-                        time_val = str(round(time_val,4))
-                        current_socket.sendall(time_val.encode('utf-8'))
-                    elif msg[2] == 7:
-                        # Set wheel velocity
-                        data_string = '0b1'
-                        current_socket.sendall(data_string.encode('utf-8'))
-                        vel = current_socket.recv(1024)
-                        data_string = '0b1'
-                        current_socket.sendall(data_string.encode('utf-8'))
-                        vel = vel.decode('utf-8')
-                        vel = json.loads(vel)
-                        # print(vel)
-                        wheel_pow = np.array([vel[0],vel[1]])
-                        # print("Wheel power:", wheel_pow)
-                        # print("motor_full_speed", motor_full_speed)
-                        wheel_vel = motor_full_speed*wheel_pow/100
-                        wheel_vel_arr[int(msg[1])] = wheel_vel
-                        # print("Wheel velocity:",wheel_vel)
-                    elif msg[2] == 8:
-                        # get_pose
-                        data_string = '0b1'
-                        current_socket.sendall(data_string.encode('utf-8'))
-                        pose_type = current_socket.recv(1024)
-                        local_id = int(msg[1])
-                        pos_tuple = [robot_state[local_id].pos_x, robot_state[local_id].pos_y, robot_state[local_id].pos_angle]
-                        # x_, y_, theta_ = transform_from_map_to_base(pos_tuple[0], pos_tuple[1], pos_tuple[2])
-                        # pos_tuple = [x_,y_,theta_]
-                        pos_tuple = json.dumps(pos_tuple)
-                        current_socket.sendall(pos_tuple.encode('utf-8'))
-
-                    elif msg[2] == 2:
-                        # set_led
-                        data_string = '0b1'
-                        current_socket.sendall(data_string.encode('utf-8'))
-                        if msg[1] in robot_id:
-                            usr_led_ = (msg[3],msg[4],msg[5])
-                            robot_state[int(msg[1])].usr_led = usr_led_
-                            # else:
-                            #     print("FLAG")
-                            #     robot_id[int(msg[1])] = msg[1]
-                            #     robot = BotSim(id=msg[1],usr_led=(msg[3],msg[4],msg[5]),clk=sim_time_curr)
-                            #     robot_state[int(msg[1])] = robot
-                    # data_csv = [sim_ticks,time.time()-sim_time_or]
-                # writer.writerow(data_csv)
-            # sim_time = time.time() - sim_time_start
-            _time_socket_delta = time.time() - _time_socket_start 
-            
-            # Only allows visualization every 0.005 seconds
-            delta_vis += T_real
-            if delta_vis > 0.01: 
-                # print("call vis")
-                delta_vis = 0
-                if vis_fd>0:
-                    # Need to change this part. Json Dumps not working. Maybe look at something else
-                    msg1 = conv_to_json(robot_state, num_of_robot)
-                    # msg1 = '0b1011'
-                    vis_socket.sendall(json.dumps(msg1).encode('utf-8'))
-                    # sim_ticks +=1
-                    # vis_socket.send(msg1.encode('utf-8'))
-                    recv_msg = vis_socket.recv(1024)
-                    
-                    # Send time to visualization
-                    # data_string = str(sim_time_curr) + '0b0' + str(real_time_curr)
-                    _data_arr = [sim_time_curr, real_time_curr, actual_rtf]
-                    _data_json = json.dumps(_data_arr)
-                    vis_socket.sendall(_data_json.encode('utf-8'))
-                    # print(recv_msg.decode('utf-8'))
-                # visualisation(screen, robot_id, robot_state, num_of_robot)
-                # sim_time_start = time.time()
-            # print(time.time() - start_of_loop, " seconds ")
-            # print("fd to id:", fd_to_id_map)
-            # sim_time_curr += delta_t
-            # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
-            
-            # delta_time = T_sim
-            _time_integrate_start = time.time()
-            sim_time_curr += T_sim
-            robot_state = integrate_world(robot_state, num_of_robot, wheel_vel_arr, curr_time = time.time(), prev_time = real_time_now_start, dt = T_sim, sim_time= sim_time_curr)
-            
-            # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
-            real_time_now_end = time.time()
-            elapsed_time_diff = real_time_now_end - real_time_now_start
-            _time_integrate_delta = time.time() - _time_integrate_start
-            # print("Time to integrate:",_time_integrate_delta)
-            # print("Time for sockets", _time_socket_delta)
-            real_time_now_start = time.time()
-
-            if elapsed_time_diff < T_real:
-                # real_time_now_loop_start = time.time()
-                
-                # sim_time_delt = T_sim
-                real_time_curr += T_real
-                # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
-                actual_rtf = T_sim/T_real
-                # print(actual_rtf)
-                # real_time_now_loop_end = time.time()
-                # elapsed_time_diff_loop = real_time_now_loop_end - real_time_now_loop_start
-                diff = T_real - elapsed_time_diff
-                if diff>0:
-                    time.sleep(diff)
-                # print("sleep")
+                # print(current_socket.fileno())
+            data = current_socket.recv(4*1024)
+            if len(data) == 0:
+                gibberish = 0
+                print("Gibberish")
             else:
-                # sim_time_curr += real_time_factor*elapsed_time_diff
-                # sim_time_curr += T_sim
-                # sim_time_delt = real_time_factor*elapsed_time_diff
-                real_time_curr += elapsed_time_diff
-                actual_rtf = T_sim/elapsed_time_diff
-                # print(actual_rtf)
-                # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
-                elapsedDIffList.append(elapsed_time_diff)
+                msg = msg_decode(data)
+                robot_state, msg_buffer, wheel_vel_arr = get_data(current_socket, msg, robot_state, robot_id, num_of_robot, MSG_BUFFER_SIZE, msg_buffer, wheel_vel_arr)
                 
-                notslept += 1
-                # print(notslept)
-            # visualisation(screen, robot_id, robot_state)
-            # print("Sim time:",sim_time_curr)
-            # print("real time:", time.time())
-        except Exception: # See for some specific exception you expect
-            # print("Some error")
-            continue
+        _time_socket_delta = time.time() - _time_socket_start 
         
-        except BaseException:
-            print("Client Shutdown requested...exiting")
-            break
+        # Only allows visualization every 0.005 seconds
+        delta_vis += T_real
+        if delta_vis > 0.01: 
+            # print("call vis")
+            delta_vis = 0
+            if vis_fd>0:
+                send_data_to_vis(vis_socket, robot_state, num_of_robot, sim_time_curr, real_time_curr, actual_rtf)
+        
+        # delta_time = T_sim
+        _time_integrate_start = time.time()
+        sim_time_curr += T_sim
+        robot_state = integrate_world(robot_state, num_of_robot, wheel_vel_arr, curr_time = time.time(), prev_time = real_time_now_start, dt = T_sim, sim_time= sim_time_curr)
+        
+        # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
+        real_time_now_end = time.time()
+        elapsed_time_diff = real_time_now_end - real_time_now_start
+        _time_integrate_delta = time.time() - _time_integrate_start
+        # print("Time to integrate:",_time_integrate_delta)
+        # print("Time for sockets", _time_socket_delta)
+        real_time_now_start = time.time()
+
+        if elapsed_time_diff < T_real:
+            real_time_curr += T_real
+            actual_rtf = T_sim/T_real
+            diff = T_real - elapsed_time_diff
+            if diff>0:
+                time.sleep(diff)
+        else:
+            
+            real_time_curr += elapsed_time_diff
+            actual_rtf = T_sim/elapsed_time_diff
+            elapsedDIffList.append(elapsed_time_diff)
+            
+            notslept += 1
+            # print(notslept)
         
     server_socket.close()
 
 def main():
 
-
+    # functiontrace.trace()
     try:
        loop()
     except KeyboardInterrupt:
