@@ -429,7 +429,7 @@ def send_data_to_vis(vis_socket, robot_state, num_of_robot, sim_time_curr, real_
 
 def get_data(current_socket, msg, robot_state, robot_id, num_of_robot, MSG_BUFFER_SIZE, msg_buffer, wheel_vel_arr):
     """
-    
+    Get and manage the data from sockets
     """
     if msg[2] == 3:
         # delay
@@ -565,7 +565,10 @@ def loop():
         for current_socket in rlist: # sockets that can be read
             # print("In Loop")
             if current_socket.fileno() == vis_fd:
-                # print(vis_socket)
+                # print('Start vis on client')
+                # _connnect = current_socket.recv(4*1024)
+                # send_data_to_vis(vis_socket, robot_state, num_of_robot, sim_time_curr, real_time_curr, actual_rtf)
+                # print('End vis on client')
                 continue
 
             if current_socket.fileno() in fd_to_id_map.keys():
@@ -583,10 +586,9 @@ def loop():
                 
         _time_socket_delta = time.time() - _time_socket_start 
         
-        # Only allows visualization every 0.005 seconds
+        # Only allows visualization every 0.05 seconds
         delta_vis += T_real
-        if delta_vis > 0.01: 
-            # print("call vis")
+        if delta_vis > 0.05: 
             delta_vis = 0
             if vis_fd>0:
                 send_data_to_vis(vis_socket, robot_state, num_of_robot, sim_time_curr, real_time_curr, actual_rtf)
@@ -623,7 +625,7 @@ def loop():
 
 def main():
 
-    # functiontrace.trace()
+    functiontrace.trace()
     try:
        loop()
     except KeyboardInterrupt:

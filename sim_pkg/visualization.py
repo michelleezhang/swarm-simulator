@@ -189,11 +189,14 @@ class visualization:
         pygame.display.flip()
 
     def loop(self):
-
+        T_vis = 0.6
         while True:
-            # print("Waiting for client to receive")
+            
+            # data_send = '0b11'
+            # self.client_socket.sendall(data_send.encode())
+            # # print("Waiting for client to receive")
             msg = self.client_socket.recv(10*4096)
-            # _start_time_vis = time.time()
+            _start_time_vis = time.time()
             msg = msg.decode('utf-8')
             msg = json.loads(msg)
             # print(msg)  
@@ -216,8 +219,10 @@ class visualization:
             # print('Vis:',real_time)
             self.update_states(msg)
             self.update_time_msg(real_time,sim_time, rtf)
-            # _vis_time_delta = time.time() - _start_time_vis
-            # print("Visual time taken:",_vis_time_delta)
+            _vis_time_delta = time.time() - _start_time_vis
+            # if _vis_time_delta < T_vis:
+            #     time.sleep(T_vis-_vis_time_delta)
+            print("Visual time taken:",_vis_time_delta)
 
             
 
