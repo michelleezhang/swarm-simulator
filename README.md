@@ -1,7 +1,7 @@
 # Swarm Simulation
 
 ## How to run 
-run `python3 run` in sim_pkg folder one terminal. 
+run `python3 run.py` in sim_pkg folder directory. 
 
 config.json file has the following options to set: 
 1. TIME_ASYNC - 0 to make the robot time synced and 1 to introduce time asynchronous initialization for robots 
