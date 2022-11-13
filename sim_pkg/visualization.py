@@ -222,7 +222,7 @@ class visualization:
             _vis_time_delta = time.time() - _start_time_vis
             # if _vis_time_delta < T_vis:
             #     time.sleep(T_vis-_vis_time_delta)
-            print("Visual time taken:",_vis_time_delta)
+            # print("Visual time taken:",_vis_time_delta)
 
             
 

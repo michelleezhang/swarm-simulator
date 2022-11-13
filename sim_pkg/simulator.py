@@ -388,6 +388,7 @@ def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, cur
         
 
         # check for collision with robots
+        collision_flag_ = True
         collision_flag_ = check_collision(pos, robot_states, i, num_of_robot)
         robot_states[i].pos_angle = pos[0]
 
@@ -545,7 +546,7 @@ def loop():
     real_time_curr = 0
     sim_time_delt = 0.0
     msg_buffer = [[]]*(NUM_OF_ROBOTS)
-    MSG_BUFFER_SIZE = 1024
+    MSG_BUFFER_SIZE = 1792
     num_of_robot = NUM_OF_ROBOTS
     wheel_vel_arr  = [np.array([0,0])]*(NUM_OF_ROBOTS)
     vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id = initialize_robots()
@@ -578,7 +579,6 @@ def loop():
                 # print(current_socket.fileno())
             data = current_socket.recv(4*1024)
             if len(data) == 0:
-                gibberish = 0
                 print("Gibberish")
             else:
                 msg = msg_decode(data)
@@ -625,7 +625,7 @@ def loop():
 
 def main():
 
-    functiontrace.trace()
+    # functiontrace.trace()
     try:
        loop()
     except KeyboardInterrupt:

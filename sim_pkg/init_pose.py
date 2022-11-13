@@ -37,10 +37,10 @@ def init(swarmsize, x, y, theta, a_ids):
     import math
     import random
     for i in range(swarmsize):
-        x[i] = (i % 50 ) * 0.11
-        y[i] = (i / 50 ) * 0.11
+        x[i] = random.uniform(-0.3, 0.3) + 0
+        y[i] = random.uniform(-0.3, 0.3) + 0
         a_ids[i] = i
-        theta[i] = 0
+        theta[i] = random.uniform(-math.pi, math.pi)
         # if i%3==0:
 		# 	a_ids[i]=1
 		# elif i%3==1:

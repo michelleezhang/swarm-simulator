@@ -1,8 +1,12 @@
 # Swarm Simulation
 
 ## How to run 
-run `python3 simulator` in one terminal. \
-run `./run_parallel.sh 1` in another terminal. 
+run `python3 run` in sim_pkg folder one terminal. \
+
+config.json file has the following options to set: \ 
+1. TIME_ASYNC - 0 to make it time synced and 1 to introduce time asynchronous for robots \ 
+2. 
+
 
 ## Current structure 
 ![Structure](workflow.drawio.png)
