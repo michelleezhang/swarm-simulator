@@ -7,11 +7,16 @@ import socketserver
 import csv
 import numpy as np
 from init_pose import init
-
+import argparse
 
 # sim_process_ = 0 
 robot_processes_ = []
 # vis_processes_ = 0
+parser = argparse.ArgumentParser(description='Run the simulator')
+
+parser.add_argument('-fn', '--filename', type=str, help="Name of the file without the .py extension")
+
+args = parser.parse_args()
 
 def write_to_csv(free_port):
     """
@@ -51,24 +56,31 @@ def run():
     Opens all the programs involved
     """
 
-
+    # Finds the first available socket on the system
     with socketserver.TCPServer(("localhost", 0), None) as s:
         free_port = s.server_address[1]
 
+    # Writes the socket number to port.csv file 
     write_to_csv(free_port)
     
+    # Read required parameters from config.json
     path = str(Path(__file__).parent)
     with open('config.json', 'r') as myfile:
         data=myfile.read()
     config_var = json.loads(data)
     num = config_var["NUMBER_OF_ROBOTS"]
+
+    # Initialize the positions in a csv file 
     init_pos(num)
     
     # print(path)
+    # Open the simulator in a process
     sim_process_ = subprocess.Popen(['python3', 'simulator.py'],close_fds=True,cwd=path)
     time.sleep(1)
+
+    # Open all the robots
     for i in range(int(num)):
-        r_process = subprocess.Popen(['python2','bootloader.py'],close_fds=True,cwd=path)
+        r_process = subprocess.Popen(['python2','bootloader.py', '-fn', args.filename],close_fds=True,cwd=path)
         robot_processes_.append(r_process)
     # subprocess.Popen(['python2','user2.py'],close_fds=True,cwd=path)
     vis_processes_ = subprocess.Popen(['python3','visualization.py'],close_fds=True,cwd=path)
@@ -77,7 +89,7 @@ def run():
 
 def main():
     """
-    
+    Opens all programs and then when program is killed, kills all the processes cleanly
     """
     sim_process, robot_processes, vis_process = run()
     
