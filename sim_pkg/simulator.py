@@ -26,6 +26,7 @@ import math
 import signal
 import pandas as pd
 import functiontrace
+import logging
 # import pygame
 # file = open('time.csv','w')
 # writer = csv.writer(file)
@@ -43,26 +44,59 @@ elapsedDIffList = []
 with open('config.json', 'r') as myfile:
     data=myfile.read()
 config_var = json.loads(data)
+
+# Sets the communication range
 RADIUS_OF_VISIBILITY = config_var["COMM_RANGE"]
+
+# Sets the packet success rate in decimal. 1.0 is 100% 0.7 is 70%
 PACKET_SUCCESS_PERC = config_var["PACKET_SUCCESS_PERC"]
+
+# Sets the number of robots to be launched in the scene
 NUM_OF_ROBOTS = config_var["NUMBER_OF_ROBOTS"]
+
+# The size of the msg buffer for each robot
 NUM_OF_MSGS = config_var["NUM_OF_MSGS"]
+
+# Length of the Arena
 ARENA_LENGTH = config_var["LENGTH"]
+
+# Width of the Arena
 ARENA_WIDTH = config_var["WIDTH"]
+
+# Radius of the robot body
 RADIUS_OF_ROBOT = 0.105/2
+
+# Variable to decide if the time initialization in the robots should be synced or not. 
+# 0 means it is synced, 1 means it is initialized at different values
 TIME_ASYNC = config_var["TIME_ASYNC"]
+
+# Use the initial positions as set from the file
 USE_INIT_POS = config_var["USE_INIT_POS"]
+
+# Set the simulation time step. Usually set as 0.005
 SIM_TIME_STEP = config_var["SIM_TIME_STEP"]
+
+# whether to use the visualizer or not. If not, by default it will log
+USE_VIS = config_var["USE_VIS"]
+if USE_VIS != 1:
+    logging.basicConfig(filename='sim.log',level=logging.INFO)
+    log_obj = logging.getLogger('sim')
+
+# Desired real_time factor
 real_time_factor = config_var["REAL_TIME_FACTOR"]
+
+# Motor Speed in rpm
 motor_rpm = 180
 motor_full_speed = motor_rpm* 2*np.pi / 60
 
+# Read Initial positions from init.csv
 init_pandas = pd.read_csv("init.csv")
 INIT_POS = init_pandas.to_numpy()
 
 class GracefulKiller:
     """
-    Kills the process
+    Checks whether a sigint or sigterm signal is received. If so, it will help 
+    exit the main while loop
     """
     kill_now = False
     def __init__(self):
@@ -104,7 +138,7 @@ class BotDiffDrive:
         
     def dynamics(self, vel_vector):
         """
-        State dynamic model 
+        State dynamic model used to integrate using euler integration
         """
         pos_angle_ = self.pos_angle
         state_matrix = np.array([[-self.radius_of_wheel/(2.0*self.distance_between_wheel), self.radius_of_wheel/(2.0*self.distance_between_wheel)], 
@@ -120,7 +154,7 @@ class BotDiffDrive:
     
     def ForwardKinematics2(self, wheel_vel):
         """
-        As per Modern Robotics 
+        integrate as per Modern Robotics Forward Kinematics
         """
         r = self.radius_of_wheel
         d = self.distance_between_wheel
@@ -329,9 +363,15 @@ def initialize_robots():
             
         except Exception:
             pass
-        if num_of_robot == NUM_OF_ROBOTS and vis_fd>0:
-            # print("DONE")
-            flag = False
+
+        if USE_VIS == 1:
+            if num_of_robot == NUM_OF_ROBOTS and vis_fd>0:
+                # print("DONE")
+                flag = False
+        else:
+            if num_of_robot == NUM_OF_ROBOTS:
+                flag = False
+
     print("While loop done")   
     for key, curr_socket in id_to_socket_map.items():
         msg1 = str(bin(int(key)))
@@ -512,7 +552,16 @@ def get_data(current_socket, msg, robot_state, robot_id, num_of_robot, MSG_BUFFE
         current_socket.sendall(pos_tuple.encode('utf-8'))
 
     return robot_state, msg_buffer, wheel_vel_arr
-    
+
+def log_data(robot_state, num_of_robot, sim_time_curr, real_time_curr, actual_rtf)->None:
+    """
+    Logs data to sim.log
+    """
+    log_data = conv_to_json(robot_state, num_of_robot)
+    log_data['sim_time'] = sim_time_curr
+    log_data['real_time'] = real_time_curr
+    log_data['real_time_factor'] = actual_rtf
+    log_obj.info(log_data)
 
 def loop():
     """
@@ -571,10 +620,16 @@ def loop():
         
         # Only allows visualization every 0.05 seconds
         delta_vis += T_real
-        if delta_vis > 0.05: 
-            delta_vis = 0
-            if vis_fd>0:
-                send_data_to_vis(vis_socket, robot_state, num_of_robot, sim_time_curr, real_time_curr, actual_rtf)
+        if USE_VIS == 1:
+
+            if delta_vis > 0.05: 
+                delta_vis = 0
+                if vis_fd>0:
+                    send_data_to_vis(vis_socket, robot_state, num_of_robot, sim_time_curr, real_time_curr, actual_rtf)
+        else:
+            # Log stuff here 
+            log_data(robot_state, num_of_robot, sim_time_curr, real_time_curr, actual_rtf)
+            
         
         # delta_time = T_sim
         _time_integrate_start = time.time()
@@ -608,7 +663,7 @@ def loop():
 
 def main():
 
-    functiontrace.trace()
+    # functiontrace.trace()
     try:
        loop()
     except KeyboardInterrupt:

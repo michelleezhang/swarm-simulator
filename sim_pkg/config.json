@@ -8,5 +8,6 @@
     "WIDTH": 4.5, 
     "LENGTH": 7.5, 
     "USE_INIT_POS": 0,
-    "SIM_TIME_STEP": 0.005
+    "SIM_TIME_STEP": 0.005,
+    "USE_VIS": 1
 }

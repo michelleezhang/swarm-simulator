@@ -69,7 +69,7 @@ def run():
         data=myfile.read()
     config_var = json.loads(data)
     num = config_var["NUMBER_OF_ROBOTS"]
-
+    use_vis = config_var["USE_VIS"]
     # Initialize the positions in a csv file 
     init_pos(num)
     
@@ -83,7 +83,11 @@ def run():
         r_process = subprocess.Popen(['python2','-O', 'bootloader.py', '-fn', args.filename],close_fds=True,cwd=path)
         robot_processes_.append(r_process)
     # subprocess.Popen(['python2','user2.py'],close_fds=True,cwd=path)
-    vis_processes_ = subprocess.Popen(['python3','-O','visualization.py'],close_fds=True,cwd=path)
+    
+    if use_vis == 1:
+        vis_processes_ = subprocess.Popen(['python3','-O','visualization.py'],close_fds=True,cwd=path)
+    else:
+        vis_processes_ = -1 
 
     return sim_process_, robot_processes_, vis_processes_
 
@@ -110,11 +114,11 @@ def main():
             # print(stderr)
         
         subprocess.Popen.terminate(sim_process)
-        
-        try:
-            subprocess.Popen.terminate(vis_process)
-        except:
-            pass
+        if vis_process != -1:
+            try:
+                subprocess.Popen.terminate(vis_process)
+            except:
+                pass
 
         
         print('Interrupted')
