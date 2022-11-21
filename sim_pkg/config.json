@@ -1,6 +1,6 @@
 {
     "TIME_ASYNC": 1,
-    "NUMBER_OF_ROBOTS": 20,
+    "NUMBER_OF_ROBOTS": 50,
     "COMM_RANGE": 20, 
     "PACKET_SUCCESS_PERC": 0.9, 
     "REAL_TIME_FACTOR": 2.0,

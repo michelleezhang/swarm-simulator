@@ -9,11 +9,11 @@ def usr(robot):
     while True:
         # val = robot.recv_msg()
         
-        # robot.delay()
+        robot.delay()
         id = robot.id
 
         if id == 3:
-            robot.delay(50)
+            robot.delay(200)
             robot.send_msg(st)
             
             

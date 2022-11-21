@@ -6,3 +6,6 @@ __pycache__/
 functiontrace*
 *log*
 *pyo
+*.txt
+*.ttf
+time_csv.py
