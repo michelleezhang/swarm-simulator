@@ -2,3 +2,7 @@ __pycache__/
 *.csv
 *.log
 *.pyc
+*.txt
+functiontrace*
+*log*
+*pyo

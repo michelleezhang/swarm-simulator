@@ -75,15 +75,15 @@ def run():
     
     # print(path)
     # Open the simulator in a process
-    sim_process_ = subprocess.Popen(['python3', 'simulator.py'],close_fds=True,cwd=path)
+    sim_process_ = subprocess.Popen(['python3','-O', 'simulator.py'],close_fds=True,cwd=path)
     time.sleep(1)
 
     # Open all the robots
     for i in range(int(num)):
-        r_process = subprocess.Popen(['python2','bootloader.py', '-fn', args.filename],close_fds=True,cwd=path)
+        r_process = subprocess.Popen(['python2','-O', 'bootloader.py', '-fn', args.filename],close_fds=True,cwd=path)
         robot_processes_.append(r_process)
     # subprocess.Popen(['python2','user2.py'],close_fds=True,cwd=path)
-    vis_processes_ = subprocess.Popen(['python3','visualization.py'],close_fds=True,cwd=path)
+    vis_processes_ = subprocess.Popen(['python3','-O','visualization.py'],close_fds=True,cwd=path)
 
     return sim_process_, robot_processes_, vis_processes_
 

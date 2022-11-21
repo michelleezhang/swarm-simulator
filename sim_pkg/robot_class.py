@@ -12,6 +12,7 @@ import numpy as np
 import math_utils
 from control import MotorController, PIDController
 import csv
+import time
 
 with open('config.json', 'r') as myfile:
     data=myfile.read()
@@ -231,6 +232,9 @@ class Coachbot:
         """
         info = str(bin(delay_time))
         self.send_data(3,info)
+        # sleep_time = (delay_time/1000) - 0.001
+        # if sleep_time>0:
+        #     time.sleep(sleep_time)
     
     def set_vel(self, left, right):
         # type: (int|float, int|float) -> None

@@ -385,34 +385,22 @@ def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, cur
         u_l = wheel_vel[0]
         u_r = wheel_vel[1]
         pos = robot_states[i].integrate(u_l,u_r,delta_time)
-        
-
+    
         # check for collision with robots
-        collision_flag_ = True
-        collision_flag_ = check_collision(pos, robot_states, i, num_of_robot)
         robot_states[i].pos_angle = pos[0]
 
-        if collision_flag_ == True:
+        if check_collision(pos, robot_states, i, num_of_robot):
             robot_states[i].pos_x = pos[1]
             robot_states[i].pos_y = pos[2]
 
         # check for collision with walls
         robot_states[i].pos_x = max(robot_states[i].pos_x, -ARENA_WIDTH/2 + RADIUS_OF_ROBOT)
         robot_states[i].pos_x = min(robot_states[i].pos_x, ARENA_WIDTH/2 - RADIUS_OF_ROBOT)
-        # if robot_states[i].pos_x - RADIUS_OF_ROBOT  < -ARENA_WIDTH/2:
-        #    robot_states[i].pos_x = -ARENA_WIDTH/2 + RADIUS_OF_ROBOT
-        # elif robot_states[i].pos_x + RADIUS_OF_ROBOT > ARENA_WIDTH/2:
-        #     robot_states[i].pos_x = ARENA_WIDTH/2 - RADIUS_OF_ROBOT
         
         robot_states[i].pos_y = max(robot_states[i].pos_y, -ARENA_LENGTH/2 + RADIUS_OF_ROBOT)
         robot_states[i].pos_y = min(robot_states[i].pos_y, ARENA_LENGTH/2 - RADIUS_OF_ROBOT)
-        # if robot_states[i].pos_y - RADIUS_OF_ROBOT < -ARENA_LENGTH/2:
-        #    robot_states[i].pos_y = -ARENA_LENGTH/2 + RADIUS_OF_ROBOT
-        # elif robot_states[i].pos_y + RADIUS_OF_ROBOT > ARENA_LENGTH/2:
-        #     robot_states[i].pos_y = ARENA_LENGTH/2 - RADIUS_OF_ROBOT
 
-        if robot_states[i].clk < sim_time:
-           robot_states[i].clk = sim_time
+        robot_states[i].clk = max(robot_states[i].clk, sim_time)
 
     return robot_states
 
@@ -432,6 +420,7 @@ def get_data(current_socket, msg, robot_state, robot_id, num_of_robot, MSG_BUFFE
     """
     Get and manage the data from sockets
     """
+    
     if msg[2] == 3:
         # delay
         robot_state[int(msg[1])].clk += (msg[3]/1000)
@@ -561,15 +550,9 @@ def loop():
        
         _time_socket_start = time.time()
         rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
-        # sim_time_real = time.time()
-        # print(rlist)
         for current_socket in rlist: # sockets that can be read
             # print("In Loop")
             if current_socket.fileno() == vis_fd:
-                # print('Start vis on client')
-                # _connnect = current_socket.recv(4*1024)
-                # send_data_to_vis(vis_socket, robot_state, num_of_robot, sim_time_curr, real_time_curr, actual_rtf)
-                # print('End vis on client')
                 continue
 
             if current_socket.fileno() in fd_to_id_map.keys():
@@ -625,7 +608,7 @@ def loop():
 
 def main():
 
-    # functiontrace.trace()
+    functiontrace.trace()
     try:
        loop()
     except KeyboardInterrupt:
