@@ -9,7 +9,7 @@ def usr(robot):
     while True:
         # val = robot.recv_msg()
         
-        robot.delay()
+        robot.delay(1000)
         id = robot.id
 
         if id == 3:
@@ -20,8 +20,8 @@ def usr(robot):
         elif id == 4:
             robot.delay(6000)
             val = robot.recv_msg(clear=True)
-            print(val)
-            print("length:", len(val))
+            # print(val)
+            # print("length:", len(val))
         
         elif id == 6:
             robot.delay(1000)

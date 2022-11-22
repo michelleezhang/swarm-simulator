@@ -432,6 +432,8 @@ def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, cur
         if check_collision(pos, robot_states, i, num_of_robot):
             robot_states[i].pos_x = pos[1]
             robot_states[i].pos_y = pos[2]
+        # robot_states[i].pos_x = pos[1]
+        # robot_states[i].pos_y = pos[2]
 
         # check for collision with walls
         robot_states[i].pos_x = max(robot_states[i].pos_x, -ARENA_WIDTH/2 + RADIUS_OF_ROBOT)
@@ -560,7 +562,8 @@ def log_data(robot_state, num_of_robot, sim_time_curr, real_time_curr, actual_rt
     log_data = conv_to_json(robot_state, num_of_robot)
     log_data['sim_time'] = sim_time_curr
     log_data['real_time'] = real_time_curr
-    log_data['real_time_factor'] = actual_rtf
+    log_data['real_time_factor'] = round(actual_rtf,1)
+    log_data = json.dumps(log_data)
     log_obj.info(log_data)
 
 def loop():
@@ -574,11 +577,9 @@ def loop():
     T_sim = SIM_TIME_STEP
     # T_sim = real_time_factor*T_real
     T_real = T_sim/real_time_factor
-    # sim_ticks = 0 
-    # sim_time_or = time.time()
+    
     sim_time_curr = 0.0001
-    # robot = BotSim(id=0,usr_led=(0,0,0),clk=sim_time_curr)
-    # robot_state = [robot]*NUM_OF_ROBOTS
+    
     buffer_list_size = 16
     delta_vis = 0
     real_time_curr = 0
@@ -593,12 +594,14 @@ def loop():
     actual_rtf = real_time_factor
 
     killer = GracefulKiller()
+    actual_rtf_list = []
     while not killer.kill_now:
         
         
        
         _time_socket_start = time.time()
         rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
+        # Loop through the sockets and get all the data
         for current_socket in rlist: # sockets that can be read
             # print("In Loop")
             if current_socket.fileno() == vis_fd:
@@ -625,7 +628,9 @@ def loop():
             if delta_vis > 0.05: 
                 delta_vis = 0
                 if vis_fd>0:
-                    send_data_to_vis(vis_socket, robot_state, num_of_robot, sim_time_curr, real_time_curr, actual_rtf)
+                    rtf = np.mean(actual_rtf_list)
+                    actual_rtf_list = []
+                    send_data_to_vis(vis_socket, robot_state, num_of_robot, sim_time_curr, real_time_curr, rtf)
         else:
             # Log stuff here 
             log_data(robot_state, num_of_robot, sim_time_curr, real_time_curr, actual_rtf)
@@ -658,12 +663,12 @@ def loop():
             
             notslept += 1
             # print(notslept)
-        
+        actual_rtf_list.append(actual_rtf)
     server_socket.close()
 
 def main():
 
-    # functiontrace.trace()
+    functiontrace.trace()
     try:
        loop()
     except KeyboardInterrupt:

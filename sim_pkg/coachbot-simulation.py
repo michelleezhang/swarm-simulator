@@ -75,6 +75,7 @@ def run():
     
     # print(path)
     # Open the simulator in a process
+    # sim_process_ = subprocess.Popen(['nice', '-n', '-20','python3','-O', 'simulator.py'],close_fds=True,cwd=path)
     sim_process_ = subprocess.Popen(['python3','-O', 'simulator.py'],close_fds=True,cwd=path)
     time.sleep(1)
 
