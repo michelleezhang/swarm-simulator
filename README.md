@@ -26,7 +26,7 @@ config.json file has the following options to set:
 
 
 ## Current structure (Outdated)
-![Structure](workflow.drawio.png)
+![Structure](.github/images/workflow.drawio.png)
 
 ## Current Stats
 
@@ -61,9 +61,9 @@ T_real - 0.0001 seconds; real time factor - 0.5 \
 
 Firefly
 
-![Firefly](firefly.gif)
+![Firefly](.github/images/firefly.gif)
 
-![Flocking](flocking.gif)
+![Flocking](.github/images/flocking.gif)
 
 ## License
 [MIT](https://choosealicense.com/licenses/mit/)
