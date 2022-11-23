@@ -9,3 +9,4 @@ functiontrace*
 *.txt
 *.ttf
 time_csv.py
+*user*
