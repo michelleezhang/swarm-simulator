@@ -668,7 +668,7 @@ def loop():
 
 def main():
 
-    functiontrace.trace()
+    # functiontrace.trace()
     try:
        loop()
     except KeyboardInterrupt:

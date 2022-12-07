@@ -1,10 +1,9 @@
 #!/usr/bin/env python2
-from robot_class import Coachbot
+from coachbot_emulator2.coachbot import Coachbot
 import signal
 import sys
 import argparse
 import importlib
-# import functiontrace
 
 parser = argparse.ArgumentParser(description='Run the simulator')
 
@@ -30,5 +29,4 @@ if __name__ == "__main__":
     # create a sigterm handler here
     signal.signal(signal.SIGTERM, sigterm_handler)
     signal.signal(signal.SIGINT, sigterm_handler)
-    # functiontrace.trace()
     fn.usr(robot)
