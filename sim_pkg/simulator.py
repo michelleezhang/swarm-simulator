@@ -238,7 +238,7 @@ def update_time(robot_state:list, num_of_robot:int, sim_time:float)-> list:
 
 def update_msg_buffer(msg_buffer:list, MSG_SIZE:int, num_of_robot:int,msg:bytes, robot_id:int,robot_states:list)->list:
     """
-    Update Message Buffer
+    Update Message Buffer. Updates buffer for robots in the comm range. 
     """
     ref_x = robot_states[robot_id].pos_x
     ref_y = robot_states[robot_id].pos_y

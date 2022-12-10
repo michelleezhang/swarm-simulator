@@ -30,8 +30,8 @@ config.json file has the following options to set:
 6. bootloader.py - launches the user code with the custom coachbot class
 
 
-<!-- ## Current structure (Outdated)
-![Structure](.github/images/workflow.drawio.png) -->
+## Current structure
+![Structure](.github/images/workflow.drawio.png)
 
 ## Current Program examples
 

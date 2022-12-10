@@ -37,9 +37,6 @@ class Coachbot:
         """
         self.id_ = id_n
         self.usr_led = (0,0,0)
-        self.pos_x = 3
-        self.pos_y = 3
-        self.clk = 0        
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # self.client_socket.settimeout(0.5)
         self.client_socket.connect((socket.gethostname(), SOCKET_PORT_NUMBER))
