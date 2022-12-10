@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 """
-Define Robot class that will act as an API
+Define Robot class that will act as an API. This API is called by
+the bootloader
 
 """
 import socket

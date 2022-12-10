@@ -11,6 +11,7 @@ __maintainer__ = 'Devesh Bhura'
 __email__ = 'devbhura@gmail.com'
 __status__ = 'Research'
 
+
 """
 import random
 import socket
@@ -25,7 +26,7 @@ from itertools import chain
 import math
 import signal
 import pandas as pd
-import functiontrace
+# import functiontrace
 import logging
 # import pygame
 # file = open('time.csv','w')
@@ -33,7 +34,7 @@ import logging
 socket_port_pandas = pd.read_csv("port.csv", header=None)
 socket_port_numpy = socket_port_pandas.to_numpy()
 socket_port_number = int(socket_port_numpy[0][0])
-print(socket_port_number)
+# print(socket_port_number)
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # SOCK_STREAM is for TCP 
 server_socket.bind((socket.gethostname(),socket_port_number)) # Binds to port 1245
 server_socket.listen(1)
@@ -82,6 +83,9 @@ if USE_VIS != 1:
     logging.basicConfig(filename='sim.log',level=logging.INFO)
     log_obj = logging.getLogger('sim')
 
+# Message size
+MSG_SIZE = config_var["MSG_SIZE"]
+
 # Desired real_time factor
 real_time_factor = config_var["REAL_TIME_FACTOR"]
 
@@ -113,7 +117,7 @@ class BotDiffDrive:
     def __init__(self, id_=0, pos_x_=0.0, pos_y_=0.0, pos_angle_=0.0, clk_=0, usr_led_=(0,0,0)):
         """
         Define base variables. 
-        All values are expected in metres, seconds and radians. 
+        All physical values are expected in metres, seconds and radians. 
         """
         self.id = id_
         self.pos_x = pos_x_
@@ -122,7 +126,7 @@ class BotDiffDrive:
         self.left_wheel_angle = 0
         self.right_wheel_angle = 0
         self.radius_of_wheel = 0.015
-        self.distance_between_wheel = 0.04
+        self.half_distance_between_wheel = 0.04
         self.clk = clk_
         self.usr_led = usr_led_
         
@@ -141,7 +145,7 @@ class BotDiffDrive:
         State dynamic model used to integrate using euler integration
         """
         pos_angle_ = self.pos_angle
-        state_matrix = np.array([[-self.radius_of_wheel/(2.0*self.distance_between_wheel), self.radius_of_wheel/(2.0*self.distance_between_wheel)], 
+        state_matrix = np.array([[-self.radius_of_wheel/(2.0*self.half_distance_between_wheel), self.radius_of_wheel/(2.0*self.half_distance_between_wheel)], 
                                  [self.radius_of_wheel*np.cos(pos_angle_)/2.0, self.radius_of_wheel*np.cos(pos_angle_)/2.0], 
                                  [self.radius_of_wheel*np.sin(pos_angle_)/2.0, self.radius_of_wheel*np.sin(pos_angle_)/2.0],
                                  [1.0, 0.0],
@@ -151,38 +155,6 @@ class BotDiffDrive:
 
         # print(pos)
         return pos
-    
-    def ForwardKinematics2(self, wheel_vel):
-        """
-        integrate as per Modern Robotics Forward Kinematics
-        """
-        r = self.radius_of_wheel
-        d = self.distance_between_wheel
-        u_x = wheel_vel[0][0]
-        u_y = wheel_vel[1][0]
-        # thetadot xdot ydot
-        V = np.array([-r*u_x/(2.0*d)+r*u_y/(2.0*d), r*u_x/2.0 + r*u_y/2.0, 0])
-
-        delq_b = [0, 0, 0]
-        if V[0]==0.0:
-            delq_b[0] = 0
-            delq_b[1] = V[1]
-            delq_b[2] = V[2]
-            
-        else:
-            delq_b[0] = V[0]
-            delq_b[1] = (V[1]*np.sin(V[0])+V[2]*(np.cos(V[0])-1))/V[0]
-            delq_b[2] = (V[2]*np.sin(V[0])+V[1]*(1 - np.cos(V[0])))/V[0]
-
-        phi = self.pos_angle
-        x = self.pos_x
-        y = self.pos_y
-        mult_mat = np.array([[1, 0, 0], [0, np.cos(phi), -np.sin(phi)], [0, np.sin(phi), np.cos(phi)]])
-        delq = mult_mat@np.array([[delq_b[0]], [delq_b[1]], [delq_b[2]]])
-        pos = np.array([phi+delq[0][0], x+delq[1][0], y+delq[2][0]])
-        return pos
-        
-
 
 def convert_list_to_dict(lst):
     """
@@ -264,7 +236,7 @@ def update_time(robot_state:list, num_of_robot:int, sim_time:float)-> list:
     
     return robot_state
 
-def update_msg_buffer(msg_buffer:list, MSG_BUFFER_SIZE:int, num_of_robot:int,msg:bytes, robot_id:int,robot_states:list)->list:
+def update_msg_buffer(msg_buffer:list, MSG_SIZE:int, num_of_robot:int,msg:bytes, robot_id:int,robot_states:list)->list:
     """
     Update Message Buffer
     """
@@ -284,8 +256,8 @@ def update_msg_buffer(msg_buffer:list, MSG_BUFFER_SIZE:int, num_of_robot:int,msg
         if d < RADIUS_OF_VISIBILITY:
             random_bool = np.random.uniform() < PACKET_SUCCESS_PERC
             if random_bool:
-                if len(msg) > MSG_BUFFER_SIZE:
-                    msg = msg[:MSG_BUFFER_SIZE]
+                if len(msg) > MSG_SIZE:
+                    msg = msg[:MSG_SIZE]
                 msg_buffer[i].append(msg)
                 if len(msg_buffer[i])> NUM_OF_MSGS:
                     msg_buffer[i] = msg_buffer[i][-NUM_OF_MSGS:]
@@ -458,7 +430,7 @@ def send_data_to_vis(vis_socket, robot_state, num_of_robot, sim_time_curr, real_
     _data_json = json.dumps(_data_arr)
     vis_socket.sendall(_data_json.encode('utf-8'))
 
-def get_data(current_socket, msg, robot_state, robot_id, num_of_robot, MSG_BUFFER_SIZE, msg_buffer, wheel_vel_arr):
+def get_data(current_socket, msg, robot_state, robot_id, num_of_robot, MSG_SIZE, msg_buffer, wheel_vel_arr):
     """
     Get and manage the data from sockets
     """
@@ -486,7 +458,7 @@ def get_data(current_socket, msg, robot_state, robot_id, num_of_robot, MSG_BUFFE
         data_string = '0b1'
         current_socket.sendall(data_string.encode('utf-8'))
         msg_type = msg[3]
-        msg_buffer = update_msg_buffer(msg_buffer,MSG_BUFFER_SIZE,num_of_robot,msg_for_buffer,msg[1],robot_state)
+        msg_buffer = update_msg_buffer(msg_buffer,MSG_SIZE,num_of_robot,msg_for_buffer,msg[1],robot_state)
         # print("New msg buffer:", msg_buffer)
         
     elif msg[2] == 5:
@@ -566,7 +538,7 @@ def log_data(robot_state, num_of_robot, sim_time_curr, real_time_curr, actual_rt
     log_data = json.dumps(log_data)
     log_obj.info(log_data)
 
-def loop():
+def loop(vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id):
     """
     Loop through to get data from bot classes
     """
@@ -585,20 +557,16 @@ def loop():
     real_time_curr = 0
     sim_time_delt = 0.0
     msg_buffer = [[]]*(NUM_OF_ROBOTS)
-    MSG_BUFFER_SIZE = 1792
+    # Msg size
+    MSG_SIZE = 1792
     num_of_robot = NUM_OF_ROBOTS
     wheel_vel_arr  = [np.array([0,0])]*(NUM_OF_ROBOTS)
-    vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id = initialize_robots()
     real_time_now_start = time.time()
-
     actual_rtf = real_time_factor
-
     killer = GracefulKiller()
     actual_rtf_list = []
     while not killer.kill_now:
         
-        
-       
         _time_socket_start = time.time()
         rlist, wlist, xlist = select.select([server_socket] + open_client_sockets, open_client_sockets, []) # apending reading n writing socket to list
         # Loop through the sockets and get all the data
@@ -617,7 +585,7 @@ def loop():
                 print("Gibberish")
             else:
                 msg = msg_decode(data)
-                robot_state, msg_buffer, wheel_vel_arr = get_data(current_socket, msg, robot_state, robot_id, num_of_robot, MSG_BUFFER_SIZE, msg_buffer, wheel_vel_arr)
+                robot_state, msg_buffer, wheel_vel_arr = get_data(current_socket, msg, robot_state, robot_id, num_of_robot, MSG_SIZE, msg_buffer, wheel_vel_arr)
                 
         _time_socket_delta = time.time() - _time_socket_start 
         
@@ -625,6 +593,8 @@ def loop():
         delta_vis += T_real
         if USE_VIS == 1:
 
+            # TODO: Potential bottleneck for larger swarms(100+) is the hardcoded value to send data to visualizer. 
+            # Currently sends data every 0.05 seconds (assumes each loop of visualization takes less than this time to run). 
             if delta_vis > 0.05: 
                 delta_vis = 0
                 if vis_fd>0:
@@ -634,19 +604,13 @@ def loop():
         else:
             # Log stuff here 
             log_data(robot_state, num_of_robot, sim_time_curr, real_time_curr, actual_rtf)
-            
-        
-        # delta_time = T_sim
-        _time_integrate_start = time.time()
+
         sim_time_curr += T_sim
         robot_state = integrate_world(robot_state, num_of_robot, wheel_vel_arr, curr_time = time.time(), prev_time = real_time_now_start, dt = T_sim, sim_time= sim_time_curr)
         
         # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
         real_time_now_end = time.time()
         elapsed_time_diff = real_time_now_end - real_time_now_start
-        _time_integrate_delta = time.time() - _time_integrate_start
-        # print("Time to integrate:",_time_integrate_delta)
-        # print("Time for sockets", _time_socket_delta)
         real_time_now_start = time.time()
 
         if elapsed_time_diff < T_real:
@@ -670,13 +634,14 @@ def main():
 
     # functiontrace.trace()
     try:
-       loop()
+        vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id = initialize_robots()
+        loop(vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id)
     except KeyboardInterrupt:
         print("Client Shutdown requested...exiting")
         server_socket.close()
     except BaseException:
         print("BaseException")
-        # server_socket.close()
+        server_socket.close()
     
 
     sys.exit(0)

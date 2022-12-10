@@ -1,4 +1,8 @@
 #!/usr/bin/env python2
+"""
+Runs the desired user file in python2 by passing the custom coachbot class for simulation to the 
+usr method in the user defined file
+"""
 from robot_class import Coachbot
 import signal
 import sys
@@ -14,12 +18,11 @@ args = parser.parse_args()
 
 fn = importlib.import_module(args.filename)
 
-
 robot = Coachbot()
 
 def sigterm_handler(signum, _):
     """
-    sigterm handler
+    sigterm handler to kill the program cleanly
     """
     # print("Client to be killed !")
     robot.client_socket.close()

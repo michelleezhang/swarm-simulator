@@ -2,18 +2,15 @@ import random
 
 def usr(robot):
 
-    T = random.randint(800,1300)
-    print(T)
+    T = random.randint(1000,1300)
+    # print(T)
     id = robot.id
 
-    pose = robot.get_pose()
-    print(id, pose)
+    # pose = robot.get_pose()
+    # print(id, pose)
     if id == 5:
-        robot.delay(4000)
-    while True:        
-        
-        if id == 4:
-            continue
+        robot.delay(1000)
+    while True:
 
         if id == 5:
             robot.set_led(0,100,0)
@@ -21,9 +18,9 @@ def usr(robot):
             curr_time = robot.get_clock()
             curr_time = round(curr_time, 2)
             msg = "time:"+ str(curr_time)+';'
-            robot.send_msg("led:(0,100,0);delay:500;"+msg)
+            robot.send_msg("led:(0,100,0);delay:800;"+msg)
             robot.set_led(0,0,0)
-            robot.delay(500)
+            robot.delay(800)
             
 
         else:

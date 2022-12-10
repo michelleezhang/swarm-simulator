@@ -10,3 +10,4 @@ functiontrace*
 *.ttf
 time_csv.py
 *user*
+.vscode/

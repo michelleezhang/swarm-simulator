@@ -36,7 +36,7 @@ def write_to_csv(free_port):
 
 def init_pos(swarmsize):
     """
-    Initialize the position
+    Initialize the position. Run the initialization script in init_pose.py and write it to a csv file. 
     """
     x = [0]*swarmsize
     y = [0]*swarmsize
@@ -85,6 +85,7 @@ def run():
         robot_processes_.append(r_process)
     # subprocess.Popen(['python2','user2.py'],close_fds=True,cwd=path)
     
+    # Opens up the visualization process
     if use_vis == 1:
         vis_processes_ = subprocess.Popen(['python3','-O','visualization.py'],close_fds=True,cwd=path)
     else:
