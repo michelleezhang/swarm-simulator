@@ -354,6 +354,7 @@ def initialize_robots():
     # print(id_to_socket_map)
     
     # Make sure no robot is over another
+    # This just puts the robots in  a diagonal (?)
     for i in range(0, num_of_robot):
         x1 = robot_state[i].pos_x
         y1 = robot_state[i].pos_y
@@ -381,7 +382,7 @@ def check_collision(pos, robot_states, i, num_of_robot):
         x1_ = robot_states[j].pos_x
         y1_ = robot_states[j].pos_y
         d = np.sqrt((x1_-pos[1])**2 + (y1_ - pos[2])**2)
-        if d <= 2*RADIUS_OF_ROBOT:
+        if d <= 2*RADIUS_OF_ROBOT + (0.09 * (ARENA_WIDTH / ARENA_LENGTH - 4/7.5)):
             collision_flag_ = False
     
     return collision_flag_

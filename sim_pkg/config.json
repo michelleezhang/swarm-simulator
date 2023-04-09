@@ -8,7 +8,7 @@
     "MSG_SIZE": 1792,
     "WIDTH": 4.5, 
     "LENGTH": 7.5, 
-    "USE_INIT_POS": 0,
+    "USE_INIT_POS": 1,
     "SIM_TIME_STEP": 0.03,
     "USE_VIS": 1
 }
