@@ -1,12 +1,63 @@
 # Swarm Simulation
 
-## Download
-Clone the repository in a folder
+# Instructions
+To set the correct packages on your system, run `setup_linux.sh`
+* This script does the following:
+    * Updates Linux VM
+    * Installs miniconda (skip default miniconda installation)
+    * Sets up a conda environment “swarm_sim_env” that contains the following modules:
+        * Python2: numpy, typing
+        * Python3: pygame, pandas
 
-## How to run 
-Go inside sim_pkg and run `python3 coachbot-simulation.py -fn <userfile>` in sim_pkg folder. The `user.py` file should be in `sim_pkg` folder. The user file name should be given without .py extension. <br/> 
+To run the simulator:
+1. Navigate to the `sim_pkg` directory. 
+2. Set parameters for the user file in `config.json` and change the code in the `init_pose.py` file if needed.
+    * The initialization parameters for each user file are listed at the end of this section.  
+3. Run `python3 coachbot_simulation.py -fn <userfile> -c <configfile> -i <initfile>`
+    * `<userfile>` is the user's program file (e.g. `firefly.py`)
+    * `<configfile>` is the file that stores simulation parameters (e.g. `config.json`)
+    * `<initfile>` is the file that initializes robot positions (e.g. `init_pose.py`) 
+        * This argument is optional
+    * All filename arguments should omit the .py or .json extensions
+    * On the first run, there might be connection errors. Usually running `tmux` before running this command fixes the issue.
 
-config.json file has the following options to set: 
+To run multiple simulations, run `python3 batch_sim.py <num_runs> <userfile> <configfile> <initfile>` 
+* `<num_runs>` is the number of simulations to run
+* All filename arguments should omit the .py or .json extensions
+* The `<initfile>` argument is optional
+
+
+The available user files are listed below. The position initialization in `init_pose.py` may need to be modified: the code corresponding to each file is written in the comments in `init_pose.py` and labeled. The parameters to set in `config.json` are:
+
+- `firefly.py`
+    - USE_INIT_POS: 0
+    - NUMBER_OF_ROBOTS: 20
+    - COMM_RANGE: 20
+    - This file should be run without an `<initfile>` argument
+- `lab1.py`
+    - USE_INIT_POS: 1
+    - NUMBER_OF_ROBOTS: 2
+    - COMM_RANGE: 0.7
+- `lab2.py`*
+    - USE_INIT_POS: 1
+    - NUMBER_OF_ROBOTS: 256
+    - COMM_RANGE: 0.13
+- `lab3.py`*
+    - USE_INIT_POS: 1
+    - NUMBER_OF_ROBOTS: 100
+    - COMM_RANGE: 0.4
+- `lab4.py`
+    - USE_INIT_POS: 1
+    - NUMBER_OF_ROBOTS: 20
+    - COMM_RANGE: 20
+- `lab4_m.py`
+    - USE_INIT_POS: 1
+    - NUMBER_OF_ROBOTS: 20
+    - COMM_RANGE: 20
+
+`*` - have not been able to run, possibly due to the large number of robots
+
+The parameters to set in the config.json file are: 
 1. TIME_ASYNC - 0 to make the robot time synced and 1 to introduce time asynchronous initialization for robots 
 2. NUMBER_OF_ROBOTS - Number of robots to launch
 3. COMM_RANGE - The range of communication (in meters)
@@ -28,7 +79,6 @@ config.json file has the following options to set:
 4. user.py - user code written by user to run 
 5. coachbot-simulation.py - launches all the processes and programs correctly, using the config.json
 6. bootloader.py - launches the user code with the custom coachbot class
-
 
 ## Current structure
 ![Structure](.github/images/workflow.drawio.png)
