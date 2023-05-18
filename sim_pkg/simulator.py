@@ -673,7 +673,6 @@ def main():
     except BaseException:
         print("BaseException")
         server_socket.close()
-    
 
     sys.exit(0)
 
