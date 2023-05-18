@@ -460,3 +460,8 @@ class Coachbot:
             #                   controller.last_error)
 
             self.rotate_with_power(int(power))
+
+    def send_stop_signal(self): ###### NEW
+        """ Robot sigals to stop the simulator """
+        info = '0bstop' 
+        self.send_data(9, info)

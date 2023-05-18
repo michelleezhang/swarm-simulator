@@ -525,6 +525,9 @@ def get_data(current_socket, msg, robot_state, robot_id, num_of_robot, MSG_SIZE,
         # pos_tuple = [x_,y_,theta_]
         pos_tuple = json.dumps(pos_tuple)
         current_socket.sendall(pos_tuple.encode('utf-8'))
+    elif msg[2] == 9: 
+        # send_stop_signal
+        signal.raise_signal(signal.SIGTERM)
 
     return robot_state, msg_buffer, wheel_vel_arr
 
