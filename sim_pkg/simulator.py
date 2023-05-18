@@ -97,6 +97,8 @@ motor_full_speed = motor_rpm* 2*np.pi / 60
 init_pandas = pd.read_csv("init.csv")
 INIT_POS = init_pandas.to_numpy()
 
+SIM_TIME = config_var["SIM_TIME"]
+
 class GracefulKiller:
     """
     Checks whether a sigint or sigterm signal is received. If so, it will help 
@@ -372,7 +374,7 @@ def initialize_robots():
     
     return vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id
 
-def check_collision(pos, robot_states, i, num_of_robot):
+def check_collision(pos, robot_states, i, num_of_robot, num_collisions):
     """
     Checks for the collision of the robot
     """
@@ -383,11 +385,12 @@ def check_collision(pos, robot_states, i, num_of_robot):
         y1_ = robot_states[j].pos_y
         d = np.sqrt((x1_-pos[1])**2 + (y1_ - pos[2])**2)
         if d <= 2*RADIUS_OF_ROBOT + (0.09 * (ARENA_WIDTH / ARENA_LENGTH - 4/7.5)):
+            num_collisions += 1
             collision_flag_ = False
     
-    return collision_flag_
+    return collision_flag_, num_collisions
 
-def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, curr_time, prev_time, dt, sim_time):
+def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, curr_time, prev_time, dt, sim_time, num_collisions):
     """ 
     Integrates the world
     """
@@ -402,11 +405,13 @@ def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, cur
         # check for collision with robots
         robot_states[i].pos_angle = pos[0]
 
-        if check_collision(pos, robot_states, i, num_of_robot):
+        collision_res = check_collision(pos, robot_states, i, num_of_robot, num_collisions)
+        if collision_res[0]:
             robot_states[i].pos_x = pos[1]
             robot_states[i].pos_y = pos[2]
         # robot_states[i].pos_x = pos[1]
         # robot_states[i].pos_y = pos[2]
+        num_collisions = collision_res[1]
 
         # check for collision with walls
         robot_states[i].pos_x = max(robot_states[i].pos_x, -ARENA_WIDTH/2 + RADIUS_OF_ROBOT)
@@ -417,7 +422,7 @@ def integrate_world(robot_states:list, num_of_robot:int, wheel_vel_arr:list, cur
 
         robot_states[i].clk = max(robot_states[i].clk, sim_time)
 
-    return robot_states
+    return robot_states, num_collisions
 
 def send_data_to_vis(vis_socket, robot_state, num_of_robot, sim_time_curr, real_time_curr, actual_rtf)->None:
     """
@@ -569,6 +574,9 @@ def loop(vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id):
     actual_rtf = real_time_factor
     killer = GracefulKiller()
     actual_rtf_list = []
+
+    num_collisions = 0
+
     while not killer.kill_now:
         
         _time_socket_start = time.time()
@@ -610,12 +618,25 @@ def loop(vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id):
             log_data(robot_state, num_of_robot, sim_time_curr, real_time_curr, actual_rtf)
 
         sim_time_curr += T_sim
-        robot_state = integrate_world(robot_state, num_of_robot, wheel_vel_arr, curr_time = time.time(), prev_time = real_time_now_start, dt = T_sim, sim_time= sim_time_curr)
+        int_world_res = integrate_world(robot_state, 
+                                      num_of_robot, 
+                                      wheel_vel_arr, 
+                                      curr_time = time.time(), 
+                                      prev_time = real_time_now_start, 
+                                      dt = T_sim, 
+                                      sim_time = sim_time_curr, 
+                                      num_collisions = num_collisions)
+        robot_state = int_world_res[0]
+        num_collisions = int_world_res[1]
         
         # robot_state = update_time(robot_state,num_of_robot,sim_time_curr)
         real_time_now_end = time.time()
         elapsed_time_diff = real_time_now_end - real_time_now_start
         real_time_now_start = time.time()
+
+        # time out simulator!
+        if real_time_curr >= SIM_TIME:
+            killer.kill_now = True
 
         if elapsed_time_diff < T_real:
             real_time_curr += T_real
@@ -632,6 +653,12 @@ def loop(vis_fd, vis_socket, fd_to_id_map, robot_state, robot_id):
             notslept += 1
             # print(notslept)
         actual_rtf_list.append(actual_rtf)
+
+    with open("collisions.csv", "a", newline = "") as file:
+        recorder = csv.writer(file)
+        recorder.writerow([num_collisions])
+        print("Collision count saved")
+    file.close()
     server_socket.close()
 
 def main():
