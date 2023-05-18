@@ -26,6 +26,8 @@ To run multiple simulations, run `python3 batch_sim.py <num_runs> <userfile> <co
 * All filename arguments should omit the .py or .json extensions
 * The `<initfile>` argument is optional
 
+To generate a histogram of recorded collision counts, run `python3 analyze.py`
+
 
 The available user files are listed below. The position initialization in `init_pose.py` may need to be modified: the code corresponding to each file is written in the comments in `init_pose.py` and labeled. The parameters to set in `config.json` are:
 
@@ -65,11 +67,12 @@ The parameters to set in the config.json file are:
 5. REAL_TIME_FACTOR - Maximum allowable real time factor
 6. NUM_OF_MSGS - Maximum number of messages to keep in the buffer
 7. MSG_SIZE - Maximum size of each message in buffer
-8. WIDTH - width of the arena
-9. LENGTH - length of the arena
-10. USE_INIT_POS - use the initialization python program to initialize position of the robot
+8. WIDTH - Width of the arena
+9. LENGTH - Length of the arena
+10. USE_INIT_POS - Use the initialization python program to initialize position of the robot
 11. SIM_TIME_STEP - Set the simulation time step for each loop cycle
-12. USE_VIS - If 1, then visualizer will be used. If 0, then visualizer will not be used and instead all states and the time are logged automatically to sim.log
+12. SIM_TIME - Set the total (wall clock) time for the simulation to run
+13. USE_VIS - If 1, then visualizer will be used. If 0, then visualizer will not be used and instead all states and the time are logged automatically to sim.log
 
 ## Main files to see in the sim_pkg folder
 
