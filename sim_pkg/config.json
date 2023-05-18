@@ -10,6 +10,5 @@
     "LENGTH": 7.5, 
     "USE_INIT_POS": 1,
     "SIM_TIME_STEP": 0.03,
-    "SIM_TIME": 10,
     "USE_VIS": 1
 }
