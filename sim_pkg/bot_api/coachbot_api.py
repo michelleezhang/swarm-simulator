@@ -1,5 +1,4 @@
 #!/usr/bin/env python2
-from client_server import Bot_Client
 import base64
 
 class Coachbot():

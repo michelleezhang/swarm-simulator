@@ -52,7 +52,7 @@ class Bot_Server():
             else:
                 # A client (whose connection has already been established) has sent data
 
-                message = s.recv(1024) # TODO: this buffer size might need to scale with num_robots
+                message = s.recv(1024)
 
                 if message: 
                     # The message was not None -- send a response back to the client
@@ -127,9 +127,14 @@ class Bot_Server():
         self.server_socket.close()
     
 class Bot_Client():
-    def __init__(self, hostname, port):
+    def __init__(self, hostname, port, config_data):
         self.hostname = hostname
         self.port = port
+        self.config_data = config_data
+
+        num_msgs = self.config_data["NUM_OF_MSGS"]
+        msg_size = self.config_data["MSG_SIZE"]
+        self.buffer_size = num_msgs * msg_size 
     
     def start(self):
         print("BOT CLIENT: Started.") # TODO: Remove
@@ -156,7 +161,7 @@ class Bot_Client():
         self.client_socket.sendall(data)
 
         # Receive response from simulator
-        response = self.client_socket.recv(1024)
+        response = self.client_socket.recv(self.buffer_size) 
 
         # Need to keep the socket open for a tiny bit
         time.sleep(0.1) 

@@ -22,7 +22,7 @@ def main(userfile, config_data, initfile):
     processes = []
 
     # Initialize classes and run processes simultaneously
-    bootloader = Bootloader(userfile)
+    bootloader = Bootloader(userfile, config_data)
     simulator = Simulator(config_data, initfile)
     if vis == 1:
         gui = GUI(config_data)

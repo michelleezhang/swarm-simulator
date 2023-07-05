@@ -184,7 +184,7 @@ class Simulator():
                             if len(msg) > self.msg_size:
                                 msg = msg[:self.msg_size]
 
-                            robot.message_buffer.append(msg) # ISSUE: Adding to the message buffer
+                            robot.message_buffer.append(msg) # ISSUE: Adding to the message buffer affects communication scalability
                             if len(robot.message_buffer) > self.num_msgs:
                                 robot.message_buffer = robot.message_buffer[-self.num_msgs:]
                             

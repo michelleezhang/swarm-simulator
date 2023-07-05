@@ -8,8 +8,9 @@ class Bootloader():
     '''
     Run the given user code.
     '''
-    def __init__(self, userfile):
+    def __init__(self, userfile, config_data):
         self.userfile = userfile
+        self.config_data = config_data
 
     def launch(self, id, a_ids):
         try:
@@ -18,7 +19,7 @@ class Bootloader():
             fn = importlib.import_module("user." + userfile) 
 
             # Create a Coachbot instance with given id number
-            bot_client = Bot_Client("localhost", 8000)
+            bot_client = Bot_Client("localhost", 8000, self.config_data)
             bot_client.start()
 
             robot = Coachbot(bot_client, id, a_ids)
