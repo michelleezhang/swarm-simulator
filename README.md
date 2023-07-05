@@ -5,7 +5,7 @@ To run the simulator:
 1. Navigate to the `sim_pkg` directory. 
 2. Set parameters for the user file in `config.json` if needed.
     * The parameters for each user file are listed at the end of this section.  
-3. Run `python3 coachbot_simulation.py -fn <userfile> -c <configfile> -i <initfile> -n <num_runs>` 
+3. Run `python3 coachbot_simulator.py -u <userfile> -c <configfile> -i <initfile> -n <num_runs>` 
     * `<userfile>` is the user's program file (e.g. `firefly.py`)
     * `<configfile>` is the file that stores simulation parameters (e.g. `config.json`)
     * `<initfile>` is the file that initializes robot positions (e.g. `init_pose.py`) 
