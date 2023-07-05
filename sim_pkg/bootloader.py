@@ -1,37 +1,42 @@
 #!/usr/bin/env python2
-"""
-Runs the desired user file in python2 by passing the custom coachbot class for simulation to the 
-usr method in the user defined file
-"""
-from robot_class import Coachbot
-import signal
-import sys
-import argparse
+import os
 import importlib
-# import functiontrace
+from bot_api.coachbot_api import Coachbot
+from client_server import Bot_Client
 
-parser = argparse.ArgumentParser(description='Run the simulator')
+class Bootloader():
+    '''
+    Run the given user code.
+    '''
+    def __init__(self, userfile):
+        self.userfile = userfile
 
-parser.add_argument('-fn', '--filename', type=str, help="Name of the file with the .py extension")
+    def launch(self, id, a_ids):
+        try:
+            # Import userfile as a module
+            userfile = os.path.splitext(self.userfile)[0] # Remove .py ending from userfile name
+            fn = importlib.import_module("user." + userfile) 
 
-args = parser.parse_args()
+            # Create a Coachbot instance with given id number
+            bot_client = Bot_Client("localhost", 8000)
+            bot_client.start()
 
-fn = importlib.import_module(args.filename)
+            robot = Coachbot(bot_client, id, a_ids)
 
-robot = Coachbot()
+            # Run usr function in userfile module
+            fn.usr(robot)
 
-def sigterm_handler(signum, _):
-    """
-    sigterm handler to kill the program cleanly
-    """
-    # print("Client to be killed !")
-    robot.client_socket.close()
-    sys.exit(0)
-    
+            bot_client.stop()
+            
+        except KeyboardInterrupt:
+            pass
 
-if __name__ == "__main__":
-    # create a sigterm handler here
-    signal.signal(signal.SIGTERM, sigterm_handler)
-    signal.signal(signal.SIGINT, sigterm_handler)
-    # functiontrace.trace()
-    fn.usr(robot)
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Run the robots")
+    parser.add_argument("-u", "--userfile", type=str, help="Path to user code file", required=True)
+    args = parser.parse_args()
+
+    bootloader = Bootloader(args.userfile)
+    bootloader.launch()
