@@ -11,6 +11,6 @@ def init(swarmsize, x, y, theta, a_ids):
         theta[i] = 0
         if i == 0:
             a_ids[i] = 1
-        elif i == 240:
+        elif i == 240: # should be 240 !!! i decreased for testing on smaller swarm -- 240:
             a_ids[i] = 2
     return x, y, theta, a_ids

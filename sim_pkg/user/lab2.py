@@ -124,10 +124,13 @@ def usr(robot):
 				try:
 					print('final x/y: ', finalx, finaly)
 					if finalx < 5: 
+						print('set led 1?')
 						robot.set_led(0, 100, 0)
 					if finalx > 11:
+						print('set led 22222?')
 						robot.set_led(0, 100, 0)
 					if (-1.1 * finalx + 20) <= finaly <= (-1.1 * finalx + 32):
+						print('set led 3?')
 						robot.set_led(0, 100, 0)
 				except:
 					pass

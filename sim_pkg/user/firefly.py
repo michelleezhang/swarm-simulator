@@ -15,14 +15,14 @@ def usr(robot):
 
         if id == 5:
             robot.set_led(0,100,0)
-            print("id: ", id, "turn on")
+            # print("id: ", id, "turn on")
             robot.delay(200)
             curr_time = robot.get_clock()
             curr_time = round(curr_time, 2)
             msg = "time:"+ str(curr_time)+';'
             robot.send_msg("led:(0,100,0);delay:800;"+msg)
             robot.set_led(0,0,0)
-            print("id: ", id, "turn off")
+            # print("id: ", id, "turn off")
             robot.delay(800)
             
 

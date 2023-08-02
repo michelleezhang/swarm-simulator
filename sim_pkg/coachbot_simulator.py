@@ -33,18 +33,22 @@ def main(userfile, config_data, initfile):
     s_proc = mp.Process(target=simulator.launch, args=(vis, gui))
     processes.append(s_proc)
     s_proc.start()
-    time.sleep(2) # Allow sim server and gui time to initialize before the sim client runs -- timed: ~0.7-1.5 s
+    time.sleep(2) # Ensures sim server and gui time start initializing before the sim clients
 
-    # Start robot processes
-    # This uses a multiprocessing pool -- allocates worker processes to execute the tasks given to the pool
-    pool_context = mp.get_context('spawn') # When creating a child process, create and use a completely new, independent Python interpreter process each time -- this is the setting most compatible across different systems (works for macOS, windows, and most linux distributions)
-    pool = pool_context.Pool(processes=num_robots) # The `processes` argument specifies the maximum number of worker processes that can be created 
     for i in range(num_robots):
-        # Submit tasks to the pool using apply_async() -- create a total of num_robots instances of the bootloader process to run, passing in i as the robot id
-        pool.apply_async(bootloader.launch, args=(i, simulator.swarm[i].a_ids))
-    pool.close() 
-    processes.append(pool)
+        proc_context = mp.get_context('spawn') # When creating a child process, create and use a completely new, independent Python interpreter process each time -- this is the setting most compatible across different systems (works for macOS, windows, and most linux distributions)
+        r_proc = proc_context.Process(target=bootloader.launch, args=(i, simulator.swarm[i].a_ids)) 
+        r_proc.start()
+        processes.append(r_proc)
     # TODO: for python2 compatibility on the bootloader, need to specify path to py2 and py3 interpreter on user's machine -- pool_context.set_executable(...)  
+
+    # pool_context = mp.get_context('spawn') # When creating a child process, create and use a completely new, independent Python interpreter process each time -- this is the setting most compatible across different systems (works for macOS, windows, and most linux distributions)
+    # pool = pool_context.Pool(processes=num_robots) # The `processes` argument specifies the maximum number of worker processes that can be created 
+    # for i in range(num_robots):
+    #     # Submit tasks to the pool using apply_async() -- create a total of num_robots instances of the bootloader process to run, passing in i as the robot id
+    #     pool.apply_async(bootloader.launch, args=(i, simulator.swarm[i].a_ids))
+    # pool.close()
+    # processes.append(pool)
 
     # Wait for processes to finish running or terminate cleanly
     try:

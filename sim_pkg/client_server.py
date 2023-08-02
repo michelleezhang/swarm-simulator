@@ -14,7 +14,7 @@ class Bot_Server():
         self.message_queues = {} # Dictionary to store messages to send to each socket
     
     def start(self):
-        print("BOT SERVER: Started") # TODO: Remove
+        # print("BOT SERVER: Started") # TODO: Remove
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) # Open socket
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # Allow reuse of addresses (prevents Address Already Bound errors)
         self.server_socket.setblocking(0) # Make socket non-blocking -- instead of waiting for each operation to complete one by one, the program can check the status of multiple sockets simultaneously
@@ -30,7 +30,7 @@ class Bot_Server():
         self.write_list = []
 
     def recv(self, swarm):
-        print("BOT SERVER: Receiving...") # TODO: Remove
+        # print("BOT SERVER: Receiving...") # TODO: Remove
         # Use `select` to identify which sockets are ready for I/O
         # This operation is blocking -- if no sockets are ready, it will wait until one is -- provide a small timeout to give the server time to accept any incoming client connections
         # Note: The timeout actually should not have an effect on performance until the server is running after the clients are done, since sockets will not be ready for I/O at this point
@@ -71,7 +71,7 @@ class Bot_Server():
                             }
                         elif client_function == 4:
                             response = {
-                                "response": (swarm[client_id].x, swarm[client_id].y, swarm[client_id].theta)
+                                "response": (swarm[client_id].posn[0], swarm[client_id].posn[1], swarm[client_id].theta)
                             }
                         elif client_function == 6:
                             response = {
@@ -84,7 +84,6 @@ class Bot_Server():
 
                         response = json.dumps(response)
                         response = response.encode("utf-8")
-
                         self.message_queues[s].put(response) # Add response to queue of messages to be sent to client s
 
                         if s not in self.write_list:
@@ -123,7 +122,7 @@ class Bot_Server():
         return received_data
     
     def stop(self):
-        print("BOT SERVER Stopped...")
+        # print("BOT SERVER Stopped...")
         self.server_socket.close()
     
 class Bot_Client():
@@ -137,7 +136,7 @@ class Bot_Client():
         self.buffer_size = num_msgs * msg_size 
     
     def start(self):
-        print("BOT CLIENT: Started.") # TODO: Remove
+        # print("BOT CLIENT: Started.") # TODO: Remove
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
@@ -147,12 +146,12 @@ class Bot_Client():
             if e.errno == errno.EINPROGRESS:
                 # `[Erno 36] Operation now in progress` occurs when a nonblocking socket operation (e.g. connect) is re-attempted before a previous attempt is finished
                 time.sleep(0.05) # Allow for a small delay before retrying
-            else:
-                print("BOT CLIENT socket failed to connect: ", e) # TODO: Remove, otherwise clients error after server disconnects
+            # else:
+                # print("BOT CLIENT socket failed to connect: ", e) # TODO: Remove, otherwise clients error after server disconnects
     
     def send(self, data):
         # NOTE: the client is actually blocking -- it will wait for a response from the server before doing things
-        print("BOT CLIENT: sending")
+        # print("BOT CLIENT: sending")
         # Process data
         data = json.dumps(data)
         data = data.encode("utf-8")
@@ -161,15 +160,14 @@ class Bot_Client():
         self.client_socket.sendall(data)
 
         # Receive response from simulator
-        response = self.client_socket.recv(self.buffer_size) 
+        response = self.client_socket.recv(self.buffer_size)
 
         # Need to keep the socket open for a tiny bit
         time.sleep(0.1) 
 
         if not response:
-            print("CLIENT STOPPED!!!") # TODO: Remove
+            # print("CLIENT STOPPED!!!") # TODO: Remove
             self.client_socket.close()
-            # response = None
         else:
             response = response.decode("utf-8")
             response = json.loads(response)
@@ -177,5 +175,5 @@ class Bot_Client():
         return response
         
     def stop(self):
-        print("BOT CLIENT Stopped") #TODO: Remove
+        # print("BOT CLIENT Stopped") #TODO: Remove
         self.client_socket.close()

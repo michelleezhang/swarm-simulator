@@ -1,61 +1,103 @@
 import contextlib
 with contextlib.redirect_stdout(None): # Suppresses "Hello from the pygame" message 
     import pygame
+import numpy as np
 
 class GUI:
     def __init__(self, config_data):
-        self.config_data = config_data
+        '''
+        A GUI to display the simulation
+        Receives data from the simulator and draws the swarm onscreen
+        '''
+        self.arena_length = config_data["LENGTH"]
+        self.arena_height = config_data["WIDTH"]
         
-        self.length = 1000
-        self.height = 800
-        self.radius = 9.9
-        self.font_size = 20
+        self.screen_length = 1000
+        self.screen_height = 700
+        self.radius = 10
+        self.arrow_width = self.radius // 3
+        self.arrow_height = self.radius // 2
+        self.x_fac = self.screen_length // self.arena_length
+        self.y_fac = self.screen_height // self.arena_height
 
     def launch(self):
-        # Initialize pygame
-        pygame.init()
-        self.window = pygame.display.set_mode((self.length, self.height))
-        self.font = pygame.font.SysFont('samanata', self.font_size)
-        self.font_num = pygame.font.SysFont('samanata', 18) 
-    
-    def stop(self):
+        '''
+        Initialize pygame and specify display settings
+        '''
+        pygame.font.init()
+        self.window = pygame.display.set_mode((self.screen_length, self.screen_height))
+        self.font = pygame.font.SysFont('samanata', 24)
+
+    def stop_gui(self):
+        '''
+        Stop the GUI
+        '''
         pygame.quit()
-
+    
     def update(self, state, real_time, sim_time, rtf):
-        # Clear the screen before redrawing (color it black)
-        self.window.fill((0, 0, 0))
+        '''
+        Update the screen
+        '''
+        self.window.fill((0, 0, 0)) # Clear the screen before redrawing (color it black)
 
-        # Draw all robots
+        # Draw robots
         for robot in state:
-            position = self.to_pygame(robot.x, robot.y) # Scale coordinates to screen size
-            pygame.draw.circle(self.window, robot.led, position, self.radius)
-        
-        self.display_time(real_time, sim_time, rtf) 
+            # Scale coordinates to screen size
+            position = self.to_pygame(robot.posn) 
 
+            # Draw circle
+            pygame.draw.circle(self.window, robot.led, position, self.radius)
+
+            # Draw arrow
+            arrow = pygame.Vector2(position[0] - int(position[0] + self.radius * np.sin(robot.theta)), 
+                                   position[1] - int(position[1] + self.radius * np.cos(robot.theta)))
+            angle = -np.radians(arrow.angle_to(pygame.Vector2(0, -1)))
+            verts = [self.rotate_in_place(0, self.arrow_height, angle, position), # Center
+                     self.rotate_in_place(self.arrow_width, -self.arrow_height, angle, position),  # Bottom right
+                     self.rotate_in_place(-self.arrow_width, -self.arrow_height, angle, position)] # Bottom left
+            pygame.draw.polygon(self.window, (230, 230, 250), verts)
+
+        # Draw text
+        time_text = self.font.render('Real time factor ' + f'{rtf:.2f}x | Real time: ' + f'{real_time:.2f} seconds | Sim time:' + f'{sim_time:.2f} seconds', 
+                                     True, (255,255,255))
+        self.window.blit(time_text, (200, 100)) # Blit is like the "draw" equivalent for text/images
+
+        # Update the display to show the latest changes
         pygame.display.flip()
 
-        # Keep pygame screen open until time to quit
+        # Keep pygame screen open (or quit if the user closes the screen)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                break
-
-    def display_time(self, real_time, sim_time, rtf):
-        data_string = 'Real time factor ' + f'{rtf:.3f} x | Real time: ' + f'{real_time:.3f} seconds | Sim time:' + f'{sim_time:.3f} seconds'
-        text = self.font.render(data_string, True, (255,255,255))
+                self.stop_gui()
         
-        self.window.blit(text, (200, 100))
+    def to_pygame(self, coord):
+        '''
+        Convert robot coordinates to pygame coordinates (lower-left => top-left)
+        '''
+        return (coord[0] + self.arena_length // 2) * self.x_fac, (-coord[1] + self.arena_height // 2) * self.y_fac
+    # NOTE: Pygame coordinate system is gross
 
-    def to_pygame(self, x_coord, y_coord):
-        """Convert coordinates into pygame coordinates (lower-left => top left)."""
-        # the origin on screen is ( (x1 + x2) / 2, (y1 + y2) / 2 ), midpoit of its diagonal
-        # or (self.length / 2), (self.height / 2)
+        # return (coord[1] + self.arena_length // 2) * self.x_fac, (coord[0] + self.arena_height // 2) * self.y_fac # the origin of the screen is the midpoint of its diagonal
+    
+    def rotate_in_place(self, x, y, theta, posn):
+        '''
+        Return arrow coordinates (x, y) rotated by theta, centered at posn
+        '''
+        cos_theta, sin_theta = np.cos(theta), np.sin(theta)
+        x_new, y_new = x * cos_theta - y * sin_theta + posn[0], x * sin_theta + y * cos_theta + posn[1] 
+        return x_new, y_new
+    
+if __name__ == '__main__':
+    import argparse
+    import json
 
-        ARENA_LENGTH = 7.5
-        ARENA_WIDTH = 4.5 # hight
-        x_fac = self.length / ARENA_LENGTH
-        y_fac = self.height / ARENA_WIDTH
+    parser = argparse.ArgumentParser(description="Run the GUI")
+    parser.add_argument("-c", "--configfile", type=str, help="Path to configuration file", required=True)
+    args = parser.parse_args()
 
-        new_x =(y_coord + ARENA_LENGTH / 2) * x_fac 
-        new_y = (x_coord + ARENA_WIDTH / 2) * y_fac
-        
-        return (int(new_x), int(new_y))
+    with open("user/" + args.configfile, 'r') as cfile:
+        config_data = json.loads(cfile.read())
+    cfile.close()
+
+    gui = GUI(config_data)
+    gui.launch()

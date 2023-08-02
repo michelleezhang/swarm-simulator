@@ -5,6 +5,9 @@ from robot import Robot
 from client_server import Bot_Server
 import time
 import itertools
+from analyze import Sim_Stat_Logger
+import logging
+import argparse
 
 class Simulator():
     def __init__(self, config_data, initfile):
@@ -28,26 +31,21 @@ class Simulator():
         self.sim_time_step = self.config_data["SIM_TIME_STEP"]
         self.sim_time_max = self.config_data["SIM_TIME"]
         self.time_async = self.config_data["TIME_ASYNC"]
-
  
         # Other simulation variables 
-        self.motor_rpm = 180 # rpm
-        self.motor_full_speed = self.motor_rpm* 2*np.pi / 60
-        self.robot_radius = 0.105/2 # TODO: might need to adjust this value 
-
+        self.robot_radius = 0.06 # TODO: might need to adjust this value 
         self.stop_sim = False
         self.num_collisions = 0
 
         # Instantiate client-server communications
         self.bot_server = Bot_Server("localhost", 8000, self.num_robots)
 
-        self.swarm = np.empty(self.num_robots, dtype=object)
-
         # Initialize swarm
-        self.initialize_swarm(self.swarm)
+        self.initialize_swarm()
 
+        self.DEBUGIN = 0
 
-    def initialize_swarm(self, swarm):
+    def initialize_swarm(self):
         '''
         Initialize swarm according to initfile.
         '''
@@ -58,29 +56,30 @@ class Simulator():
 
             # Pass in arrays of [0] * num_robots as input
             x, y, theta, a_ids = imod.init(self.num_robots, 
-                                    [0 for _ in range(self.num_robots)], 
-                                    [0 for _ in range(self.num_robots)], 
-                                    [0 for _ in range(self.num_robots)],
-                                    [0 for _ in range(self.num_robots)]) 
+                                           np.zeros(self.num_robots),
+                                           np.zeros(self.num_robots),
+                                           np.zeros(self.num_robots),
+                                           np.zeros(self.num_robots))
         elif self.use_init == 0:
-            x = [np.random.uniform(-(self.arena_length - 0.1) / 2, (self.arena_length - 0.1) / 2) for _ in range(self.num_robots)]
-            y = [np.random.uniform(-(self.arena_height - 0.1) / 2, (self.arena_height - 0.1) / 2) for _ in range(self.num_robots)]
-            theta = [0 for _ in range(self.num_robots)]
+            x = np.random.uniform(-(self.arena_length - 0.1) / 2, (self.arena_length - 0.1) / 2, size=self.num_robots)
+            y = np.random.uniform(-(self.arena_height - 0.1) / 2, (self.arena_height - 0.1) / 2, size=self.num_robots)
+            theta = np.zeros(self.num_robots)
+            a_ids = np.zeros(self.num_robots)
 
         if self.time_async == 1:
-            clocks = [np.random.uniform(0, 1) * 0.001 for _ in range(self.num_robots)]
+            clocks = np.random.rand(self.num_robots) * 0.001 # rand does 0 to 1 range automatically
+            # clocks = [np.random.uniform(0, 1) * 0.001 for _ in range(self.num_robots)]
         else:
-            clocks = [0 for _ in range(self.num_robots)]
+            clocks = np.zeros(self.num_robots)
 
-        for i in range(self.num_robots):
-            # Truncate values to 3 decimal places
-            curr_x = float(f'{x[i]:.3f}')
-            curr_y = float(f'{y[i]:.3f}')
-            curr_theta = float(f'{theta[i]:.3f}')
-            curr_robot = Robot(i, curr_x, curr_y, curr_theta, self.num_robots, clocks[i], a_ids[i])
+        # Round x, y, and theta arrays to 3 decimal places using numpy
+        x = np.round(x, 3)
+        y = np.round(y, 3)
+        theta = np.round(theta, 3)
 
-            # Set swarm entry to robot
-            swarm[i] = curr_robot
+        self.swarm = np.empty(self.num_robots, dtype=object)
+        self.swarm[:] = [Robot(i, x[i], y[i], theta[i], a_ids[i], clocks[i], self.num_robots) for i in range(self.num_robots)]
+        # iterate through all elements of the numpy arrays and create the corresponding Robot objects in one go, making it more efficient compared to explicit loops.
 
     def launch(self, vis, gui):
         try:
@@ -91,34 +90,41 @@ class Simulator():
             # Start server
             self.bot_server.start()
 
+            # GRAPHING
+            logging.basicConfig(
+            level=logging.INFO,  # Set the logging level (e.g., DEBUG, INFO, WARNING, ERROR, CRITICAL)
+            # format='%(asctime)s - %(levelname)s - %(message)s',
+            handlers=[Sim_Stat_Logger('log_values.csv')])    # Log messages using the custom CSVHandler
             time.sleep(2) # lines up w sleep time from the coachbot_simulator.py so everything starts at the same time
-
+            
             actual_rtf = self.rtf # this will be some value initially, but will change slightly over time
-            T_sim = self.sim_time_step 
+            T_sim = self.sim_time_step
             T_real = T_sim/actual_rtf
 
             self.sim_time = 0.0001
             delta_vis = 0
-            self.real_time = 0
+            real_time = 0
             real_time_now_start = time.time()
-            actual_rtf_list = []
+            # actual_rtf_list = []
+            actual_rtf_sum, iteration_count = 0, 0
             
             while not self.stop_sim:
                 datas = self.bot_server.recv(self.swarm) # receive data
                 
                 if len(datas) != 0:
-                    # print(f"Received data: ", datas)
                     for data in datas:
                         self.update_state(data)
 
                 if vis == 1:
                     delta_vis += T_real
                     # Only allows visualization every 0.05 seconds
-                    if delta_vis > 0.05: 
+                    if delta_vis > 0.05: # could this possibly depend on rtf? -> if faster motion, may need more frequent updates 
                         delta_vis = 0
-                        self.rtf = np.mean(actual_rtf_list)
-                        actual_rtf_list = []
-                        gui.update(self.swarm, self.real_time, self.sim_time, self.rtf)
+                        self.rtf = actual_rtf_sum / iteration_count
+                        actual_rtf_sum, iteration_count = 0, 0
+                        # self.rtf = np.mean(actual_rtf_list)
+                        # actual_rtf_list = []
+                        gui.update(self.swarm, real_time, self.sim_time, self.rtf)
                 
                 self.sim_time += T_sim
 
@@ -130,28 +136,34 @@ class Simulator():
                 real_time_now_start = time.time()
 
                 # time out simulator!
-                if self.real_time >= self.sim_time_max: # SIM_TIME -- max time we want sim to run
-                    # TODO: change to self.sim_time
+                if self.sim_time >= self.sim_time_max: 
                     print("Sim time maxed out.")
                     self.stop_sim = True
 
                 if elapsed_time_diff < T_real:
-                    self.real_time += T_real
+                    real_time += T_real
                     actual_rtf = T_sim/T_real
                     diff = T_real - elapsed_time_diff
                     if diff > 0:
                         time.sleep(diff)
                 else:
                     
-                    self.real_time += elapsed_time_diff
+                    real_time += elapsed_time_diff
                     actual_rtf = T_sim/elapsed_time_diff
                     
-                actual_rtf_list.append(actual_rtf)
+                # actual_rtf_list.append(actual_rtf)
+                actual_rtf_sum += actual_rtf
+                iteration_count += 1
+            
+            row_data = [0, self.num_collisions]
+            logging.info(row_data)
 
             self.bot_server.stop()
             if vis == 1:
-                gui.stop()
-    
+                gui.stop_gui()
+            
+            print("HOW MUCH TIME SPENT COLLISION CHECKING --- %s seconds ---" % self.DEBUGIN)
+
         except KeyboardInterrupt:
             pass
     
@@ -160,34 +172,29 @@ class Simulator():
         robot_id = data["id"]
 
         if function == 1: # set_LED
-            params = data["params"]
-            r = params[0]
-            b = params[1]
-            g = params[2]
-            self.swarm[robot_id].led = (r, b, g)
+            self.swarm[robot_id].led = data["params"] 
         elif function == 2: # set_vel
+            motor_full_speed = 180 * 2 * np.pi / 60 # motor_rpm = 180
             params = data["params"]
-            l = (params[0] / 100) * self.motor_full_speed
-            r = (params[1] / 100) * self.motor_full_speed
-            self.swarm[robot_id].velocity = (l, r)
-        elif function == 5: # send_msg
-            params = data["params"]
+            self.swarm[robot_id].velocity = (params[0] / 100) * motor_full_speed, (params[1] / 100) * motor_full_speed
 
-            sender = self.swarm[robot_id]
+        elif function == 5: # send_msg
+            msg = data["params"]
+        
+            sender_posn = self.swarm[robot_id].posn
+            comm_dist = self.comm_radius**2 # this is the value squared
+            
             for robot in self.swarm:
                 if robot.id != robot_id:
-                    dist = np.sqrt((sender.x - robot.x)**2 + (sender.y - robot.y)**2)
-                    if dist < self.comm_radius:
-                        random_bool = np.random.uniform() < self.packet_success
-                        if random_bool:
-                            msg = params[0]
+                    dist = (sender_posn[0] - robot.posn[0])**2 + (sender_posn[1] - robot.posn[1])**2
+                    if dist < comm_dist: 
+                        if np.random.uniform() < self.packet_success: # generate a random val and check if it's less than packet_success
                             if len(msg) > self.msg_size:
                                 msg = msg[:self.msg_size]
-
-                            robot.message_buffer.append(msg) # ISSUE: Adding to the message buffer affects communication scalability
+                            robot.message_buffer.append(msg) 
                             if len(robot.message_buffer) > self.num_msgs:
                                 robot.message_buffer = robot.message_buffer[-self.num_msgs:]
-                            
+
         elif function == 6:
             # Clear message buffer if recv_msg is called
             self.swarm[robot_id].message_buffer = []
@@ -197,39 +204,63 @@ class Simulator():
             params = data["params"]
             self.swarm[robot_id].clock += (params[0] / 1000)
 
-    def integrate_world(self, dt):  
-        for robot in self.swarm:
-            pos = robot.integrate(dt)
-            robot.theta = pos[0]
+    def integrate_world(self, dt):
+            result_array = np.array([robot.integrate(dt) for robot in self.swarm])
 
-            check_collision = True # yes, check for collision
-            collide_flag = True # no, no collision has occured
+            for i in range(self.num_robots):
+                robot, pos = self.swarm[i], result_array[i]
+                start_time = time.time()
+                collision_will_occur = False
 
-            # BROAD PHASE
-            if check_collision: 
-                # NARROW PHASE
-                collide_flag = self.check_collision(robot, pos)
-            
-            if collide_flag:
-                robot.x = pos[1]
-                robot.y = pos[2]
-                # adjust for wall collisions
-                robot.x = max(robot.x, -self.arena_height / 2 + self.robot_radius)
-                robot.x = min(robot.x, self.arena_height / 2 - self.robot_radius)
-                robot.y = max(robot.y, -self.arena_length / 2 + self.robot_radius)
-                robot.y = min(robot.y, self.arena_length / 2 - self.robot_radius)
+                if robot.posn[0] != pos[1] or robot.posn[1] != pos[2]: # if new pos is diff from old pos:
+                    # decrement time to collision for everyone
+                    robot.collision_list -= dt
 
-            robot.clock = max(robot.clock, self.sim_time) 
+                    # get a list of all robots where we have run out of time till collision
+                    check_these = np.where(robot.collision_list <= 0)[0] # list of inidices!
+                    for r in check_these:
+                        if r != robot.id: # avoid self-collision checks
+                            other_x, other_y = self.swarm[r].posn[0], self.swarm[r].posn[1]
+                            ir_dist = (other_x - pos[1])**2 + (other_y - pos[2])**2
+                            if ir_dist <= (2 * self.robot_radius)**2:
+                                self.num_collisions += 1  
+                                collision_will_occur = True
 
-    def check_collision(self, robot, pos):
-        range_val = itertools.chain(range(0, robot.id), range(robot.id + 1, self.num_robots))
-        for j in range_val:
+                            # recalculate time to collision
+                            # calculate magnitude: don't need to square bc sqrt(x^2+y^2) >= sqrt(a^2+b^2) iff x^2+y^2 >= a^2+b^2
+                            vel1 = (self.swarm[r].velocity[0])**2 + (self.swarm[r].velocity[1])**2
+                            vel2 = (robot.velocity[0])**2 + (robot.velocity[1])**2
+                            max_v = max(vel1, vel2) # get bigger velocity
+                            time_to_collision = ir_dist / (2 * np.sqrt(max_v) * dt) 
+                            robot.collision_list[r] = time_to_collision
+                
+                    if not collision_will_occur:
+                        robot.posn = [pos[1], pos[2]]
+                        # TODO: prevents top/bottom wall collisions but not side -> check by lowering comm range
+                        robot.posn[0] = max(robot.posn[0], -self.arena_length / 2 + self.robot_radius)
+                        robot.posn[0] = min(robot.posn[0], self.arena_length / 2 - self.robot_radius)
+                        # np.clip(robot.posn[0], -self.arena_height / 2 + self.robot_radius, self.arena_height / 2 - self.robot_radius)
+                        robot.posn[1] = max(robot.posn[1], -self.arena_height / 2 + self.robot_radius)
+                        robot.posn[1] = min(robot.posn[1], self.arena_height / 2 - self.robot_radius)
+                        # np.clip(robot.posn[1], -self.arena_length / 2 + self.robot_radius, self.arena_length / 2 - self.robot_radius)
+                    
+                robot.theta, robot.clock = pos[0], max(robot.clock, self.sim_time)  #  single line assignment takes advantage of Python's tuple unpacking feature, which results in a more optimized bytecode.
+        
+                self.DEBUGIN += time.time() - start_time
 
-            x1 = self.swarm[j].x
-            y1 = self.swarm[j].y
 
-            dist = np.sqrt((x1 - pos[1])**2 + (y1 - pos[2])**2)
-            if dist <= 2 * self.robot_radius:
-                self.num_collisions += 1 # NOTE: collision number is scaled -- will count +1 if ANY collision occurs at a given iteration (not total number)
-                return False
-        return True
+if __name__ == '__main__':
+    import json
+    # Parse command line arguments to obtain the paths to the required files
+    parser = argparse.ArgumentParser(description="Run the simulator")
+    parser.add_argument("-c", "--configfile", type=str, help="Path to configuration file", required=True)
+    parser.add_argument("-i", "--initfile", type=str, help="Path to initialization file", required=False) # default value: None
+    args = parser.parse_args()
+
+    # Unpack configuration data dictionary
+    with open("user/" + args.configfile, 'r') as cfile:
+        config_data = json.loads(cfile.read())
+    cfile.close()
+
+    simulator = Simulator(config_data, args.initfile)
+    simulator.launch()
