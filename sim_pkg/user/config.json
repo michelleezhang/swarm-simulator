@@ -1,15 +1,16 @@
 {
     "TIME_ASYNC": 0,
-    "NUMBER_OF_ROBOTS": 150,
+    "NUMBER_OF_ROBOTS": 100,
     "COMM_RANGE": 20, 
     "PACKET_SUCCESS_PERC": 1.0, 
-    "REAL_TIME_FACTOR": 4.0,
+    "REAL_TIME_FACTOR": 3.0,
     "NUM_OF_MSGS": 36, 
     "MSG_SIZE": 1792,
-    "WIDTH": 7, 
+    "MSG_TYPE": 0,
+    "WIDTH": 10, 
     "LENGTH": 10, 
     "USE_INIT_POS": 1,
     "SIM_TIME_STEP": 0.05,
-    "SIM_TIME": 100,
+    "SIM_TIME": 60,
     "USE_VIS": 1
 }

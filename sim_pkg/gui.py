@@ -9,16 +9,11 @@ class GUI:
         A GUI to display the simulation
         Receives data from the simulator and draws the swarm onscreen
         '''
-        self.arena_length = config_data["LENGTH"]
-        self.arena_height = config_data["WIDTH"]
-        
-        self.screen_length = 1000
-        self.screen_height = 700
+        self.arena_length, self.arena_height = config_data["LENGTH"], config_data["WIDTH"]
+        self.screen_length, self.screen_height = 900, 900
         self.radius = 10
-        self.arrow_width = self.radius // 3
-        self.arrow_height = self.radius // 2
-        self.x_fac = self.screen_length // self.arena_length
-        self.y_fac = self.screen_height // self.arena_height
+        self.arrow_width, self.arrow_height = self.radius // 3, self.radius // 2
+        self.x_fac, self.y_fac = self.screen_length // self.arena_length, self.screen_height // self.arena_height
 
     def launch(self):
         '''
@@ -49,9 +44,9 @@ class GUI:
             pygame.draw.circle(self.window, robot.led, position, self.radius)
 
             # Draw arrow
-            arrow = pygame.Vector2(position[0] - int(position[0] + self.radius * np.sin(robot.theta)), 
-                                   position[1] - int(position[1] + self.radius * np.cos(robot.theta)))
-            angle = -np.radians(arrow.angle_to(pygame.Vector2(0, -1)))
+            arrow = pygame.Vector2(position[0] - int(position[0] + self.radius * np.sin(robot.posn[2])), 
+                                   position[1] - int(position[1] + self.radius * np.cos(robot.posn[2])))
+            angle = -np.radians(arrow.angle_to(pygame.Vector2(1, 0)))
             verts = [self.rotate_in_place(0, self.arrow_height, angle, position), # Center
                      self.rotate_in_place(self.arrow_width, -self.arrow_height, angle, position),  # Bottom right
                      self.rotate_in_place(-self.arrow_width, -self.arrow_height, angle, position)] # Bottom left
@@ -72,20 +67,17 @@ class GUI:
         
     def to_pygame(self, coord):
         '''
-        Convert robot coordinates to pygame coordinates (lower-left => top-left)
+        Convert robot coordinates to pygame coordinates 
         '''
         return (coord[0] + self.arena_length // 2) * self.x_fac, (-coord[1] + self.arena_height // 2) * self.y_fac
-    # NOTE: Pygame coordinate system is gross
+    # NOTE: Pygame coordinate system has (0,0) in the top-left and positive y is downward direction
 
-        # return (coord[1] + self.arena_length // 2) * self.x_fac, (coord[0] + self.arena_height // 2) * self.y_fac # the origin of the screen is the midpoint of its diagonal
-    
     def rotate_in_place(self, x, y, theta, posn):
         '''
         Return arrow coordinates (x, y) rotated by theta, centered at posn
         '''
         cos_theta, sin_theta = np.cos(theta), np.sin(theta)
-        x_new, y_new = x * cos_theta - y * sin_theta + posn[0], x * sin_theta + y * cos_theta + posn[1] 
-        return x_new, y_new
+        return x * cos_theta - y * sin_theta + posn[0], x * sin_theta + y * cos_theta + posn[1] 
     
 if __name__ == '__main__':
     import argparse

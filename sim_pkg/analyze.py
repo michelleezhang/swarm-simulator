@@ -1,7 +1,8 @@
-from matplotlib import pyplot as plt
-import numpy as np
+import argparse
 import logging
 import csv
+from matplotlib import pyplot as plt
+import numpy as np
 
 class Sim_Stat_Logger(logging.StreamHandler):
     def __init__(self, filename):
@@ -13,26 +14,27 @@ class Sim_Stat_Logger(logging.StreamHandler):
 
     def emit(self, record):
         '''
-        Open the CSV file and record a data row
+        Open CSV file and record a data row
         '''
         with open(self.filename, mode='a', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(record.msg)
 
 class Analyzer():
-    def __init__(self):
+    def __init__(self, filename):
         '''
+        Class to hold methods for plotting simulation statistics
         '''
-        self.collisions = True
+        self.filename = filename
 
     def plot_collisions(self):
         '''
+        Plot number of collisions as a histogram
         '''
-        # Read the CSV file into a NumPy array using genfromtxt
-        data_array = np.genfromtxt('log_values.csv', delimiter=',', skip_header=0)
+        # Read the CSV file into a numpy array using genfromtxt
+        data_array = np.genfromtxt(self.filename, delimiter=',', skip_header=0)
 
-        # Extract the values from a specific column (e.g., column index 1)
-        
+        # Extract the values from a specific column (here, we use column 1)
         column_index = 1
         if len(data_array.shape) > 1:
             collision_counts = data_array[:, column_index]
@@ -48,5 +50,9 @@ class Analyzer():
         plt.show()
 
 if __name__ == '__main__':
-    analyzer = Analyzer()
+    parser = argparse.ArgumentParser(description="Plot simulation statistics")
+    parser.add_argument("-f", "--filename", type=str, help="Name of csv file", required=True)
+    args = parser.parse_args()
+
+    analyzer = Analyzer(args.filename)
     analyzer.plot_collisions()

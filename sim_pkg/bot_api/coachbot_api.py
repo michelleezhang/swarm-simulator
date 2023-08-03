@@ -2,7 +2,7 @@
 import base64
 
 class Coachbot():
-    def __init__(self, bot_client, id_n=-1, a_ids=-1):
+    def __init__(self, bot_client, msg_type, id_n=-1, a_ids=-1):
         '''
         Define API for Coachbots
         When a method is called, it sends a request to the simulator. For some methods, it receives a response back and returns it
@@ -21,8 +21,10 @@ class Coachbot():
         self.bot_client = bot_client
 
         # TODO: can only send messages of the same type for a given usr file 
-        # self.msg_type = str
-        self.msg_type = bytes
+        if msg_type == 0:
+            self.msg_type = str
+        elif msg_type == 1:
+            self.msg_type = bytes
 
     def set_led(self, r, g, b):
         payload = {
@@ -105,6 +107,6 @@ class Coachbot():
         payload = {
             "id": self.id,
             "function": 8,
-            "params": [delay_time]
+            "params": delay_time
         }
         self.bot_client.send(payload)
