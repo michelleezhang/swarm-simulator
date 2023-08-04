@@ -4,7 +4,6 @@
 To run the simulator:
 1. Navigate to the `sim_pkg` directory. 
 2. Set parameters for the user file in `config.json` if needed.
-    * The parameters for each user file are listed at the end of this section.  
 3. Run `python3 coachbot_simulator.py -u <userfile> -c <configfile> -i <initfile> -n <num_runs>` 
     * `<userfile>` is the user's program file (e.g. `firefly.py`)
     * `<configfile>` is the file that stores simulation parameters (e.g. `config.json`)
@@ -14,7 +13,7 @@ To run the simulator:
         * This argument is optional
 
 To generate a histogram of recorded collision counts, run `python3 analyze.py -f <filename>`
-    * `<filename>` is the name of the log file containing data about collisions
+* `<filename>` is the name of the log file containing data about collisions
 
 To set the correct packages on a Linux system before running the simultor, run `setup_linux.sh`
 * This script does the following:
@@ -24,7 +23,7 @@ To set the correct packages on a Linux system before running the simultor, run `
         * Python2: numpy, typing
         * Python3: pygame, pandas
 
-The available user files are listed below. The parameters to set in `config.json` are:
+The parameters to set in `config.json` for the example user file, `firefly.py`, are:
 - `firefly.py`
     - USE_INIT_POS: 0
     - COMM_RANGE: 20
