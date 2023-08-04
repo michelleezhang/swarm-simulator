@@ -13,7 +13,7 @@ To run the simulator:
         * This argument is optional
 
 To generate a histogram of recorded collision counts, run `python3 analyze.py -f <filename>`
-    * `<filename>` is the name of the log file containing data about collisions
+* `<filename>` is the name of the log file containing data about collisions
 
 To set the correct packages on a Linux system before running the simultor, run `setup_linux.sh`
 * This script does the following:
