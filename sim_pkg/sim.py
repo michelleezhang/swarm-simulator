@@ -22,7 +22,7 @@ class Simulator():
         self.use_init = self.config_data["USE_INIT_POS"]
  
         # Other simulation variables 
-        self.robot_radius = 0.1 # TODO: May need to adjust this value
+        self.robot_radius = 0.13 # TODO: May need to adjust this value
         self.stop_sim = False
         self.num_collisions = 0
 
