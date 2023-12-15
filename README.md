@@ -18,15 +18,6 @@ To generate a histogram of recorded collision counts, run `python3 analyze.py -f
 
 To set up required packages, run `pip install -r requirements.in`
 
-For a Linux system, you can run `setup_linux.sh`
-* This script does the following:
-    * Updates Linux VM
-    * Installs miniconda (skip default miniconda installation)
-    * Sets up a conda environment “swarm_sim_env” that contains the following modules:
-        * Python2: numpy, typing
-        * Python3: pygame, pandas
-
-
 The parameters to set in `config.json` for the example user file, `firefly.py`, are:
 - `firefly.py`
     - USE_INIT_POS: 0
