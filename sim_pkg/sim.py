@@ -3,6 +3,7 @@ import importlib
 import numpy as np
 import time
 import logging
+import csv
 from robot import Robot
 from client_server import Bot_Server
 from analyze import Sim_Stat_Logger
@@ -37,16 +38,29 @@ class Simulator():
         Initialize swarm
         '''
         if self.use_init == 1:
-        # Import initfile as a module
-            initfile = os.path.splitext(self.initfile)[0] # Remove .py ending from initfile name
-            imod = importlib.import_module("user." + initfile)
+            init_split = os.path.splitext(self.initfile) # Split .py ending from initfile name
+            initfile, init_suffix = init_split[0], init_split[1] 
 
-            # Pass in arrays of [0] * num_robots as input
-            x, y, theta, a_ids = imod.init(self.num_robots, 
-                                           np.zeros(self.num_robots),
-                                           np.zeros(self.num_robots),
-                                           np.zeros(self.num_robots),
-                                           np.zeros(self.num_robots, dtype=int))
+            if init_suffix == ".py":
+                # Import initfile as a module
+                imod = importlib.import_module("user." + initfile)
+
+                # Pass in arrays of [0] * num_robots as input
+                x, y, theta, a_ids = imod.init(self.num_robots, 
+                                            np.zeros(self.num_robots),
+                                            np.zeros(self.num_robots),
+                                            np.zeros(self.num_robots),
+                                            np.zeros(self.num_robots, dtype=int))
+            elif init_suffix == ".csv":
+                x, y, theta, a_ids = [], [], [], []
+                with open("user/" + self.initfile, newline='') as csvfile:
+                    reader = csv.DictReader(csvfile)
+                    for row in reader:
+                        x.append(float(row['x']))
+                        y.append(float(row['y']))
+                        theta.append(float(row['theta']))
+                        a_ids.append(float(row['a_ids']))
+ 
         elif self.use_init == 0:
             x, y, theta, a_ids = np.random.uniform(-(self.arena_length - 0.1) / 2, (self.arena_length - 0.1) / 2, size=self.num_robots), np.random.uniform(-(self.arena_height - 0.1) / 2, (self.arena_height - 0.1) / 2, size=self.num_robots), np.zeros(self.num_robots), np.zeros(self.num_robots)
 

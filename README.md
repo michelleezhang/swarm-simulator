@@ -9,6 +9,7 @@ To run the simulator:
     * `<configfile>` is the file that stores simulation parameters (e.g. `config.json`)
     * `<initfile>` is the file that initializes robot positions (e.g. `init_pose.py`) 
         * This argument is optional
+        * Accepted file formats: ``.py`` or ``.csv``
     * `<num_runs>` is the number of simulations to run
         * This argument is optional
 
