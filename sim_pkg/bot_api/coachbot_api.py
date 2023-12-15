@@ -16,7 +16,7 @@ class Coachbot():
             7: stop_sim
             8: delay
         '''
-        self.assigned_id = a_ids 
+        self.virtual_id = a_ids 
         self.id = id_n
         self.bot_client = bot_client
 
@@ -103,7 +103,7 @@ class Coachbot():
         }
         self.bot_client.send(payload)
     
-    def delay(self, delay_time):
+    def delay(self, delay_time=0.02):
         payload = {
             "id": self.id,
             "function": 8,
