@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 import os
 import importlib
+import socket, errno
 from bot_api.coachbot_api import Coachbot
 from client_server import Bot_Client
 
@@ -30,9 +31,15 @@ class Bootloader():
 
         except KeyboardInterrupt:
             pass # Allow clean termination by KeyboardInterrupt from the main program
-        except:
-            pass # TODO: this is a temporary fix -- suppresses any exception from the bootloader, prevents errors when robot threads terminate earlier than expected
-                 # This works but would be better to use some kind of stop event based on the simulator ending
+        except socket.error as e:
+            if e.errno == errno.ECONNRESET:
+                pass 
+                # TODO: this is a temporary fix -- suppresses connection reset error from the bootloader, prevents errors when robot threads terminate earlier than expected
+                # This works but would be better to use some kind of stop event based on the simulator ending
+            else:
+                print(f"bootloader.py: {e}")
+        except Exception as e:
+            print(f"bootloader.py: {e}")
 
 if __name__ == '__main__':
     import argparse

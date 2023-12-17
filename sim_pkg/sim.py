@@ -154,7 +154,7 @@ class Simulator():
                 gui.stop_gui()
             
         except KeyboardInterrupt:
-            pass
+            pass # Allow clean termination by KeyboardInterrupt from the main program
     
     def update_state(self, data):
         '''

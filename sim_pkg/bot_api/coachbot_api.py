@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+import os
 import base64
 
 class Coachbot():
@@ -110,3 +111,20 @@ class Coachbot():
             "params": delay_time
         }
         self.bot_client.send(payload)
+
+    def log(self, message):
+        '''
+        Log robot messages
+        '''
+        # If it doesn't already exist, create a folder to store bot logs
+        if not os.path.exists("coachbot_logs"):
+            os.makedirs("coachbot_logs")
+        
+        log_file = f"coachbot_logs/{self.virtual_id}_{self.id}_log.txt"
+        
+        try:
+            with open(log_file, 'a') as file:
+                file.write(message + '\n')
+        except FileNotFoundError:
+             with open(log_file, 'w') as file:
+                file.write(message + '\n')

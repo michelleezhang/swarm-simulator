@@ -1,6 +1,8 @@
 # Swarm Simulation
 
 # Instructions
+To set up required packages, run `pip install -r requirements.in`
+
 To run the simulator:
 1. Navigate to the `sim_pkg` directory. 
 2. Set parameters for the user file in `config.json` if needed.
@@ -15,8 +17,6 @@ To run the simulator:
 
 To generate a histogram of recorded collision counts, run `python3 analyze.py -f <filename>`
 * `<filename>` is the name of the log file containing data about collisions
-
-To set up required packages, run `pip install -r requirements.in`
 
 The parameters to set in `config.json` for the example user file, `firefly.py`, are:
 - `firefly.py`
