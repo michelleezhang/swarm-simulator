@@ -23,7 +23,7 @@ class Simulator():
         self.use_init = self.config_data["USE_INIT_POS"]
  
         # Other simulation variables 
-        self.robot_radius = 0.06 # TODO: May need to adjust this value
+        self.robot_radius = 0.12 # Simulation radius is 0.06, but we scale up because we set GUI radius to 10 for visualization purposes (true value would be 5)
         self.stop_sim = False
         self.num_collisions = 0
 
@@ -114,7 +114,7 @@ class Simulator():
                 
                 if vis == 1:
                     delta_vis += T_real
-                    # Only allows visualization every 0.05 seconds
+                    # Only allows visualization every 0.05 seconds (controls frame rate)
                     if delta_vis > 0.05: 
                         self.rtf = actual_rtf_sum / iteration_count
                         delta_vis, actual_rtf_sum, iteration_count = 0, 0, 0
@@ -207,7 +207,7 @@ class Simulator():
         
         for i in range(self.num_robots):
             robot, pos = self.swarm[i], result_array[i]
-
+            
             if robot.posn[0] != pos[1] or robot.posn[1] != pos[2]: # If new pos is diff from old pos:
                 collision_will_occur = False
                 # Decrement time to collision for everyone
@@ -220,15 +220,16 @@ class Simulator():
                         if ir_dist <= (2 * self.robot_radius)**2:
                             self.num_collisions += 1  
                             collision_will_occur = True
+                        else: # If two robots have collided, don't recalculate for them (will eventually recalculate when posn updates to a valid posn)
+                            # Recalculate time to collision
+                            # Calculate magnitude of velocity vector: note sqrt(x^2+y^2) >= sqrt(a^2+b^2) iff x^2+y^2 >= a^2+b^2
+                            vel1, vel2 = (self.swarm[r].velocity[0])**2 + (self.swarm[r].velocity[1])**2, (robot.velocity[0])**2 + (robot.velocity[1])**2
+                            max_v = max(vel1, vel2) # Select larger velocity
+                            robot.collision_list[r] = ir_dist / (2 * np.sqrt(max_v) * dt)  # time to collision
 
-                        # Recalculate time to collision
-                        # Calculate magnitude of velocity vector: note sqrt(x^2+y^2) >= sqrt(a^2+b^2) iff x^2+y^2 >= a^2+b^2
-                        vel1, vel2 = (self.swarm[r].velocity[0])**2 + (self.swarm[r].velocity[1])**2, (robot.velocity[0])**2 + (robot.velocity[1])**2
-                        max_v = max(vel1, vel2) # Select larger velocity
-                        robot.collision_list[r] = ir_dist / (2 * np.sqrt(max_v) * dt)  # time to collision
-            
                 if not collision_will_occur:
                     robot.posn[0], robot.posn[1] = min(max(pos[1], -self.arena_length / 2 + self.robot_radius), self.arena_length / 2 - self.robot_radius), min(max(pos[2], -self.arena_height / 2 + self.robot_radius), self.arena_height / 2 - self.robot_radius) 
+            
             robot.posn[2], robot.clock = pos[0], max(robot.clock, self.sim_time)  
 
 if __name__ == '__main__':
