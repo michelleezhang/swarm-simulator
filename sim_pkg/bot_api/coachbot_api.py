@@ -7,7 +7,7 @@ class Coachbot():
         '''
         Define API for Coachbots
         When a method is called, it sends a request to the simulator. For some methods, it receives a response back and returns it
-        Each method is identified by a unique number, allowing the simulator and coachbot to coordinate what data should be interchanged
+        Each method (except log) is identified by a unique number, allowing the simulator and coachbot to coordinate what data should be interchanged
             1: set_led
             2: set_vel
             3: get_clock
@@ -16,6 +16,7 @@ class Coachbot():
             6: recv_msg
             7: stop_sim
             8: delay
+            _: log
         '''
         self.virtual_id = a_ids 
         self.id = id_n
