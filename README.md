@@ -24,20 +24,19 @@ An example user program `firefly.py`, along with associated configuration and in
 
 ## Configuration parameters
 The parameters that can be set in the configuration file are: 
-1. TIME_ASYNC: 0 to make the robot time synced and 1 to introduce time asynchronous initialization for robots 
-2. NUMBER_OF_ROBOTS: Number of robots to launch
-3. COMM_RANGE: The range of communication (in meters)
-4. PACKET_SUCCESS_PERC: See the success rate of message packets (values in decimal range from 0 to 1)
-5. REAL_TIME_FACTOR: Maximum allowable real time factor
-6. NUM_OF_MSGS: Maximum number of messages to keep in the buffer
-7. MSG_SIZE: Maximum size of each message in buffer
-8. MSG_TYPE: Type of message that robots send (0 for string, 1 for bytes)
-9. WIDTH: Width of the arena
-10. LENGTH: Length of the arena
-11. USE_INIT_POS: Use the initialization python program to initialize position of the robot
-12. SIM_TIME_STEP: Set the simulation time step for each loop cycle
-13. SIM_TIME: Set the total (simulation) time for the simulation to run
-14. USE_VIS: If 1, then visualizer will be used. 
+1. NUMBER_OF_ROBOTS (int): number of robots to simulate
+2. COMM_RANGE (float): radius of communication for each robot (meters)
+3. PACKET_SUCCESS_PERC (float): success rate of sending messages (between 0 and 1)
+4. NUM_OF_MSGS (int): maximum number of messages each robot can keep in its message buffer
+5. MSG_SIZE (int): maximum size of each message (bytes)
+6. MSG_TYPE (int): set the type of messages to string (0) or bytes (1)
+7. TIME_ASYNC (int): set time synchronous (0) or asynchronous (1) initialization for robots
+8. REAL_TIME_FACTOR (float): maximum allowed real time factor (ratio of simulated time to actual time)
+9. SIM_TIME_STEP (float): set the (simulation) time step (how much time each iteration of the simulation loop should model)
+10. SIM_TIME (float): set the maximum allowed (simulation) time for the simulation to run
+11. WIDTH (float): width (height) of arena (meters)
+12. LENGTH (float): length of the arena (meters)
+13. USE_VIS (int): set whether (1) or not (0) to use the simulator GUI
 
 ## Code structure
 ![Structure](.github/images/structure.png)

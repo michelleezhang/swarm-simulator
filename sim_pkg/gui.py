@@ -10,18 +10,19 @@ class GUI:
         Receives data from the simulator and draws the swarm onscreen
         '''
         self.arena_length, self.arena_height = config_data["LENGTH"], config_data["WIDTH"]
-        self.screen_length, self.screen_height = 900, 900
-        self.radius = 10
-        self.arrow_width, self.arrow_height = self.radius // 3, self.radius // 2
-        self.x_fac, self.y_fac = self.screen_length // self.arena_length, self.screen_height // self.arena_height
+        self.screen_length, self.screen_height = 1200, 900
+        self.radius = 12
+        self.arrow_width, self.arrow_height = self.radius / 3, self.radius / 2
+        self.x_fac, self.y_fac = 2 * self.screen_length / self.arena_length, 2 * self.screen_height / self.arena_height
+        self.x_offset, self.y_offset = self.screen_length / 2, self.screen_height / 2 # TODO: May need to adjust these values
 
     def launch(self):
         '''
         Initialize pygame and specify display settings
         '''
         pygame.font.init()
-        self.window = pygame.display.set_mode((self.screen_length, self.screen_height))
         self.font = pygame.font.SysFont('samanata', 24)
+        self.window = pygame.display.set_mode((self.screen_length, self.screen_height))
 
     def stop_gui(self):
         '''
@@ -55,7 +56,7 @@ class GUI:
         # Draw text
         time_text = self.font.render('Real time factor ' + f'{rtf:.2f}x | Real time: ' + f'{real_time:.2f} seconds | Sim time:' + f'{sim_time:.2f} seconds', 
                                      True, (255,255,255))
-        self.window.blit(time_text, (200, 100)) # Blit is like the "draw" equivalent for text/images
+        self.window.blit(time_text, (300, 100)) # Blit is like the "draw" equivalent for text/images
 
         # Update the display to show the latest changes
         pygame.display.flip()
@@ -69,7 +70,7 @@ class GUI:
         '''
         Convert robot coordinates to pygame coordinates 
         '''
-        return (coord[0] + self.arena_length // 2) * self.x_fac, (-coord[1] + self.arena_height // 2) * self.y_fac
+        return ((coord[0] + self.arena_length / 2) * self.x_fac) - self.x_offset, ((-coord[1] + self.arena_height / 2) * self.y_fac) - self.y_offset
     # NOTE: Pygame coordinate system has (0,0) in the top-left and positive y is downward direction
 
     def rotate_in_place(self, x, y, theta, posn):

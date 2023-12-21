@@ -9,7 +9,6 @@
     "MSG_TYPE": 0,
     "WIDTH": 10, 
     "LENGTH": 10, 
-    "USE_INIT_POS": 1,
     "SIM_TIME_STEP": 0.05,
     "SIM_TIME": 60,
     "USE_VIS": 1

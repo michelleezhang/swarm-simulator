@@ -20,10 +20,9 @@ class Simulator():
         self.comm_radius, self.packet_success, self.num_msgs, self.msg_size = self.config_data["COMM_RANGE"], self.config_data["PACKET_SUCCESS_PERC"], self.config_data["NUM_OF_MSGS"], self.config_data["MSG_SIZE"]
         self.arena_length, self.arena_height = self.config_data["LENGTH"], self.config_data["WIDTH"]
         self.time_async, self.rtf, self.sim_time_step, self.sim_time_max = self.config_data["TIME_ASYNC"], self.config_data["REAL_TIME_FACTOR"], self.config_data["SIM_TIME_STEP"], self.config_data["SIM_TIME"]
-        self.use_init = self.config_data["USE_INIT_POS"]
  
         # Other simulation variables 
-        self.robot_radius = 0.12 # Simulation radius is 0.06, but we scale up because we set GUI radius to 10 for visualization purposes (true value would be 5)
+        self.robot_radius = 0.06
         self.stop_sim = False
         self.num_collisions = 0
 
@@ -37,7 +36,7 @@ class Simulator():
         '''
         Initialize swarm
         '''
-        if self.use_init == 1:
+        if self.initfile != None:
             init_split = os.path.splitext(self.initfile) # Split .py ending from initfile name
             initfile, init_suffix = init_split[0], init_split[1] 
 
@@ -60,13 +59,11 @@ class Simulator():
                         y.append(float(row['y']))
                         theta.append(float(row['theta']))
                         a_ids.append(float(row['a_ids']))
- 
-        elif self.use_init == 0:
+        else:
             x, y, theta, a_ids = np.random.uniform(-(self.arena_length - 0.1) / 2, (self.arena_length - 0.1) / 2, size=self.num_robots), np.random.uniform(-(self.arena_height - 0.1) / 2, (self.arena_height - 0.1) / 2, size=self.num_robots), np.zeros(self.num_robots), np.zeros(self.num_robots)
 
         if self.time_async == 1:
             clocks = np.random.rand(self.num_robots) * 0.001 # rand does 0 to 1 range automatically
-            # clocks = [np.random.uniform(0, 1) * 0.001 for _ in range(self.num_robots)]
         else:
             clocks = np.zeros(self.num_robots)
 
@@ -93,59 +90,59 @@ class Simulator():
             handlers=[Sim_Stat_Logger('log_values.csv')])    # Log messages using the custom CSVHandler
 
             first = True
-            actual_rtf = self.rtf # This will be some value initially, but will change slightly over time
-            T_sim = self.sim_time_step
-            T_real = T_sim/actual_rtf
-            delta_vis, actual_rtf_sum, iteration_count = 0, 0, 0
-
+            actual_rtf = self.rtf # The actual RTF during simulation will fluctuate over time
+            real_time_step = self.sim_time_step / actual_rtf # Each iteration should ideally take exactly sim_time_step / rtf real seconds 
+            delta_vis = 0
+            
             while not self.stop_sim:
                 datas = self.bot_server.recv(self.swarm) # Receive data
                 
                 if self.bot_server.num_connected < self.num_robots: # Prevent simulation from starting until all robot clients are connected to the server
                     continue
 
+                # In the first iteration, initialize time variables
                 if first:
-                    self.sim_time, real_time, real_time_now_start = 0.0001, 0, time.time()
+                    # Variables to store time elapsed in simulation, time elapsed in real world, and start time of the current simulation loop iteration
+                    self.sim_time, real_time, loop_start_time = 0.0001, 0, time.time()
                     first = False
 
+                # Update swarm state based on received data
                 if len(datas) != 0:
                     for data in datas:
                         self.update_state(data)
                 
+                # Send updates to GUI 
                 if vis == 1:
-                    delta_vis += T_real
+                    delta_vis += real_time_step
                     # Only allows visualization every 0.05 seconds (controls frame rate)
                     if delta_vis > 0.05: 
-                        self.rtf = actual_rtf_sum / iteration_count
-                        delta_vis, actual_rtf_sum, iteration_count = 0, 0, 0
-                        gui.update(self.swarm, real_time, self.sim_time, self.rtf)
+                        delta_vis = 0
+                        gui.update(self.swarm, real_time, self.sim_time, actual_rtf)
                 
-                self.sim_time += T_sim
+                # Increment simulation time
+                self.sim_time += self.sim_time_step
 
                 # Integrate world here
-                self.integrate_world(T_sim)
-    
-                real_time_now_end = time.time()
-                elapsed_time_diff = real_time_now_end - real_time_now_start
-                real_time_now_start = time.time()
+                self.integrate_world(self.sim_time_step)
+
+                elapsed_time_diff = time.time() - loop_start_time
+                loop_start_time = time.time()
 
                 # Time out simulator
                 if self.sim_time >= self.sim_time_max: 
                     print("Sim time maxed out.")
                     self.stop_sim = True
 
-                if elapsed_time_diff < T_real:
-                    real_time += T_real
-                    actual_rtf = T_sim/T_real
-                    diff = T_real - elapsed_time_diff
+                if elapsed_time_diff <= real_time_step:
+                    real_time += real_time_step
+                    actual_rtf = self.sim_time_step / real_time_step
+                    diff = real_time_step - elapsed_time_diff
                     if diff > 0:
                         time.sleep(diff)
                 else:
+                    # Note: this means the current iteration of the loop is taking longer than the ideal
                     real_time += elapsed_time_diff
-                    actual_rtf = T_sim/elapsed_time_diff
-                 
-                actual_rtf_sum += actual_rtf
-                iteration_count += 1
+                    actual_rtf = self.sim_time_step / elapsed_time_diff
             
             logging.info([0, self.num_collisions])
 
@@ -230,11 +227,13 @@ class Simulator():
                 if not collision_will_occur:
                     robot.posn[0], robot.posn[1] = min(max(pos[1], -self.arena_length / 2 + self.robot_radius), self.arena_length / 2 - self.robot_radius), min(max(pos[2], -self.arena_height / 2 + self.robot_radius), self.arena_height / 2 - self.robot_radius) 
             
-            robot.posn[2], robot.clock = pos[0], max(robot.clock, self.sim_time)  
+            robot.posn[2], robot.clock = pos[0], max(robot.clock, self.sim_time)
+
 
 if __name__ == '__main__':
     import argparse
     import json
+
     # Parse command line arguments to obtain the paths to the required files
     parser = argparse.ArgumentParser(description="Run the simulator")
     parser.add_argument("-c", "--configfile", type=str, help="Path to configuration file", required=True)
