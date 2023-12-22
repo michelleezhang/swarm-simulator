@@ -9,9 +9,9 @@ class GUI:
         A GUI to display the simulation
         Receives data from the simulator and draws the swarm onscreen
         '''
-        self.arena_length, self.arena_height = config_data["LENGTH"] / 2, config_data["WIDTH"] / 2
-        self.screen_length, self.screen_height = 1200, 900
-        self.radius = 10
+        self.arena_length, self.arena_height = config_data["LENGTH"], config_data["WIDTH"]
+        self.screen_length, self.screen_height = (900 / self.arena_height) * self.arena_length, 900 # Scales screen size by given arena dimensions
+        self.radius = 5
         self.arrow_width, self.arrow_height = self.radius / 3, self.radius / 2
         self.x_fac, self.y_fac = self.screen_length / self.arena_length, self.screen_height / self.arena_height
 
@@ -55,7 +55,7 @@ class GUI:
         # Draw text
         time_text = self.font.render('Real time factor ' + f'{rtf:.2f}x | Real time: ' + f'{real_time:.2f} seconds | Sim time: ' + f'{sim_time:.2f} seconds', 
                                      True, (255,255,255))
-        self.window.blit(time_text, (300, 100)) # Blit is like the "draw" equivalent for text/images
+        self.window.blit(time_text, (170, 100)) # Blit is like the "draw" equivalent for text/images
 
         # Update the display to show the latest changes
         pygame.display.flip()
