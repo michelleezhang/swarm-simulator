@@ -125,19 +125,24 @@ class Simulator():
                 # Integrate world here
                 self.integrate_world(self.sim_time_step)
 
-                #find elapsed time (time since last while loop ran)
-                #Calling time.time() twice will give 2 different results, so we use t to call it once
-                t = time.time()
-                elapsed_time_diff = t - loop_start_time
-                loop_start_time = t
+                elapsed_time_diff = time.time() - loop_start_time
+                loop_start_time = time.time()
 
                 # Time out simulator
                 if self.sim_time >= self.sim_time_max: 
                     print("Sim time maxed out.")
                     self.stop_sim = True
 
-                # Increment real time
-                real_time += real_time_step
+                if elapsed_time_diff <= real_time_step:
+                    real_time += real_time_step
+                    actual_rtf = self.sim_time_step / real_time_step
+                    diff = real_time_step - elapsed_time_diff
+                    if diff > 0:
+                        time.sleep(diff)
+                else:
+                    # Note: this means the current iteration of the loop is taking longer than the ideal
+                    real_time += elapsed_time_diff
+                    actual_rtf = self.sim_time_step / elapsed_time_diff
             
             logging.info([0, self.num_collisions])
 
