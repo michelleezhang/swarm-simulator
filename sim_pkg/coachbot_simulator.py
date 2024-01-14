@@ -59,22 +59,38 @@ def main(userfile, config_data, initfile):
 if __name__ == '__main__':
     # Parse command line arguments to obtain the paths to the required files
     parser = argparse.ArgumentParser(description="Run the robots, simulator, and GUI")
-    parser.add_argument("-u", "--userfile", type=str, help="Path to user code file", required=True)
-    parser.add_argument("-c", "--configfile", type=str, help="Path to configuration file", required=True)
-    parser.add_argument("-i", "--initfile", type=str, help="Path to initialization file", required=False) # default value: None
-    parser.add_argument("-n", "--num", type=str, help="Number of batches to run", required=False) # default value: None
+    parser.add_argument("-b", "--batchfile", type=str, help="Path to user code file", required=True)
     args = parser.parse_args()
 
-    # Unpack configuration data dictionary
-    with open("user/" + args.configfile, 'r') as cfile:
-        config_data = json.loads(cfile.read())
-    cfile.close()
+    # Unpack batchfile data
+    with open("user/" + args.batchfile, 'r') as bfile:
+        batch_config = json.loads(bfile.read())
+    bfile.close()
 
-    if args.num == None:
-        num_iters = 1
-    else:
-        num_iters = int(args.num)
+    num_runs = batch_config["NUM_RUNS"]
+
+    for i in range(num_runs):
+        if f"USER_{i}" in batch_config:
+            userfile = batch_config[f"USER_{i}"]
+        else:
+            userfile = batch_config["DEFAULT_USER"]
+
+        if f"CONFIG_{i}" in batch_config:
+            configfile = batch_config[f"CONFIG_{i}"]
+        else:
+            configfile = batch_config["DEFAULT_CONFIG"]
+
+        # Unpack configuration data dictionary
+        with open("user/" + configfile, 'r') as cfile:
+            config_data = json.loads(cfile.read())
+        cfile.close()
+
+        if f"INIT_{i}" in batch_config:
+            initfile = batch_config[f"INIT_{i}"]
+        elif "DEFAULT_INIT" in batch_config:
+            initfile = batch_config["DEFAULT_INIT"]
+        else:
+            initfile = None
         
-    for i in range(num_iters):
         # Run main function
-        main(args.userfile, config_data, args.initfile)
+        main(userfile, config_data, initfile)

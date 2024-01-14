@@ -5,25 +5,30 @@ This package provides a simulator for swarm robotics.
 ## Usage
 To set up required packages, run `pip install -r requirements.in`
 
+Each simulation may take three input files: the user file, the configuration file, and the initialization file
+* The user file is the robot program file 
+* The configuration file stores parameters for the simulation
+* The initialization file initializes robot positions in the swarm
+    * This file is optional
+    * Accepted file formats: ``.py`` or ``.csv`` (where columns are `x`, `y`, `theta`, and `a_ids`)
+
 To run the simulator:
-1. Navigate to the `sim_pkg` directory. 
-2. Set parameters for the user file in your configuration file if needed.
-3. Run `python coachbot_simulator.py -u <userfile> -c <configfile> -i <initfile> -n <num_runs>` 
-    * `<userfile>` is the user's program file 
-    * `<configfile>` is the file that stores simulation parameters
-    * `<initfile>` is the file that initializes robot positions  
-        * This argument is optional
-        * Accepted file formats: ``.py`` or ``.csv``
-    * `<num_runs>` is the number of simulations to run
-        * This argument is optional
+1. Move all user, configuration, and intialization files into the `user` directory
+2. Navigate to the `sim_pkg` directory
+3. Run `python coachbot_simulator.py -b <batchfile>`
+    * `<batchfile>` is the batch file, which specifies the number of simulations to run ("NUM_RUNS") and the input files to use for each simulation
+    * Default input files can be set in the batch file, under "DEFAULT_USER", "DEFAULT_CONFIG", and "DEFAULT_INIT" respectively
+        * To exclude the initialization file by default, simply omit "DEFAULT_INIT"
+    * Files for specific runs can also be set in the batch file
+        * e.g. "USER_i" specifies the userfile for the i-th simulation
 
 To generate a histogram of recorded collision counts, run `python analyze.py -f <filename>`
 * `<filename>` is the name for the log file containing data about collisions
 
-An example user program `firefly.py`, along with associated configuration and initialization files `config.json` and `init_pose.py`, are provided in the user directory of this repository. 
+An example user program `firefly.py`, associated configuration and initialization files `config.json` and `init_pose.py`, and batch file `firefly_batch.json` are provided in the user directory of this repository -- this example can be viewed by running `python coachbot_simulator.py -b firefly_batch.json`
 
 ## Configuration parameters
-The parameters that can be set in the configuration file are: 
+The parameters that can be set in a configuration file are: 
 1. NUMBER_OF_ROBOTS (int): number of robots to simulate
 2. COMM_RANGE (float): radius of communication for each robot (meters)
 3. PACKET_SUCCESS_PERC (float): success rate of sending messages (between 0 and 1)
