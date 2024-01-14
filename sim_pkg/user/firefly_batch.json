@@ -1,0 +1,9 @@
+{
+    "NUM_RUNS": 1,
+    "DEFAULT_USER": "firefly.py",
+    "DEFAULT_CONFIG": "config.json",
+    "DEFAULT_INIT": "init_pose.py",
+    "USER_1": "firefly.py",
+    "CONFIG_1": "config.json",
+    "INIT_1": "init_pose.py"
+}
