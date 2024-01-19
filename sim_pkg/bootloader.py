@@ -1,9 +1,11 @@
 #!/usr/bin/env python2
 import os
+import traceback
 import importlib
 import socket, errno
 from bot_api.coachbot_api import Coachbot
 from client_server import Bot_Client
+
 
 class Bootloader():
     def __init__(self, userfile, config_data):
@@ -28,7 +30,7 @@ class Bootloader():
             fn = importlib.import_module("user." + self.userfile) # Import userfile as a module
             fn.usr(robot)
             bot_client.stop() # NOTE: This usually isn't run because it does not get called until after usr is complete
-
+            
         except KeyboardInterrupt:
             pass # Allow clean termination by KeyboardInterrupt from the main program
         except socket.error as e:
@@ -37,9 +39,11 @@ class Bootloader():
                 # TODO: this is a temporary fix -- suppresses connection reset error from the bootloader, prevents errors when robot threads terminate earlier than expected
                 # This works but would be better to use some kind of stop event based on the simulator ending
             else:
-                print(f"bootloader.py: {e}")
+                print(f"bootloader.py: {e}. Full traceback below:")
+                traceback.print_exc()
         except Exception as e:
-            print(f"bootloader.py: {e}")
+            print(f"bootloader.py: {e}. Full traceback below:")
+            traceback.print_exc()
 
 if __name__ == '__main__':
     import argparse

@@ -15,12 +15,12 @@ def run_threads(bootloader, simulator, num_robots):
     for thread in threads:
         thread.start()
 
-def main(userfile, config_data, initfile):
+def main(userfile, config_data, initfile, run_number):
     '''
     Runs the robots, simulator, and GUI in parallel. 
     If the program is interrupted, terminate all processes cleanly.
     '''
-    print("Simulation initiated.")
+    print(f"Simulation {run_number} initiated.")
 
     # Number of robots
     num_robots = config_data["NUMBER_OF_ROBOTS"]
@@ -49,12 +49,12 @@ def main(userfile, config_data, initfile):
     try:
         s_proc.join() # Wait for simulator process to complete
         r_proc.terminate() # Terminate the robot process after the simulator process is finished
-        print("Simulation completed.")
+        print(f"Simulation {run_number} completed.")
 
     except KeyboardInterrupt:
         s_proc.terminate()
         r_proc.terminate()
-        print("User interrupted: Simulation terminated.")
+        print(f"User interrupted: Simulation {run_number} terminated.")
 
 if __name__ == '__main__':
     # Parse command line arguments to obtain the paths to the required files
@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
     num_runs = batch_config["NUM_RUNS"]
 
-    for i in range(num_runs):
+    for i in range(1, num_runs + 1):
         if f"USER_{i}" in batch_config:
             userfile = batch_config[f"USER_{i}"]
         else:
@@ -93,4 +93,4 @@ if __name__ == '__main__':
             initfile = None
         
         # Run main function
-        main(userfile, config_data, initfile)
+        main(userfile, config_data, initfile, i)
