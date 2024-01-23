@@ -1,0 +1,15 @@
+{
+    "NUMBER_OF_ROBOTS": 60,
+    "COMM_RANGE": 0.3, 
+    "PACKET_SUCCESS_PERC": 1.0, 
+    "NUM_OF_MSGS": 36, 
+    "MSG_SIZE": 1792,
+    "MSG_TYPE": 0,
+    "TIME_ASYNC": 0,
+    "REAL_TIME_FACTOR": 1.0,
+    "SIM_TIME_STEP": 0.05,
+    "SIM_TIME": 1000,
+    "WIDTH": 12, 
+    "LENGTH": 12, 
+    "USE_VIS": 1
+}
