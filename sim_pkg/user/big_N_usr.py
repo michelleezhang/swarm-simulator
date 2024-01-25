@@ -21,7 +21,7 @@ def usr(robot):
     counts = 0
         
     while True:
-        # print('Thread: ' + str(robot.id))
+        
         counts += 1
         if not changed:
             robot.set_led(50,0,50)
@@ -29,8 +29,30 @@ def usr(robot):
             robot.set_led(100,100,100)
 
         t = robot.get_clock()
-        if t > 60 and not changed:
+        if t > 10 and not changed:
             changed = True
             robot.set_led(100,100,100)
             print(str(robot.id) + ': time of change: ' + str(t) + ' : ' + str(counts))
-                
+        
+        # t = robot.get_clock()
+        # if t > 10:
+        #     t = t % 10
+
+        # if t > 7.5:
+        #     robot.set_led(100,0,0)
+        # elif t > 5.0:
+        #     robot.set_led(0,0,100)
+        # elif t > 2.5:
+        #     robot.set_led(100,0,0)
+        # elif t > 0:
+        #     robot.set_led(0,0,100)
+        
+
+        
+        # robot.set_led(100,0,0)
+
+        # robot.delay(2)
+
+        # robot.set_led(0,0,100)
+
+        # robot.delay(2)
