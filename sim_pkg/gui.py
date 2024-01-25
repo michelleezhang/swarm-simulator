@@ -10,7 +10,7 @@ class GUI:
         Receives data from the simulator and draws the swarm onscreen
         '''
         self.arena_length, self.arena_height = config_data["LENGTH"], config_data["WIDTH"]
-        self.screen_length, self.screen_height = (900 / self.arena_height) * self.arena_length, 900 # Scales screen size by given arena dimensions
+        self.screen_length, self.screen_height = int(900 / self.arena_height) * self.arena_length, 900 # Scales screen size by given arena dimensions
         self.radius = 5
         self.arrow_width, self.arrow_height = self.radius / 3, self.radius / 2
         self.x_fac, self.y_fac = self.screen_length / self.arena_length, self.screen_height / self.arena_height
