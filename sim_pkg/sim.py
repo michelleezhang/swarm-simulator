@@ -91,12 +91,16 @@ class Simulator():
 
             first = True
             actual_rtf = self.rtf # The actual RTF during simulation will fluctuate over time
-            real_time_step = self.sim_time_step / actual_rtf # Each iteration should ideally take exactly sim_time_step / rtf real seconds 
+            adjusted_time_step = actual_rtf*self.sim_time_step # Each iteration should ideally take exactly sim_time_step / rtf real seconds 
             delta_vis = 0
-            
+
+            datas_backlog = []
+
             while not self.stop_sim:
+
+                #this has to be first to avoid socket erros!
                 datas = self.bot_server.recv(self.swarm) # Receive data
-                
+
                 if self.bot_server.num_connected < self.num_robots: # Prevent simulation from starting until all robot clients are connected to the server
                     continue
 
@@ -104,45 +108,51 @@ class Simulator():
                 if first:
                     # Variables to store time elapsed in simulation, time elapsed in real world, and start time of the current simulation loop iteration
                     self.sim_time, real_time, loop_start_time = 0.0001, 0, time.time()
+                    self.sim_time_threshold, integral_time = 0,0
                     first = False
 
-                # Update swarm state based on received data
-                if len(datas) != 0:
-                    for data in datas:
-                        self.update_state(data)
-                
-                # Send updates to GUI 
-                if vis == 1:
-                    delta_vis += real_time_step
-                    # Only allows visualization every 0.05 seconds (controls frame rate)
-                    if delta_vis > 0.05: 
-                        delta_vis = 0
-                        gui.update(self.swarm, real_time, self.sim_time, actual_rtf)
-                
-                # Increment simulation time
-                self.sim_time += self.sim_time_step
+                #check the time to move clocks forward
+                t = time.time()
+                elapsed_time_diff = t - loop_start_time
+                loop_start_time = t
 
-                # Integrate world here
-                self.integrate_world(self.sim_time_step)
+                #move wall clock forward
+                real_time = real_time + elapsed_time_diff
 
-                elapsed_time_diff = time.time() - loop_start_time
-                loop_start_time = time.time()
+                #move sim time forward (scaled by time factor)
+                self.sim_time = self.sim_time + actual_rtf*elapsed_time_diff
+
+                #move forward integral time (this is like sim time but it resets to 0 every time the world is integrated)
+                integral_time = integral_time + actual_rtf*elapsed_time_diff
+
+                #keep track of all messages received between simulation time
+                datas_backlog += datas
+
+                #only update the simulator vis and the swarm every time step.                               
+                if integral_time >= self.sim_time_step:
+
+                    # Integrate world here
+                    self.integrate_world(integral_time)
+                    integral_time = 0
+                    
+                    # Update swarm state based on received data
+                    if len(datas_backlog) != 0:
+                        for data in datas_backlog:
+                            self.update_state(data)
+
+                    # Send updates to GUI 
+                    if vis == 1:
+                        delta_vis += self.sim_time_step
+                        # Only allows visualization every 0.05 seconds (controls frame rate)
+                        if delta_vis > 0.05: 
+                            delta_vis = 0
+                            gui.update(self.swarm, real_time, self.sim_time, actual_rtf)
+
 
                 # Time out simulator
                 if self.sim_time >= self.sim_time_max: 
                     print("Sim time maxed out.")
                     self.stop_sim = True
-
-                if elapsed_time_diff <= real_time_step:
-                    real_time += real_time_step
-                    actual_rtf = self.sim_time_step / real_time_step
-                    diff = real_time_step - elapsed_time_diff
-                    if diff > 0:
-                        time.sleep(diff)
-                else:
-                    # Note: this means the current iteration of the loop is taking longer than the ideal
-                    real_time += elapsed_time_diff
-                    actual_rtf = self.sim_time_step / elapsed_time_diff
             
             logging.info([0, self.num_collisions])
 
