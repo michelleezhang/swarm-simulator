@@ -19,7 +19,8 @@ To run the simulator:
     * `<batchfile>` is the batch file, which specifies the number of simulations to run ("NUM_RUNS") and the input files to use for each simulation
     * Default input files can be set in the batch file, under "DEFAULT_USER", "DEFAULT_CONFIG", and "DEFAULT_INIT" respectively
         * To exclude the initialization file by default, simply omit "DEFAULT_INIT"
-    * Files for specific runs can also be set in the batch file
+    * The default number of trials for each simulation can be set under "DEFAULT_TRIALS"
+    * Files and trial numbers for specific runs can also be set in the batch file
         * e.g. "USER_i" specifies the userfile for the i-th simulation
 
 To generate a histogram of recorded collision counts, run `python analyze.py -f <filename>`

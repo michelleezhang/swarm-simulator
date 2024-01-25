@@ -3,7 +3,9 @@
     "DEFAULT_USER": "firefly.py",
     "DEFAULT_CONFIG": "config.json",
     "DEFAULT_INIT": "init_pose.py",
+    "DEFAULT_TRIALS": 1,
     "USER_1": "firefly.py",
     "CONFIG_1": "config.json",
-    "INIT_1": "init_pose.py"
+    "INIT_1": "init_pose.py",
+    "TRIALS_1": 1
 }
