@@ -5,7 +5,7 @@
     "NUM_OF_MSGS": 36, 
     "MSG_SIZE": 1792,
     "MSG_TYPE": 0,
-    "TIME_ASYNC": 1,
+    "TIME_ASYNC": 0,
     "REAL_TIME_FACTOR": 1.0,
     "SIM_TIME_STEP": 0.05,
     "SIM_TIME": 1000,

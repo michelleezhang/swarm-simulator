@@ -19,33 +19,34 @@ def usr(robot):
     
     changed = False
     counts = 0
+    first_part = True
         
     while True:
         
         counts += 1
-        if not changed:
+        if not changed and first_part:
             robot.set_led(50,0,50)
-        else:
+        elif first_part:
             robot.set_led(100,100,100)
 
         t = robot.get_clock()
-        if t > 10 and not changed:
+        if t > 5 and not changed:
             changed = True
+            first_part = False
             robot.set_led(100,100,100)
             print(str(robot.id) + ': time of change: ' + str(t) + ' : ' + str(counts))
         
-        # t = robot.get_clock()
-        # if t > 10:
-        #     t = t % 10
+        if t > 10:
+            t = t % 10
 
-        # if t > 7.5:
-        #     robot.set_led(100,0,0)
-        # elif t > 5.0:
-        #     robot.set_led(0,0,100)
-        # elif t > 2.5:
-        #     robot.set_led(100,0,0)
-        # elif t > 0:
-        #     robot.set_led(0,0,100)
+            if t > 7.5:
+                robot.set_led(100,0,0)
+            elif t > 5.0:
+                robot.set_led(0,0,100)
+            elif t > 2.5:
+                robot.set_led(100,0,0)
+            elif t > 0:
+                robot.set_led(0,0,100)
         
 
         
