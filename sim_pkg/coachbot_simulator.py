@@ -11,7 +11,8 @@ def run_threads(bootloader, simulator, num_robots):
     '''
     Starts a thread that calls bootloader launch for each robot 
     '''
-    threads = [threading.Thread(target=bootloader.launch, args=(i, simulator.swarm[i].a_ids)) for i in range(num_robots)]
+    barrier = threading.Barrier(num_robots)
+    threads = [threading.Thread(target=bootloader.launch, args=(barrier, i, simulator.swarm[i].a_ids)) for i in range(num_robots)]
     for thread in threads:
         thread.start()
 
