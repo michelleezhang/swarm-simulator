@@ -14,7 +14,7 @@ class Bootloader():
         self.buffer_size = config_data["NUM_OF_MSGS"] * config_data["MSG_SIZE"]
         self.msg_type = config_data["MSG_TYPE"]
         
-    def launch(self, id, a_ids=-1):
+    def launch(self, barrier, id, a_ids=-1):
         '''
         Creates a robot instance to run the user file
         '''
@@ -26,6 +26,7 @@ class Bootloader():
 
             # Run usr function in userfile module
             fn = importlib.import_module("user." + self.userfile) # Import userfile as a module
+            barrier.wait() # Wait for all robot threads to reach this point before starting the usr function
             fn.usr(robot)
             bot_client.stop() # NOTE: This usually isn't run because it does not get called until after usr is complete
 

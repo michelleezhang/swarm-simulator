@@ -11,16 +11,17 @@ def run_threads(bootloader, simulator, num_robots):
     '''
     Starts a thread that calls bootloader launch for each robot 
     '''
-    threads = [threading.Thread(target=bootloader.launch, args=(i, simulator.swarm[i].a_ids)) for i in range(num_robots)]
+    barrier = threading.Barrier(num_robots)
+    threads = [threading.Thread(target=bootloader.launch, args=(barrier, i, simulator.swarm[i].a_ids)) for i in range(num_robots)]
     for thread in threads:
         thread.start()
 
-def main(userfile, config_data, initfile):
+def main(userfile, config_data, initfile, run_number, trial_number):
     '''
     Runs the robots, simulator, and GUI in parallel. 
     If the program is interrupted, terminate all processes cleanly.
     '''
-    print("Simulation initiated.")
+    print(f"Simulation {run_number} Trial {trial_number} initiated.")
 
     # Number of robots
     num_robots = config_data["NUMBER_OF_ROBOTS"]
@@ -49,32 +50,54 @@ def main(userfile, config_data, initfile):
     try:
         s_proc.join() # Wait for simulator process to complete
         r_proc.terminate() # Terminate the robot process after the simulator process is finished
-        print("Simulation completed.")
+        print(f"Simulation {run_number} Trial {trial_number} completed.")
 
     except KeyboardInterrupt:
         s_proc.terminate()
         r_proc.terminate()
-        print("User interrupted: Simulation terminated.")
+        print(f"User interrupted: Simulation {run_number} Trial {trial_number} terminated.")
 
 if __name__ == '__main__':
     # Parse command line arguments to obtain the paths to the required files
     parser = argparse.ArgumentParser(description="Run the robots, simulator, and GUI")
-    parser.add_argument("-u", "--userfile", type=str, help="Path to user code file", required=True)
-    parser.add_argument("-c", "--configfile", type=str, help="Path to configuration file", required=True)
-    parser.add_argument("-i", "--initfile", type=str, help="Path to initialization file", required=False) # default value: None
-    parser.add_argument("-n", "--num", type=str, help="Number of batches to run", required=False) # default value: None
+    parser.add_argument("-b", "--batchfile", type=str, help="Path to user code file", required=True)
     args = parser.parse_args()
 
-    # Unpack configuration data dictionary
-    with open("user/" + args.configfile, 'r') as cfile:
-        config_data = json.loads(cfile.read())
-    cfile.close()
+    # Unpack batchfile data
+    with open("user/" + args.batchfile, 'r') as bfile:
+        batch_config = json.loads(bfile.read())
+    bfile.close()
 
-    if args.num == None:
-        num_iters = 1
-    else:
-        num_iters = int(args.num)
-        
-    for i in range(num_iters):
-        # Run main function
-        main(args.userfile, config_data, args.initfile)
+    num_runs = batch_config["NUM_RUNS"]
+
+    for i in range(1, num_runs + 1):
+        if f"TRIALS_{i}" in batch_config:
+            num_trials = batch_config[f"TRIALS_{i}"]
+        else:
+            num_trials = batch_config["DEFAULT_TRIALS"]
+
+        for trial in range(1, num_trials + 1):
+            if f"USER_{i}" in batch_config:
+                userfile = batch_config[f"USER_{i}"]
+            else:
+                userfile = batch_config["DEFAULT_USER"]
+
+            if f"CONFIG_{i}" in batch_config:
+                configfile = batch_config[f"CONFIG_{i}"]
+            else:
+                configfile = batch_config["DEFAULT_CONFIG"]
+
+            # Unpack configuration data dictionary
+            with open("user/" + configfile, 'r') as cfile:
+                config_data = json.loads(cfile.read())
+            cfile.close()
+
+            if f"INIT_{i}" in batch_config:
+                initfile = batch_config[f"INIT_{i}"]
+            elif "DEFAULT_INIT" in batch_config:
+                initfile = batch_config["DEFAULT_INIT"]
+            else:
+                initfile = None
+            
+            # Run main function
+            main(userfile, config_data, initfile, i, trial)
