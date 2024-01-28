@@ -32,6 +32,8 @@ class Simulator():
         # Initialize swarm
         self.initialize_swarm()
 
+        self.thread_start_time = 0
+
     def initialize_swarm(self):
         '''
         Initialize swarm
@@ -169,6 +171,15 @@ class Simulator():
         '''
         function = data["function"]
         robot_id = data["id"]
+        thread_time = data["time"]
+
+        # Get the time when the robot threads started (approximated by the time that the latest-starting robot thread began)
+        if function == 0: # If we receive a function 0, ideally all bootloader threads should be one step before running usr function
+            thread_time = data["params"]
+            if thread_time > self.thread_start_time:
+                self.thread_start_time = thread_time # Set it to be whatever the latest starting robot time is
+        
+        # print("TIME:", thread_time - self.thread_start_time) # time elapsed since the thread started
 
         if function == 1: # set_LED
             self.swarm[robot_id].led = data["params"] 

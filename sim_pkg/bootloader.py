@@ -5,6 +5,7 @@ import importlib
 import socket, errno
 from bot_api.coachbot_api import Coachbot
 from client_server import Bot_Client
+import time
 
 
 class Bootloader():
@@ -29,6 +30,8 @@ class Bootloader():
             # Run usr function in userfile module
             fn = importlib.import_module("user." + self.userfile) # Import userfile as a module
             barrier.wait() # Wait for all robot threads to reach this point before starting the usr function
+            robot.send_start_time(time.time()) 
+
             fn.usr(robot)
             bot_client.stop() # NOTE: This usually isn't run because it does not get called until after usr is complete
             
