@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 import os
 import base64
+import time
 
 class Coachbot():
     def __init__(self, bot_client, msg_type, id_n=-1, a_ids=-1):
@@ -32,7 +33,8 @@ class Coachbot():
         payload = {
             "id": self.id,
             "function": 1,
-            "params": (r, g, b)
+            "params": (r, g, b),
+            "time": time.time()
         }
         self.bot_client.send(payload)
     
@@ -44,14 +46,16 @@ class Coachbot():
         payload = {
             "id": self.id,
             "function": 2,
-            "params": (left, right)
+            "params": (left, right),
+            "time": time.time()
         }
         self.bot_client.send(payload)
 
     def get_clock(self):
         payload = {
             "id": self.id,
-            "function": 3
+            "function": 3,
+            "time": time.time()
         }
         response = self.bot_client.send(payload)
         return float(response["response"])
@@ -59,7 +63,8 @@ class Coachbot():
     def get_pose(self):
         payload = {
             "id": self.id,
-            "function": 4
+            "function": 4,
+            "time": time.time()
         }
         response = self.bot_client.send(payload)
         return response["response"] 
@@ -74,7 +79,8 @@ class Coachbot():
         payload = {
             "id": self.id,
             "function": 5,
-            "params": msg
+            "params": msg,
+            "time": time.time()
         }
    
         self.bot_client.send(payload)
@@ -83,7 +89,8 @@ class Coachbot():
         # TODO: clear doesn't seem to do anything
         payload = {
             "id": self.id,
-            "function": 6
+            "function": 6,
+            "time": time.time()
         }
         response = self.bot_client.send(payload)
 
@@ -101,7 +108,8 @@ class Coachbot():
     def stop_sim(self):
         payload = {
             "id": self.id,
-            "function": 7
+            "function": 7,
+            "time": time.time()
         }
         self.bot_client.send(payload)
     
@@ -109,7 +117,8 @@ class Coachbot():
         payload = {
             "id": self.id,
             "function": 8,
-            "params": delay_time
+            "params": delay_time,
+            "time": time.time()
         }
         self.bot_client.send(payload)
 
@@ -129,3 +138,12 @@ class Coachbot():
         except FileNotFoundError:
              with open(log_file, 'w') as file:
                 file.write(message + '\n')
+    
+    def send_start_time(self, start_time):
+        payload = {
+            "id": self.id,
+            "function": 0,
+            "params": start_time,
+            "time": time.time()
+        }
+        self.bot_client.send(payload)
