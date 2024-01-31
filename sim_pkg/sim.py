@@ -123,6 +123,7 @@ class Simulator():
 
                 #move sim time forward (scaled by time factor)
                 self.sim_time = self.sim_time + actual_rtf*elapsed_time_diff
+                # print(self.sim_time)
 
                 #move forward integral time (this is like sim time but it resets to 0 every time the world is integrated)
                 integral_time = integral_time + actual_rtf*elapsed_time_diff
@@ -130,25 +131,23 @@ class Simulator():
                 #keep track of all messages received between simulation time
                 datas_backlog += datas
 
-                #only update the simulator vis and the swarm every time step.                               
-                if integral_time >= self.sim_time_step:
+                # Integrate world here
+                self.integrate_world(integral_time)
+                integral_time = 0
 
-                    # Integrate world here
-                    self.integrate_world(integral_time)
-                    integral_time = 0
+                # Update swarm state based on received data
+                if len(datas_backlog) != 0:
+                    for data in datas_backlog:
+                        self.update_state(data)
+                datas_backlog = []
                     
-                    # Update swarm state based on received data
-                    if len(datas_backlog) != 0:
-                        for data in datas_backlog:
-                            self.update_state(data)
-
-                    # Send updates to GUI 
-                    if vis == 1:
-                        delta_vis += self.sim_time_step
-                        # Only allows visualization every 0.05 seconds (controls frame rate)
-                        if delta_vis > 0.05: 
-                            delta_vis = 0
-                            gui.update(self.swarm, real_time, self.sim_time, actual_rtf)
+                # Send updates to GUI 
+                if vis == 1:
+                    delta_vis += self.sim_time_step
+                    # Only allows visualization every 0.05 seconds (controls frame rate)
+                    if delta_vis > 0.05: 
+                        delta_vis = 0
+                        gui.update(self.swarm, real_time, self.sim_time, actual_rtf)
 
 
                 # Time out simulator
@@ -247,7 +246,6 @@ class Simulator():
 
                 if not collision_will_occur:
                     robot.posn[0], robot.posn[1] = min(max(pos[1], -self.arena_length / 2 + self.robot_radius), self.arena_length / 2 - self.robot_radius), min(max(pos[2], -self.arena_height / 2 + self.robot_radius), self.arena_height / 2 - self.robot_radius) 
-            
             robot.posn[2], robot.clock = pos[0], max(robot.clock, self.sim_time)
 
 
