@@ -114,13 +114,15 @@ class Coachbot():
         self.bot_client.send(payload)
     
     def delay(self, delay_time=0.02):
+        t = time.time()
         payload = {
             "id": self.id,
             "function": 8,
             "params": delay_time,
-            "time": time.time()
+            "time": t
         }
         self.bot_client.send(payload)
+        time.sleep(delay_time)
 
     def log(self, message):
         '''

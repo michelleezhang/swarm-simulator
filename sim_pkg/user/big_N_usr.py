@@ -20,8 +20,12 @@ def usr(robot):
     changed = False
     counts = 0
     first_part = True
-        
+
+    threshold = 10
+
     while True:
+
+        robot.delay()
         
         counts += 1
         if not changed and first_part:
@@ -30,23 +34,30 @@ def usr(robot):
             robot.set_led(100,100,100)
 
         t = robot.get_clock()
-        if t > 5 and not changed:
+        if t > threshold and not changed:
             changed = True
             first_part = False
             robot.set_led(100,100,100)
             print(str(robot.id) + ': time of change: ' + str(t) + ' : ' + str(counts))
         
-        if t > 10:
-            t = t % 10
+        if t > threshold + 5:
+            robot.set_led(100,0,0)
+            # print('entering delay 1 at: ' + str(t))
+            robot.delay(2)
+            robot.set_led(0,0,100)
+            # print('entering delay 2 at: ' + str(robot.get_clock()))
+            robot.delay(2)
 
-            if t > 7.5:
-                robot.set_led(100,0,0)
-            elif t > 5.0:
-                robot.set_led(0,0,100)
-            elif t > 2.5:
-                robot.set_led(100,0,0)
-            elif t > 0:
-                robot.set_led(0,0,100)
+            # t = t % 10
+
+            # if t > 7.5:
+            #     robot.set_led(100,0,0)
+            # elif t > 5.0:
+            #     robot.set_led(0,0,100)
+            # elif t > 2.5:
+            #     robot.set_led(100,0,0)
+            # elif t > 0:
+            #     robot.set_led(0,0,100)
         
 
         
