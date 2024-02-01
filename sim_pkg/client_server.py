@@ -146,13 +146,14 @@ class Bot_Server():
         self.server_socket.close()
     
 class Bot_Client():
-    def __init__(self, hostname, port, buffer_size):
+    def __init__(self, hostname, port, buffer_size, rtf):
         '''
         Client used in Coachbot API
         All robots send data through the client to the simulator server 
         '''
         self.hostname, self.port = hostname, port
         self.buffer_size = buffer_size
+        self.rtf = rtf
     
     def start(self):
         '''
@@ -177,6 +178,7 @@ class Bot_Client():
         '''
         # NOTE: the client is actually blocking -- it will wait for a response from the server before doing things
         # print("BOT CLIENT: sending")
+        raw_data = data
         data = json.dumps(data)
         data = data.encode("utf-8")
 
@@ -187,7 +189,8 @@ class Bot_Client():
         response = self.client_socket.recv(self.buffer_size)
 
         # Need to keep the socket open for a tiny bit
-        time.sleep(0.1)
+        #want it to be open for 20ms at rtf = 1 
+        time.sleep(0.02/self.rtf)
 
         if not response:
             # print("CLIENT STOPPED!!!") # TODO: Remove
@@ -197,6 +200,15 @@ class Bot_Client():
             response = response.decode("utf-8")
             response = json.loads(response)
 
+        #actually do the sleeping here (if robot.delay)
+        if raw_data["function"] in [8,9]:
+            #we have already slept 20ms of sim time. Here we sleep off the rest IFF user asked for something > 20ms
+            #Robot delay accepts a time value in ms!!
+            delay_time = raw_data["params"]
+            if delay_time > 20:
+                delay_time_remaining = (delay_time - 20)/1000
+                time.sleep(delay_time_remaining/self.rtf)
+
         return response
         
     def stop(self):
@@ -205,3 +217,11 @@ class Bot_Client():
         '''
         # print("BOT CLIENT Stopped") #TODO: Remove
         self.client_socket.close()
+
+    def manage_thread(self, data):
+        '''
+        Manage threading and thread ordering here. Executed as part of the "start new loop" api call.
+        NOTE: on the real robots, this "start new loop" is just a delay function.
+        '''
+
+        self.send(data)
