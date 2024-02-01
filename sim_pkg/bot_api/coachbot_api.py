@@ -114,7 +114,7 @@ class Coachbot():
         }
         self.bot_client.send(payload)
     
-    def delay(self, delay_time=0.02):
+    def delay(self, delay_time=20):
         payload = {
             "id": self.id,
             "function": 8,

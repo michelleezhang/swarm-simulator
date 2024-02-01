@@ -124,7 +124,7 @@ class Simulator():
                 # print(self.sim_time)
 
                 # Integrate world here
-                self.integrate_world(elapsed_time_diff)
+                self.integrate_world(actual_rtf*elapsed_time_diff)
 
                 # Update swarm state based on received data
                 if len(datas) != 0:
