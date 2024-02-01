@@ -16,6 +16,7 @@ class Bootloader():
         self.userfile = os.path.splitext(userfile)[0] # Remove .py ending from userfile name
         self.buffer_size = config_data["NUM_OF_MSGS"] * config_data["MSG_SIZE"]
         self.msg_type = config_data["MSG_TYPE"]
+        self.rtf = config_data["REAL_TIME_FACTOR"]
         
     def launch(self, barrier, id, a_ids=-1):
         '''
@@ -23,7 +24,7 @@ class Bootloader():
         '''
         try:
             # Create a Coachbot instance with given id number
-            bot_client = Bot_Client("localhost", 8000, self.buffer_size)
+            bot_client = Bot_Client("localhost", 8000, self.buffer_size, self.rtf)
             bot_client.start()
             robot = Coachbot(bot_client, self.msg_type, id, a_ids)
 
