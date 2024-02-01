@@ -17,6 +17,7 @@ class Coachbot():
             6: recv_msg
             7: stop_sim
             8: delay
+            9: start_new_loop
             _: log
         '''
         self.virtual_id = a_ids 
@@ -114,15 +115,22 @@ class Coachbot():
         self.bot_client.send(payload)
     
     def delay(self, delay_time=0.02):
-        t = time.time()
         payload = {
             "id": self.id,
             "function": 8,
             "params": delay_time,
-            "time": t
+            "time": time.time()
         }
         self.bot_client.send(payload)
-        time.sleep(delay_time)
+
+    def start_new_loop(self,delay_time=20):
+        payload = {
+            "id": self.id,
+            "function": 9,
+            "params": delay_time,
+            "time": time.time()
+        }
+        self.bot_client.manage_thread(payload)
 
     def log(self, message):
         '''
