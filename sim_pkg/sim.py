@@ -96,7 +96,6 @@ class Simulator():
             adjusted_time_step = actual_rtf*self.sim_time_step # Each iteration should ideally take exactly sim_time_step / rtf real seconds 
             delta_vis = 0
 
-            datas_backlog = []
 
             while not self.stop_sim:
 
@@ -110,7 +109,6 @@ class Simulator():
                 if first:
                     # Variables to store time elapsed in simulation, time elapsed in real world, and start time of the current simulation loop iteration
                     self.sim_time, real_time, loop_start_time = 0.0001, 0, time.time()
-                    self.sim_time_threshold, integral_time = 0,0
                     first = False
 
                 #check the time to move clocks forward
@@ -125,25 +123,17 @@ class Simulator():
                 self.sim_time = self.sim_time + actual_rtf*elapsed_time_diff
                 # print(self.sim_time)
 
-                #move forward integral time (this is like sim time but it resets to 0 every time the world is integrated)
-                integral_time = integral_time + actual_rtf*elapsed_time_diff
-
-                #keep track of all messages received between simulation time
-                datas_backlog += datas
-
                 # Integrate world here
-                self.integrate_world(integral_time)
-                integral_time = 0
+                self.integrate_world(elapsed_time_diff)
 
                 # Update swarm state based on received data
-                if len(datas_backlog) != 0:
-                    for data in datas_backlog:
+                if len(datas) != 0:
+                    for data in datas:
                         self.update_state(data)
-                datas_backlog = []
                     
                 # Send updates to GUI 
                 if vis == 1:
-                    delta_vis += self.sim_time_step
+                    delta_vis += elapsed_time_diff
                     # Only allows visualization every 0.05 seconds (controls frame rate)
                     if delta_vis > 0.05: 
                         delta_vis = 0
@@ -154,6 +144,11 @@ class Simulator():
                 if self.sim_time >= self.sim_time_max: 
                     print("Sim time maxed out.")
                     self.stop_sim = True
+
+
+                #slow down to let the robots execute too!
+                #sleep for 1/2 a time step adjusted for rtf
+                time.sleep(adjusted_time_step/2)
             
             logging.info([0, self.num_collisions])
 
@@ -214,6 +209,7 @@ class Simulator():
             
         elif function == 8:
             params = data["params"]
+            #delay time is in ms, but clock is in s, so /1000
             self.swarm[robot_id].clock += (params / 1000) 
 
     def integrate_world(self, dt):
