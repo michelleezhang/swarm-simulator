@@ -144,6 +144,12 @@ class Simulator():
                             empty_spot = False
                     if empty_spot:
                         self.last_active_id += 1
+
+                        if self.time_async == 1:
+                            self.swarm[self.last_active_id].clock = np.random.rand() * 0.001
+                        else:
+                            self.swarm[self.last_active_id].clock = 0.0
+                            
                         self.swarm[self.last_active_id].alive = True
                         tau_loop_start_time = t
 
