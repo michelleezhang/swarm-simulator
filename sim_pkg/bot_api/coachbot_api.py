@@ -68,7 +68,7 @@ class Coachbot():
             "time": time.time()
         }
         response = self.bot_client.send(payload)
-        return response["response"] 
+        return response["response"]
     
     def send_msg(self, msg):
         if type(msg) == bytes:

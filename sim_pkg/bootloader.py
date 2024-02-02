@@ -37,11 +37,11 @@ class Bootloader():
             bot_client.stop() # NOTE: This usually isn't run because it does not get called until after usr is complete
             
         except KeyboardInterrupt:
-            pass # Allow clean termination by KeyboardInterrupt from the main program
+            bot_client.stop() # Allow clean termination by KeyboardInterrupt from the main program
         except socket.error as e:
             if e.errno == errno.ECONNRESET:
                 pass 
-                # TODO: this is a temporary fix -- suppresses connection reset error from the bootloader, prevents errors when robot threads terminate earlier than expected
+                # TODO: this is a temporary fix -- suppresses connection reset error (or bad file descriptor) from the bootloader, prevents errors when robot threads terminate earlier than expected
                 # This works but would be better to use some kind of stop event based on the simulator ending
             else:
                 print(f"bootloader.py: {e}. Full traceback below:")

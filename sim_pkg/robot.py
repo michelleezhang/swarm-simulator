@@ -1,7 +1,7 @@
 import numpy as np
 
 class Robot():
-    def __init__(self, id, x, y, theta, a_ids, clock, num_robots):
+    def __init__(self, id, x, y, theta, a_ids, clock, num_robots, alive):
         '''
         Internal representation of a robot in the simulator
         Contains all variables associated with a given robot
@@ -14,6 +14,8 @@ class Robot():
         self.message_buffer = []
         self.clock = clock 
         self.collision_list = np.zeros(num_robots) # List of times until collision with all other robots in the swarm
+        
+        self.alive = alive # NEW: C+D
 
     def integrate(self, delta_time):
         """
