@@ -1,5 +1,5 @@
 {
-    "NUMBER_OF_ROBOTS": 60,
+    "NUMBER_OF_ROBOTS": 632,
     "COMM_RANGE": 0.3, 
     "PACKET_SUCCESS_PERC": 1.0, 
     "NUM_OF_MSGS": 36, 
@@ -11,5 +11,6 @@
     "SIM_TIME": 1000,
     "WIDTH": 12, 
     "LENGTH": 12, 
-    "USE_VIS": 1
+    "USE_VIS": 1,
+    "EXTRA": [600, 100, 100, 2, 0, 0, 0.5]
 }

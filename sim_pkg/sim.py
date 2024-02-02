@@ -29,6 +29,17 @@ class Simulator():
         # Instantiate client-server communications
         self.bot_server = Bot_Server("localhost", 8000, self.num_robots)
 
+        # NEW: C+D
+        self.extra = self.config_data["EXTRA"]
+        self.initial_num_robots = self.extra[0]
+        self.x_b = self.extra[1]
+        self.y_b = self.extra[2]
+        self.tau_b = self.extra[3]
+        self.x_d = self.extra[4]
+        self.y_d = self.extra[5]
+        self.r_d = self.extra[6]
+        self.last_active_id = self.initial_num_robots - 1
+
         # Initialize swarm
         self.initialize_swarm()
 
@@ -73,8 +84,13 @@ class Simulator():
         x, y, theta = np.round(x, 3), np.round(y, 3), np.round(theta, 3)
 
         self.swarm = np.empty(self.num_robots, dtype=object)
-        self.swarm[:] = [Robot(i, x[i], y[i], theta[i], a_ids[i], clocks[i], self.num_robots) for i in range(self.num_robots)]
+        # self.swarm[:] = [Robot(i, x[i], y[i], theta[i], a_ids[i], clocks[i], self.num_robots) for i in range(self.num_robots)]
         # iterate through all elements of the numpy arrays and create the corresponding Robot objects in one go, making it more efficient compared to explicit loops.
+        
+        # NEW: C+D
+        alive_status = np.zeros(self.num_robots, dtype=bool)
+        alive_status[:self.initial_num_robots] = True # set the first initial_num_robots to active
+        self.swarm[:] = [Robot(i, x[i], y[i], theta[i], a_ids[i], clocks[i], self.num_robots, alive_status[i]) for i in range(self.num_robots)]
 
     def launch(self, vis, gui):
         '''
@@ -109,12 +125,27 @@ class Simulator():
                 if first:
                     # Variables to store time elapsed in simulation, time elapsed in real world, and start time of the current simulation loop iteration
                     self.sim_time, real_time, loop_start_time = 0.0001, 0, time.time()
+                    tau_loop_start_time = loop_start_time # NEW: C+D
                     first = False
 
                 #check the time to move clocks forward
                 t = time.time()
                 elapsed_time_diff = t - loop_start_time
                 loop_start_time = t
+
+                # NEW: C+D
+                tau_b_diff = t - tau_loop_start_time
+                if tau_b_diff >= self.tau_b and (self.last_active_id + 1) < self.num_robots:
+                    
+                    empty_spot = True
+                    # Check if any robots are already in x_b, y_b spot
+                    for robot in self.swarm[:self.last_active_id + 1]:
+                        if robot.alive and ((self.x_b - self.robot_radius <= robot.posn[0] <= self.x_b + self.robot_radius) and (self.y_b - self.robot_radius <= robot.posn[1] <= self.y_b + self.robot_radius)):
+                            empty_spot = False
+                    if empty_spot:
+                        self.last_active_id += 1
+                        self.swarm[self.last_active_id].alive = True
+                        tau_loop_start_time = t
 
                 #move wall clock forward
                 real_time = real_time + elapsed_time_diff
@@ -137,7 +168,10 @@ class Simulator():
                     # Only allows visualization every 0.05 seconds (controls frame rate)
                     if delta_vis > 0.05: 
                         delta_vis = 0
-                        gui.update(self.swarm, real_time, self.sim_time, actual_rtf)
+                        # NEW: C+D
+                        gui_swarm = self.swarm[np.array([robot.alive for robot in self.swarm])]
+                        gui.update(gui_swarm, real_time, self.sim_time, actual_rtf)
+                        # gui.update(self.swarm, real_time, self.sim_time, actual_rtf)
 
 
                 # Time out simulator
@@ -174,75 +208,87 @@ class Simulator():
                 self.thread_start_time = thread_time # Set it to be whatever the latest starting robot time is
         
         # print("TIME:", thread_time - self.thread_start_time) # time elapsed since the thread started
-
-        if function == 1: # set_LED
-            self.swarm[robot_id].led = data["params"] 
-
-        elif function == 2: # set_vel
-            motor_full_speed = 180 * np.pi / 30 # motor_rpm = 180
-            params = data["params"]
-            self.swarm[robot_id].velocity = (params[0] / 100) * motor_full_speed, (params[1] / 100) * motor_full_speed
-
-        elif function == 5: # send_msg
-            msg = data["params"]
         
-            sender_posn = self.swarm[robot_id].posn
-            comm_dist = self.comm_radius**2 # this is the value squared
-            
-            for robot in self.swarm:
-                if robot.id != robot_id:
-                    dist = (sender_posn[0] - robot.posn[0])**2 + (sender_posn[1] - robot.posn[1])**2
-                    if dist < comm_dist: 
-                        if np.random.uniform() < self.packet_success: # generate a random val and check if it's less than packet_success
-                            if len(msg) > self.msg_size:
-                                msg = msg[:self.msg_size]
-                            robot.message_buffer.append(msg) 
-                            if len(robot.message_buffer) > self.num_msgs:
-                                robot.message_buffer = robot.message_buffer[-self.num_msgs:]
+        if self.swarm[robot_id].alive: # NEW: C+D
+            if function == 1: # set_LED
+                self.swarm[robot_id].led = data["params"] 
 
-        elif function == 6:
-            # Clear message buffer if recv_msg is called
-            self.swarm[robot_id].message_buffer = []
+            elif function == 2: # set_vel
+                motor_full_speed = 180 * np.pi / 30 # motor_rpm = 180
+                params = data["params"]
+                self.swarm[robot_id].velocity = (params[0] / 100) * motor_full_speed, (params[1] / 100) * motor_full_speed
 
-        elif function == 7: # stop
-            self.stop_sim = True
+            elif function == 5: # send_msg
+                msg = data["params"]
             
-        elif function == 8:
-            params = data["params"]
-            #delay time is in ms, but clock is in s, so /1000
-            self.swarm[robot_id].clock += (params / 1000) 
+                sender_posn = self.swarm[robot_id].posn
+                comm_dist = self.comm_radius**2 # this is the value squared
+                
+                # NEW: C+D
+                for robot in self.swarm[:self.last_active_id+1]: 
+                    if robot.id != robot_id and robot.alive: 
+                # for robot in self.swarm:
+                #     if robot.id != robot_id:
+                        dist = (sender_posn[0] - robot.posn[0])**2 + (sender_posn[1] - robot.posn[1])**2
+                        if dist < comm_dist: 
+                            if np.random.uniform() < self.packet_success: # generate a random val and check if it's less than packet_success
+                                if len(msg) > self.msg_size:
+                                    msg = msg[:self.msg_size]
+                                robot.message_buffer.append(msg) 
+                                if len(robot.message_buffer) > self.num_msgs:
+                                    robot.message_buffer = robot.message_buffer[-self.num_msgs:]
+
+            elif function == 6:
+                # Clear message buffer if recv_msg is called
+                self.swarm[robot_id].message_buffer = []
+
+            elif function == 7: # stop
+                self.stop_sim = True
+                
+            elif function == 8:
+                params = data["params"]
+                #delay time is in ms, but clock is in s, so /1000
+                self.swarm[robot_id].clock += (params / 1000) 
 
     def integrate_world(self, dt):
         '''
         Update positions of robots, while adjusting for collisions
         '''
-        result_array = np.array([robot.integrate(dt) for robot in self.swarm])
+        result_array = np.array([robot.integrate(dt) for robot in self.swarm[:self.last_active_id+1]]) # NEW: C+D
+        # result_array = np.array([robot.integrate(dt) for robot in self.swarm])
         
-        for i in range(self.num_robots):
+        for i in range(self.last_active_id+1): # NEW: C+D
+        # for i in range(self.num_robots):
             robot, pos = self.swarm[i], result_array[i]
             
-            if robot.posn[0] != pos[1] or robot.posn[1] != pos[2]: # If new pos is diff from old pos:
-                collision_will_occur = False
-                # Decrement time to collision for everyone
-                robot.collision_list -= dt
+            if robot.alive: # NEW: C+D
+                # If robot is in death circle, KILL IT
+                if (self.x_d - self.r_d <= robot.posn[0] <= self.x_d + self.r_d) and (self.y_d - self.r_d <= robot.posn[1] <= self.y_d + self.r_d):
+                    robot.alive = False
+                else:
+                    if robot.posn[0] != pos[1] or robot.posn[1] != pos[2]: # If new pos is diff from old pos:
+                        collision_will_occur = False
+                        # Decrement time to collision for everyone
+                        robot.collision_list -= dt
 
-                # Get a list of indices of all robots that have run out of time till collision
-                for r in np.where(robot.collision_list <= 0)[0]: 
-                    if r != robot.id: # Avoid self-collision checks
-                        ir_dist = (self.swarm[r].posn[0] - pos[1])**2 + (self.swarm[r].posn[1] - pos[2])**2
-                        if ir_dist <= (2 * self.robot_radius)**2:
-                            self.num_collisions += 1  
-                            collision_will_occur = True
-                        else: # If two robots have collided, don't recalculate for them (will eventually recalculate when posn updates to a valid posn)
-                            # Recalculate time to collision
-                            # Calculate magnitude of velocity vector: note sqrt(x^2+y^2) >= sqrt(a^2+b^2) iff x^2+y^2 >= a^2+b^2
-                            vel1, vel2 = (self.swarm[r].velocity[0])**2 + (self.swarm[r].velocity[1])**2, (robot.velocity[0])**2 + (robot.velocity[1])**2
-                            max_v = max(vel1, vel2) # Select larger velocity
-                            robot.collision_list[r] = ir_dist / (2 * np.sqrt(max_v) * dt)  # time to collision
+                        # Get a list of indices of all robots that have run out of time till collision
+                        for r in np.where(robot.collision_list <= 0)[0]: 
+                            if r != robot.id and r <= self.last_active_id and self.swarm[r].alive: # NEW: C+D
+                            # if r != robot.id: # Avoid self-collision checks
+                                ir_dist = (self.swarm[r].posn[0] - pos[1])**2 + (self.swarm[r].posn[1] - pos[2])**2
+                                if ir_dist <= (2 * self.robot_radius)**2:
+                                    self.num_collisions += 1  
+                                    collision_will_occur = True
+                                else: # If two robots have collided, don't recalculate for them (will eventually recalculate when posn updates to a valid posn)
+                                    # Recalculate time to collision
+                                    # Calculate magnitude of velocity vector: note sqrt(x^2+y^2) >= sqrt(a^2+b^2) iff x^2+y^2 >= a^2+b^2
+                                    vel1, vel2 = (self.swarm[r].velocity[0])**2 + (self.swarm[r].velocity[1])**2, (robot.velocity[0])**2 + (robot.velocity[1])**2
+                                    max_v = max(vel1, vel2) # Select larger velocity
+                                    robot.collision_list[r] = ir_dist / (2 * np.sqrt(max_v) * dt)  # time to collision
 
-                if not collision_will_occur:
-                    robot.posn[0], robot.posn[1] = min(max(pos[1], -self.arena_length / 2 + self.robot_radius), self.arena_length / 2 - self.robot_radius), min(max(pos[2], -self.arena_height / 2 + self.robot_radius), self.arena_height / 2 - self.robot_radius) 
-            robot.posn[2], robot.clock = pos[0], max(robot.clock, self.sim_time)
+                        if not collision_will_occur:
+                            robot.posn[0], robot.posn[1] = min(max(pos[1], -self.arena_length / 2 + self.robot_radius), self.arena_length / 2 - self.robot_radius), min(max(pos[2], -self.arena_height / 2 + self.robot_radius), self.arena_height / 2 - self.robot_radius) 
+                    robot.posn[2], robot.clock = pos[0], max(robot.clock, self.sim_time)
 
 
 if __name__ == '__main__':
