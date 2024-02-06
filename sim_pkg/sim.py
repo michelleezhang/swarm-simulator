@@ -111,6 +111,7 @@ class Simulator():
             actual_rtf = self.rtf # The actual RTF during simulation will fluctuate over time
             adjusted_time_step = actual_rtf*self.sim_time_step # Each iteration should ideally take exactly sim_time_step / rtf real seconds 
             delta_vis = 0
+            integral_time = 0
 
 
             while not self.stop_sim:
@@ -127,57 +128,80 @@ class Simulator():
                     self.sim_time, real_time, loop_start_time = 0.0001, 0, time.time()
                     tau_loop_start_time = loop_start_time # NEW: C+D
                     first = False
+                    next_execution_time = 0 + self.sim_time_step #we only integrate every 1 time step.
 
                 #check the time to move clocks forward
                 t = time.time()
                 elapsed_time_diff = t - loop_start_time
                 loop_start_time = t
 
-                # NEW: C+D
-                tau_b_diff = t - tau_loop_start_time
-                if tau_b_diff >= self.tau_b and (self.last_active_id + 1) < self.num_robots:
-                    
-                    empty_spot = True
-                    # Check if any robots are already in x_b, y_b spot
-                    for robot in self.swarm[:self.last_active_id + 1]:
-                        if robot.alive and ((self.x_b - self.robot_radius <= robot.posn[0] <= self.x_b + self.robot_radius) and (self.y_b - self.robot_radius <= robot.posn[1] <= self.y_b + self.robot_radius)):
-                            empty_spot = False
-                    if empty_spot:
-                        self.last_active_id += 1
-
-                        if self.time_async == 1:
-                            self.swarm[self.last_active_id].clock = np.random.rand() * 0.001
-                        else:
-                            self.swarm[self.last_active_id].clock = 0.0
-                            
-                        self.swarm[self.last_active_id].alive = True
-                        tau_loop_start_time = t
-
                 #move wall clock forward
                 real_time = real_time + elapsed_time_diff
 
                 #move sim time forward (scaled by time factor)
                 self.sim_time = self.sim_time + actual_rtf*elapsed_time_diff
+                integral_time += actual_rtf*elapsed_time_diff
                 # print(self.sim_time)
 
-                # Integrate world here
-                self.integrate_world(actual_rtf*elapsed_time_diff)
 
-                # Update swarm state based on received data
-                if len(datas) != 0:
-                    for data in datas:
-                        self.update_state(data)
+                #if enough time has elapsed to be approximately 1 time step
+                if real_time >= next_execution_time:
+                    #identify when we have to integrate next
+                    next_execution_time = real_time + self.sim_time_step
+
+                    #set fresh data markers
+                    self.bot_server.fresh_pose = np.full(self.num_robots, True)
+
+                    # NEW: C+D
+                    tau_b_diff = t - tau_loop_start_time
+                    if tau_b_diff >= self.tau_b and (self.last_active_id + 1) < self.num_robots:
                     
-                # Send updates to GUI 
-                if vis == 1:
-                    delta_vis += elapsed_time_diff
-                    # Only allows visualization every 0.05 seconds (controls frame rate)
-                    if delta_vis > 0.05: 
-                        delta_vis = 0
-                        # NEW: C+D
-                        gui_swarm = self.swarm[np.array([robot.alive for robot in self.swarm])]
-                        gui.update(gui_swarm, real_time, self.sim_time, actual_rtf)
-                        # gui.update(self.swarm, real_time, self.sim_time, actual_rtf)
+                        empty_spot = True
+                        # Check if any robots are already in x_b, y_b spot
+                        for robot in self.swarm[:self.last_active_id + 1]:
+                            if robot.alive and ((self.x_b - self.robot_radius <= robot.posn[0] <= self.x_b + self.robot_radius) and (self.y_b - self.robot_radius <= robot.posn[1] <= self.y_b + self.robot_radius)):
+                                empty_spot = False
+                        if empty_spot:
+                            self.last_active_id += 1
+
+                            if self.time_async == 1:
+                                self.swarm[self.last_active_id].clock = np.random.rand() * 0.001
+                            else:
+                                self.swarm[self.last_active_id].clock = 0.0
+                                
+                            self.swarm[self.last_active_id].alive = True
+                            tau_loop_start_time = t
+
+                    # Integrate world here
+                    self.integrate_world(integral_time)
+                    integral_time = 0
+
+                    # Update swarm state based on received data
+                    if len(datas) != 0:
+                        for data in datas:
+                            self.update_state(data)
+
+                    # Send updates to GUI 
+                    if vis == 1:
+                        delta_vis += self.sim_time_step
+                        # Only allows visualization every 0.05 seconds (controls frame rate)
+                        if delta_vis > 0.05: 
+                            delta_vis = 0
+                            # NEW: C+D
+                            gui_swarm = self.swarm[np.array([robot.alive for robot in self.swarm])]
+                            gui.update(gui_swarm, real_time, self.sim_time, actual_rtf)
+                            # gui.update(self.swarm, real_time, self.sim_time, actual_rtf)
+                        
+                    
+                else:
+                    self.update_clocks()
+                    if len(datas) != 0:
+                        for data in datas:
+                            self.update_messages(data)
+                    # Update swarm state based on received data
+                    if len(datas) != 0:
+                        for data in datas:
+                            self.update_state(data)
 
 
                 # Time out simulator
@@ -185,11 +209,6 @@ class Simulator():
                     print("Sim time maxed out.")
                     self.stop_sim = True
 
-
-                #slow down to let the robots execute too!
-                #sleep for 1/2 a time step adjusted for rtf
-                time.sleep(adjusted_time_step/2)
-            
             logging.info([0, self.num_collisions])
 
             self.bot_server.stop()
@@ -241,6 +260,7 @@ class Simulator():
                                 if len(msg) > self.msg_size:
                                     msg = msg[:self.msg_size]
                                 robot.message_buffer.append(msg) 
+                                self.bot_server.fresh_messages[robot.id] = True
                                 if len(robot.message_buffer) > self.num_msgs:
                                     robot.message_buffer = robot.message_buffer[-self.num_msgs:]
 
@@ -256,6 +276,41 @@ class Simulator():
                 #delay time is in ms, but clock is in s, so /1000
                 self.swarm[robot_id].clock += (params / 1000) 
 
+    
+    def update_messages(self,data):
+        function = data["function"]
+        robot_id = data["id"]
+
+        if self.swarm[robot_id].alive:
+            if function == 5: # send_msg
+                msg = data["params"]
+            
+                sender_posn = self.swarm[robot_id].posn
+                comm_dist = self.comm_radius**2 # this is the value squared
+                
+                # NEW: C+D
+                for robot in self.swarm[:self.last_active_id+1]: 
+                    if robot.id != robot_id and robot.alive: 
+                # for robot in self.swarm:
+                #     if robot.id != robot_id:
+                        dist = (sender_posn[0] - robot.posn[0])**2 + (sender_posn[1] - robot.posn[1])**2
+                        if dist < comm_dist: 
+                            if np.random.uniform() < self.packet_success: # generate a random val and check if it's less than packet_success
+                                if len(msg) > self.msg_size:
+                                    msg = msg[:self.msg_size]
+                                robot.message_buffer.append(msg) 
+                                self.bot_server.fresh_messages[robot.id] = True
+                                if len(robot.message_buffer) > self.num_msgs:
+                                    robot.message_buffer = robot.message_buffer[-self.num_msgs:]
+
+    
+    def update_clocks(self):
+        for i in range(self.last_active_id+1): # NEW: C+D
+        # for i in range(self.num_robots):
+            robot = self.swarm[i]
+            robot.clock = max(robot.clock, self.sim_time)
+
+    
     def integrate_world(self, dt):
         '''
         Update positions of robots, while adjusting for collisions

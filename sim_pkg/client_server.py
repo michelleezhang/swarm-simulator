@@ -4,6 +4,7 @@ import json
 import time
 import errno
 import queue
+import numpy as np
 
 class Bot_Server():
     def __init__(self, hostname, port, num_robots):
@@ -15,6 +16,8 @@ class Bot_Server():
         self.num_robots = num_robots
         self.message_queues = {} # Dictionary to store messages to send to each socket
         self.num_connected = 0
+        self.fresh_pose = np.full(num_robots, False)
+        self.fresh_messages = np.full(num_robots, False)
     
     def start(self):
         '''
@@ -82,13 +85,26 @@ class Bot_Server():
                                 "response": swarm[client_id].clock 
                             }
                         elif client_function == 4:
-                            response = {
-                                "response": swarm[client_id].posn
-                            }
+                            if self.fresh_pose[client_id]:
+                                response = {
+                                    "response": swarm[client_id].posn
+                                }
+                                self.fresh_pose[client_id] = False
+                            else:
+                                response = {
+                                    "response": False
+                                }
                         elif client_function == 6:
-                            response = {
-                                "response": swarm[client_id].message_buffer
-                            }
+                            if self.fresh_messages[client_id]:
+                                response = {
+                                    "response": swarm[client_id].message_buffer
+                                }
+                                self.fresh_messages[client_id] = False
+                                swarm[client_id].message_buffer = [] #clear the message buffer 
+                            else:
+                                response = {
+                                    "response": []
+                                }
                         else:
                             response = {
                                 "response": 1
@@ -190,7 +206,8 @@ class Bot_Client():
 
         # Need to keep the socket open for a tiny bit
         #want it to be open for 20ms at rtf = 1 
-        time.sleep(0.02/self.rtf)
+        # time.sleep(0.02/self.rtf)
+        time.sleep(0.001)
 
         if not response:
             # print("CLIENT STOPPED!!!") # TODO: Remove
