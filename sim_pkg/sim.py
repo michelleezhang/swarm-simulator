@@ -195,9 +195,6 @@ class Simulator():
                     
                 else:
                     self.update_clocks()
-                    if len(datas) != 0:
-                        for data in datas:
-                            self.update_messages(data)
                     # Update swarm state based on received data
                     if len(datas) != 0:
                         for data in datas:
