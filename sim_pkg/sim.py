@@ -274,33 +274,6 @@ class Simulator():
                 self.swarm[robot_id].clock += (params / 1000) 
 
     
-    def update_messages(self,data):
-        function = data["function"]
-        robot_id = data["id"]
-
-        if self.swarm[robot_id].alive:
-            if function == 5: # send_msg
-                msg = data["params"]
-            
-                sender_posn = self.swarm[robot_id].posn
-                comm_dist = self.comm_radius**2 # this is the value squared
-                
-                # NEW: C+D
-                for robot in self.swarm[:self.last_active_id+1]: 
-                    if robot.id != robot_id and robot.alive: 
-                # for robot in self.swarm:
-                #     if robot.id != robot_id:
-                        dist = (sender_posn[0] - robot.posn[0])**2 + (sender_posn[1] - robot.posn[1])**2
-                        if dist < comm_dist: 
-                            if np.random.uniform() < self.packet_success: # generate a random val and check if it's less than packet_success
-                                if len(msg) > self.msg_size:
-                                    msg = msg[:self.msg_size]
-                                robot.message_buffer.append(msg) 
-                                self.bot_server.fresh_messages[robot.id] = True
-                                if len(robot.message_buffer) > self.num_msgs:
-                                    robot.message_buffer = robot.message_buffer[-self.num_msgs:]
-
-    
     def update_clocks(self):
         for i in range(self.last_active_id+1): # NEW: C+D
         # for i in range(self.num_robots):
