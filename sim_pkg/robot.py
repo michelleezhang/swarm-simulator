@@ -29,6 +29,8 @@ class Robot():
         """
         State dynamic model used to integrate using Euler integration
         """
+        friction = 0.6
+        vel_vector = friction*vel_vector
         half_radius_of_wheel, dist_between_wheel = 0.0075, 0.08 # First value is half of the wheel's radius
         scaled_rad, scaled_cos, scaled_sin = (2 * half_radius_of_wheel)/dist_between_wheel, half_radius_of_wheel * np.cos(self.posn[2]), half_radius_of_wheel * np.sin(self.posn[2])
 

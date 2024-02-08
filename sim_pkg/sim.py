@@ -30,27 +30,15 @@ class Simulator():
         self.bot_server = Bot_Server("localhost", 8000, self.num_robots)
 
         # NEW: C+D
-        if "EXTRA" in self.config_data:
-            self.extra = self.config_data["EXTRA"]
-            self.initial_num_robots = self.extra[0]
-            self.x_b = self.extra[1]
-            self.y_b = self.extra[2]
-            self.tau_b = self.extra[3]
-            self.x_d = self.extra[4]
-            self.y_d = self.extra[5]
-            self.r_d = self.extra[6]
-            self.last_active_id = self.initial_num_robots - 1
-        else:
-            self.initial_num_robots = self.num_robots
-            self.last_active_id = self.num_robots - 1
-            self.extra = None
-            # self.x_b = None
-            # self.y_b = None
-            # self.tau_b = None
-            # self.x_d = None
-            # self.y_d = None
-            # self.r_d = None
-
+        self.extra = self.config_data["EXTRA"]
+        self.initial_num_robots = self.extra[0]
+        self.x_b = self.extra[1]
+        self.y_b = self.extra[2]
+        self.tau_b = self.extra[3]
+        self.x_d = self.extra[4]
+        self.y_d = self.extra[5]
+        self.r_d = self.extra[6]
+        self.last_active_id = self.initial_num_robots - 1
 
         # Initialize swarm
         self.initialize_swarm()
@@ -75,7 +63,6 @@ class Simulator():
                                             np.zeros(self.num_robots),
                                             np.zeros(self.num_robots),
                                             np.zeros(self.num_robots, dtype=int))
-
             elif init_suffix == ".csv":
                 x, y, theta, a_ids = [], [], [], []
                 with open("user/" + self.initfile, newline='') as csvfile:
@@ -92,12 +79,6 @@ class Simulator():
             clocks = np.random.rand(self.num_robots) * 0.001 # rand does 0 to 1 range automatically
         else:
             clocks = np.zeros(self.num_robots)
-        
-        # Overwrite birth positions for robots that spawn later # NEW: C+D
-        if self.extra:
-            for r_ind in range(self.initial_num_robots, self.num_robots):
-                x[r_ind] = self.x_b
-                y[r_ind] = self.y_b
 
         # Round x, y, and theta arrays to 3 decimal places using numpy
         x, y, theta = np.round(x, 3), np.round(y, 3), np.round(theta, 3)
@@ -128,7 +109,7 @@ class Simulator():
 
             first = True
             actual_rtf = self.rtf # The actual RTF during simulation will fluctuate over time
-            adjusted_time_step = actual_rtf*self.sim_time_step # Each iteration should ideally take exactly sim_time_step / rtf real seconds 
+            adjusted_time_step = self.sim_time_step/self.rtf # Each iteration should ideally take exactly sim_time_step / rtf real seconds 
             delta_vis = 0
             integral_time = 0
 
@@ -145,10 +126,9 @@ class Simulator():
                 if first:
                     # Variables to store time elapsed in simulation, time elapsed in real world, and start time of the current simulation loop iteration
                     self.sim_time, real_time, loop_start_time = 0.0001, 0, time.time()
-                    if self.extra:
-                        tau_loop_start_time = loop_start_time # NEW: C+D
+                    tau_loop_start_time = loop_start_time # NEW: C+D
                     first = False
-                    next_execution_time = 0 + self.sim_time_step #we only integrate every 1 time step.
+                    next_execution_time = 0 + adjusted_time_step #we only integrate every 1 time step.
 
                 #check the time to move clocks forward
                 t = time.time()
@@ -167,31 +147,30 @@ class Simulator():
                 #if enough time has elapsed to be approximately 1 time step
                 if real_time >= next_execution_time:
                     #identify when we have to integrate next
-                    next_execution_time = real_time + self.sim_time_step
+                    next_execution_time = real_time + adjusted_time_step
 
                     #set fresh data markers
                     self.bot_server.fresh_pose = np.full(self.num_robots, True)
 
                     # NEW: C+D
-                    if self.extra:
-                        tau_b_diff = t - tau_loop_start_time
-                        if tau_b_diff >= self.tau_b and (self.last_active_id + 1) < self.num_robots:
-                        
-                            empty_spot = True
-                            # Check if any robots are already in x_b, y_b spot
-                            for robot in self.swarm[:self.last_active_id + 1]:
-                                if robot.alive and ((self.x_b - self.robot_radius <= robot.posn[0] <= self.x_b + self.robot_radius) and (self.y_b - self.robot_radius <= robot.posn[1] <= self.y_b + self.robot_radius)):
-                                    empty_spot = False
-                            if empty_spot:
-                                self.last_active_id += 1
+                    tau_b_diff = t - tau_loop_start_time
+                    if tau_b_diff >= self.tau_b and (self.last_active_id + 1) < self.num_robots:
+                    
+                        empty_spot = True
+                        # Check if any robots are already in x_b, y_b spot
+                        for robot in self.swarm[:self.last_active_id + 1]:
+                            if robot.alive and ((self.x_b - self.robot_radius <= robot.posn[0] <= self.x_b + self.robot_radius) and (self.y_b - self.robot_radius <= robot.posn[1] <= self.y_b + self.robot_radius)):
+                                empty_spot = False
+                        if empty_spot:
+                            self.last_active_id += 1
 
-                                if self.time_async == 1:
-                                    self.swarm[self.last_active_id].clock = np.random.rand() * 0.001
-                                else:
-                                    self.swarm[self.last_active_id].clock = 0.0
-                                    
-                                self.swarm[self.last_active_id].alive = True
-                                tau_loop_start_time = t
+                            if self.time_async == 1:
+                                self.swarm[self.last_active_id].clock = np.random.rand() * 0.001
+                            else:
+                                self.swarm[self.last_active_id].clock = 0.0
+                                
+                            self.swarm[self.last_active_id].alive = True
+                            tau_loop_start_time = t
 
                     # Integrate world here
                     self.integrate_world(integral_time)
@@ -315,7 +294,7 @@ class Simulator():
             
             if robot.alive: # NEW: C+D
                 # If robot is in death circle, KILL IT
-                if self.extra and (self.x_d - self.r_d <= robot.posn[0] <= self.x_d + self.r_d) and (self.y_d - self.r_d <= robot.posn[1] <= self.y_d + self.r_d):
+                if (self.x_d - self.r_d <= robot.posn[0] <= self.x_d + self.r_d) and (self.y_d - self.r_d <= robot.posn[1] <= self.y_d + self.r_d):
                     robot.alive = False
                 else:
                     if robot.posn[0] != pos[1] or robot.posn[1] != pos[2]: # If new pos is diff from old pos:
