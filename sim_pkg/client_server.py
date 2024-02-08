@@ -207,7 +207,7 @@ class Bot_Client():
         # Need to keep the socket open for a tiny bit
         #want it to be open for 20ms at rtf = 1 
         # time.sleep(0.02/self.rtf)
-        time.sleep(0.001)
+        time.sleep(0.001/self.rtf)
 
         if not response:
             # print("CLIENT STOPPED!!!") # TODO: Remove
@@ -219,12 +219,13 @@ class Bot_Client():
 
         #actually do the sleeping here (if robot.delay)
         if raw_data["function"] in [8,9]:
-            #we have already slept 20ms of sim time. Here we sleep off the rest IFF user asked for something > 20ms
+            #we have already slept 0.001 s of REAL time. Here we sleep off the rest IFF user asked for something > 0.001 s real time
             #Robot delay accepts a time value in ms!!
-            delay_time = raw_data["params"]
-            if delay_time > 20:
-                delay_time_remaining = (delay_time - 20)/1000
+            delay_time = raw_data["params"]/1000
+            if delay_time > 0.001:
+                delay_time_remaining = (delay_time - 0.001)
                 time.sleep(delay_time_remaining/self.rtf)
+
 
         return response
         
