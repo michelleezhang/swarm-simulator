@@ -30,15 +30,28 @@ class Simulator():
         self.bot_server = Bot_Server("localhost", 8000, self.num_robots)
 
         # NEW: C+D
-        self.extra = self.config_data["EXTRA"]
-        self.initial_num_robots = self.extra[0]
-        self.x_b = self.extra[1]
-        self.y_b = self.extra[2]
-        self.tau_b = self.extra[3]
-        self.x_d = self.extra[4]
-        self.y_d = self.extra[5]
-        self.r_d = self.extra[6]
-        self.last_active_id = self.initial_num_robots - 1
+        if "EXTRA" in self.config_data:
+            self.extra = self.config_data["EXTRA"]
+            self.initial_num_robots = self.extra[0]
+            self.x_b = self.extra[1]
+            self.y_b = self.extra[2]
+            self.tau_b = self.extra[3]
+            self.x_d = self.extra[4]
+            self.y_d = self.extra[5]
+            self.r_d = self.extra[6]
+            self.last_active_id = self.initial_num_robots - 1
+            self.spawning = True 
+            self.pause_length = 0
+
+            if self.extra[7] == 1:
+                self.reactivate = True # make this a param
+                self.reactivate_queue = []
+            else:
+                self.reactivate = False
+        else:
+            self.initial_num_robots = self.num_robots
+            self.last_active_id = self.num_robots - 1
+            self.extra = None
 
         # Initialize swarm
         self.initialize_swarm()
@@ -79,6 +92,12 @@ class Simulator():
             clocks = np.random.rand(self.num_robots) * 0.001 # rand does 0 to 1 range automatically
         else:
             clocks = np.zeros(self.num_robots)
+        
+        # Overwrite birth positions for robots that spawn later # NEW: C+D
+        if self.extra:
+            for r_ind in range(self.initial_num_robots, self.num_robots):
+                x[r_ind] = self.x_b
+                y[r_ind] = self.y_b
 
         # Round x, y, and theta arrays to 3 decimal places using numpy
         x, y, theta = np.round(x, 3), np.round(y, 3), np.round(theta, 3)
@@ -107,6 +126,13 @@ class Simulator():
             logging.basicConfig(level=logging.INFO, # format='%(asctime)s - %(levelname)s - %(message)s',
             handlers=[Sim_Stat_Logger('log_values.csv')])    # Log messages using the custom CSVHandler
 
+            # Set up logging for swarm state tracking
+            swarm_file = 'swarm_state_log.csv'
+            with open(swarm_file, 'w', newline='') as csvfile:
+                writer = csv.writer(csvfile)
+                header = ['sim time', 'real time' 'swarm state']
+                writer.writerow(header)
+
             first = True
             actual_rtf = self.rtf # The actual RTF during simulation will fluctuate over time
             adjusted_time_step = self.sim_time_step/self.rtf # Each iteration should ideally take exactly sim_time_step / rtf real seconds 
@@ -125,8 +151,10 @@ class Simulator():
                 # In the first iteration, initialize time variables
                 if first:
                     # Variables to store time elapsed in simulation, time elapsed in real world, and start time of the current simulation loop iteration
-                    self.sim_time, real_time, loop_start_time = 0.0001, 0, time.time()
-                    tau_loop_start_time = loop_start_time # NEW: C+D
+                    self.sim_time, self.real_time, loop_start_time = 0.0001, 0, time.time()
+                    if self.extra:
+                        tau_loop_start_time = loop_start_time # NEW: C+D
+                        self.next_spawn_time = 0
                     first = False
                     next_execution_time = 0 + adjusted_time_step #we only integrate every 1 time step.
 
@@ -136,7 +164,7 @@ class Simulator():
                 loop_start_time = t
 
                 #move wall clock forward
-                real_time = real_time + elapsed_time_diff
+                self.real_time = self.real_time + elapsed_time_diff
 
                 #move sim time forward (scaled by time factor)
                 self.sim_time = self.sim_time + actual_rtf*elapsed_time_diff
@@ -145,32 +173,54 @@ class Simulator():
 
 
                 #if enough time has elapsed to be approximately 1 time step
-                if real_time >= next_execution_time:
+                if self.real_time >= next_execution_time:
                     #identify when we have to integrate next
-                    next_execution_time = real_time + adjusted_time_step
-
+                    next_execution_time = self.real_time + adjusted_time_step
+                        
                     #set fresh data markers
                     self.bot_server.fresh_pose = np.full(self.num_robots, True)
 
-                    # NEW: C+D
-                    tau_b_diff = t - tau_loop_start_time
-                    if tau_b_diff >= self.tau_b and (self.last_active_id + 1) < self.num_robots:
-                    
-                        empty_spot = True
-                        # Check if any robots are already in x_b, y_b spot
-                        for robot in self.swarm[:self.last_active_id + 1]:
-                            if robot.alive and ((self.x_b - self.robot_radius <= robot.posn[0] <= self.x_b + self.robot_radius) and (self.y_b - self.robot_radius <= robot.posn[1] <= self.y_b + self.robot_radius)):
-                                empty_spot = False
-                        if empty_spot:
-                            self.last_active_id += 1
+                    # Log swarm state
+                    with open(swarm_file, 'a', newline='') as csvfile:
+                        writer = csv.writer(csvfile)
+                        swarm_dict = {index: robot.posn for index, robot in enumerate(self.swarm)}
+                        row = [self.sim_time, self.real_time, swarm_dict]
+                        writer.writerow(row)
 
-                            if self.time_async == 1:
-                                self.swarm[self.last_active_id].clock = np.random.rand() * 0.001
-                            else:
-                                self.swarm[self.last_active_id].clock = 0.0
-                                
-                            self.swarm[self.last_active_id].alive = True
-                            tau_loop_start_time = t
+                    # NEW: C+D
+                    if self.extra:
+                        tau_b_diff = t - tau_loop_start_time
+                        if not self.spawning:
+                            if tau_b_diff >= self.pause_length:
+                                self.spawning = True
+                        elif (self.real_time > self.next_spawn_time) and (tau_b_diff >= self.tau_b) and (self.last_active_id + 1) < self.num_robots:
+                            empty_spot = True
+                            # Check if any robots are already in x_b, y_b spot
+                            for robot in self.swarm[:self.last_active_id + 1]:
+                                if robot.alive and ((self.x_b - self.robot_radius <= robot.posn[0] <= self.x_b + self.robot_radius) and (self.y_b - self.robot_radius <= robot.posn[1] <= self.y_b + self.robot_radius)):
+                                    empty_spot = False
+                            if empty_spot:
+                                if self.reactivate and self.reactivate_queue != []:
+                                    id_to_activate = self.reactivate_queue.pop()
+                                    # Reset all fields
+                                    self.swarm[id_to_activate].posn[0] = self.x_b 
+                                    self.swarm[id_to_activate].posn[1] = self.y_b
+                                    self.swarm[id_to_activate].message_buffer = []
+                                    self.swarm[id_to_activate].velocity = (0, 0)
+                                    self.swarm[id_to_activate].collision_list = np.zeros(self.num_robots)
+                                else:
+                                    self.last_active_id += 1
+                                    id_to_activate = self.last_active_id
+
+                                if self.time_async == 1:
+                                    self.swarm[id_to_activate].clock = np.random.rand() * 0.001
+                                else:
+                                    self.swarm[id_to_activate].clock = 0.0
+
+                                self.swarm[id_to_activate].alive = True
+                                tau_loop_start_time = t
+
+                                # print('spawned!', id_to_activate, self.real_time)
 
                     # Integrate world here
                     self.integrate_world(integral_time)
@@ -189,10 +239,9 @@ class Simulator():
                             delta_vis = 0
                             # NEW: C+D
                             gui_swarm = self.swarm[np.array([robot.alive for robot in self.swarm])]
-                            gui.update(gui_swarm, real_time, self.sim_time, actual_rtf)
-                            # gui.update(self.swarm, real_time, self.sim_time, actual_rtf)
-                        
-                    
+                            gui.update(gui_swarm, self.real_time, self.sim_time, actual_rtf)
+                            # gui.update(self.swarm, self.real_time, self.sim_time, actual_rtf)
+
                 else:
                     self.update_clocks()
                     # Update swarm state based on received data
@@ -272,7 +321,12 @@ class Simulator():
                 params = data["params"]
                 #delay time is in ms, but clock is in s, so /1000
                 self.swarm[robot_id].clock += (params / 1000) 
-
+            
+            elif function == 10:
+                self.pause_length = data["params"]
+                self.spawning = False
+                self.next_spawn_time = (((self.real_time + self.pause_length) // self.tau_b) + 1) * self.tau_b
+                # this gets the nearest multiple of pause length to real time (that is also larger than real time)
     
     def update_clocks(self):
         for i in range(self.last_active_id+1): # NEW: C+D
@@ -294,8 +348,10 @@ class Simulator():
             
             if robot.alive: # NEW: C+D
                 # If robot is in death circle, KILL IT
-                if (self.x_d - self.r_d <= robot.posn[0] <= self.x_d + self.r_d) and (self.y_d - self.r_d <= robot.posn[1] <= self.y_d + self.r_d):
+                if self.extra and (self.x_d - self.r_d <= robot.posn[0] <= self.x_d + self.r_d) and (self.y_d - self.r_d <= robot.posn[1] <= self.y_d + self.r_d):
                     robot.alive = False
+                    if self.reactivate:
+                        self.reactivate_queue.append(robot.id)
                 else:
                     if robot.posn[0] != pos[1] or robot.posn[1] != pos[2]: # If new pos is diff from old pos:
                         collision_will_occur = False

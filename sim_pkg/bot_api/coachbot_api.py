@@ -18,6 +18,7 @@ class Coachbot():
             7: stop_sim
             8: delay
             9: start_new_loop
+            10: pause_spawning
             _: log
         '''
         self.virtual_id = a_ids 
@@ -154,6 +155,15 @@ class Coachbot():
             "id": self.id,
             "function": 0,
             "params": start_time,
+            "time": time.time()
+        }
+        self.bot_client.send(payload)
+    
+    def pause_spawning(self, pause_length):
+        payload = {
+            "id": self.id,
+            "function": 10,
+            "params": pause_length,
             "time": time.time()
         }
         self.bot_client.send(payload)
