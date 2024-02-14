@@ -193,7 +193,7 @@ class Simulator():
                         if not self.spawning:
                             if tau_b_diff >= self.pause_length:
                                 self.spawning = True
-                        elif (self.real_time > self.next_spawn_time) and (tau_b_diff >= self.tau_b) and (self.last_active_id + 1) < self.num_robots:
+                        elif (self.sim_time > self.next_spawn_time) and (tau_b_diff >= self.tau_b) and (self.last_active_id + 1) < self.num_robots:
                             empty_spot = True
                             # Check if any robots are already in x_b, y_b spot
                             for robot in self.swarm[:self.last_active_id + 1]:
@@ -325,7 +325,7 @@ class Simulator():
             elif function == 10:
                 self.pause_length = data["params"]
                 self.spawning = False
-                self.next_spawn_time = (((self.real_time + self.pause_length) // self.tau_b) + 1) * self.tau_b
+                self.next_spawn_time = (((self.sim_time + self.pause_length) // self.tau_b) + 1) * self.tau_b
                 # this gets the nearest multiple of pause length to real time (that is also larger than real time)
     
     def update_clocks(self):
