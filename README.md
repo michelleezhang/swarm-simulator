@@ -1,6 +1,6 @@
-# **Swarm Simulation**
+# **Swarm Simulator**
 ## About
-This package provides a simulator for swarm robotics. 
+This package provides a simulation environment for swarm robotics. 
 
 ## Usage
 To set up required packages, run `pip install -r requirements.in`
@@ -43,6 +43,11 @@ The parameters that can be set in a configuration file are:
 11. WIDTH (float): width (height) of arena (meters)
 12. LENGTH (float): length of the arena (meters)
 13. USE_VIS (int): set whether (1) or not (0) to use the simulator GUI
+14. (optional) EXTRA (list): set parameters for robot creation and destruction
+
+    This simulator allows for robots to be added to the environment one at a time, at a specified time interval. Robots can also be destroyed once they reach a specified circular area. 
+    
+    The parameters contained in this field are (in order): initial number of robots (int), x coordinate for robot creation (float), y coordinate for robot creation (float), time interval for robot creation (float), x coordinate for robot destruction (float), y coordinate for robot destruction (float), radius for area of robot destruction (float), indicator for whether or not to reuse past robot ids for new robot creation (int, 1 or 0).
 
 ## Code structure
 ![Structure](.github/images/structure.png)

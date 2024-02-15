@@ -1,7 +1,0 @@
-{
-    "NUM_RUNS": 1,
-    "DEFAULT_TRIALS": 1,
-    "DEFAULT_USER": "travel_test_usr.py",
-    "DEFAULT_CONFIG": "travel_test_config.json",
-    "DEFAULT_INIT": "travel_test_init_pose.py"
-}

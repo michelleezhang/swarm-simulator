@@ -1,7 +1,0 @@
-{
-    "NUM_RUNS": 1,
-    "DEFAULT_TRIALS": 1,
-    "DEFAULT_USER": "big_N_usr.py",
-    "DEFAULT_CONFIG": "big_N_config.json",
-    "DEFAULT_INIT": "big_N_init_pose.py"
-}
