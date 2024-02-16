@@ -210,6 +210,7 @@ class Bot_Client():
         time.sleep(0.001/self.rtf)
 
         if not response:
+            time.sleep(0.2) # Need to wait a longer period to prevent "OSError: [Errno 9] Bad file descriptor" at the end of the simulation (i.e. socket closed after reading only part of the data)
             # print("CLIENT STOPPED!!!") # TODO: Remove
             self.client_socket.close()
             self.stop()
@@ -218,7 +219,7 @@ class Bot_Client():
             response = json.loads(response)
 
         #actually do the sleeping here (if robot.delay)
-        if raw_data["function"] in [8,9]:
+        if raw_data["function"] in [8, 9]:
             #we have already slept 0.001 s of REAL time. Here we sleep off the rest IFF user asked for something > 0.001 s real time
             #Robot delay accepts a time value in ms!!
             delay_time = raw_data["params"]/1000
@@ -226,8 +227,11 @@ class Bot_Client():
                 delay_time_remaining = (delay_time - 0.001)
                 time.sleep(delay_time_remaining/self.rtf)
 
-
-        return response
+        if response:
+            return response
+        else:
+            # Sometimes response = b'', in which case, we want to return something the Coachbot API can handle
+            return {'response': False}
         
     def stop(self):
         '''

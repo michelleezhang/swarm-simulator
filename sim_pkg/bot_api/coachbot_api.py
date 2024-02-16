@@ -2,6 +2,7 @@
 import os
 import base64
 import time
+import csv
 
 class Coachbot():
     def __init__(self, bot_client, msg_type, id_n=-1, a_ids=-1):
@@ -98,14 +99,17 @@ class Coachbot():
 
         msg_buffer = response["response"]
 
-        if self.msg_type == str:
-            return msg_buffer
-        
-        list = []
-        for msg in msg_buffer:
-            msg = base64.b64decode(msg)
-            list.append(msg)
-        return list
+        if msg_buffer:
+            if self.msg_type == str:
+                return msg_buffer
+            
+            list = []
+            for msg in msg_buffer:
+                msg = base64.b64decode(msg)
+                list.append(msg)
+            return list
+        else: # In client_server.py, we have it so that if response["response"] == False, then that means the socket is already closed
+            return []
 
     def stop_sim(self):
         payload = {
@@ -141,16 +145,23 @@ class Coachbot():
         os.makedirs(log_directory, exist_ok=True) # If it doesn't already exist, create a folder to store bot logs
 
         if log_file == None:
-            log_file = f"{self.virtual_id}_{self.id}_log.txt"
+            log_file = f"{self.virtual_id}_{self.id}_log.csv"
 
         log_path = f"{log_directory}/{log_file}"
 
+        if type(message) == str:
+            csv_payload = [message]
+        else:
+            csv_payload = message
+
         try:
-            with open(log_path, 'a') as file:
-                file.write(message + '\n')
+            with open(log_path, 'a', newline='') as csvfile:
+                csvwriter = csv.writer(csvfile)
+                csvwriter.writerow(csv_payload)
         except FileNotFoundError:
-             with open(log_path, 'w') as file:
-                file.write(message + '\n')
+             with open(log_path, 'w', newline='') as csvfile:
+                csvwriter = csv.writer(csvfile)
+                csvwriter.writerow(csv_payload)
     
     def send_start_time(self, start_time):
         payload = {
