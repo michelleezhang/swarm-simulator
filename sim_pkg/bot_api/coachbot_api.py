@@ -5,7 +5,7 @@ import time
 import csv
 
 class Coachbot():
-    def __init__(self, bot_client, msg_type, id_n=-1, a_ids=-1):
+    def __init__(self, bot_client, msg_type, id_n=-1, a_ids=-1, log_file=None):
         '''
         Define API for Coachbots
         When a method is called, it sends a request to the simulator. For some methods, it receives a response back and returns it
@@ -25,6 +25,7 @@ class Coachbot():
         self.virtual_id = a_ids 
         self.id = id_n
         self.bot_client = bot_client
+        self.log_file = log_file
 
         # TODO: can only send messages of the same type for a given usr file 
         if msg_type == 0:
@@ -145,7 +146,10 @@ class Coachbot():
         os.makedirs(log_directory, exist_ok=True) # If it doesn't already exist, create a folder to store bot logs
 
         if log_file == None:
-            log_file = f"{self.virtual_id}_{self.id}_log.csv"
+            if self.log_file == None:
+                log_file = f"{self.virtual_id}_{self.id}_log.csv"
+            else:
+                log_file = self.log_file + ".csv"
 
         log_path = f"{log_directory}/{log_file}"
 

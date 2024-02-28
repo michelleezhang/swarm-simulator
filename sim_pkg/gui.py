@@ -2,9 +2,11 @@ import contextlib
 with contextlib.redirect_stdout(None): # Suppresses "Hello from the pygame" message 
     import pygame
 import numpy as np
+import os
+import shutil
 
 class GUI:
-    def __init__(self, config_data):
+    def __init__(self, config_data, trial_number):
         '''
         A GUI to display the simulation
         Receives data from the simulator and draws the swarm onscreen
@@ -14,6 +16,17 @@ class GUI:
         self.radius = 5
         self.arrow_width, self.arrow_height = self.radius / 3, self.radius / 2
         self.x_fac, self.y_fac = self.screen_length / self.arena_length, self.screen_height / self.arena_height
+        self.frame_num = 0
+        if "VIDEO_NAME" in config_data:
+            self.video_folder = config_data["VIDEO_NAME"] + "_" + str(trial_number)
+            # Delete directory if it already exists and make a new one
+            if os.path.exists(self.video_folder):
+                shutil.rmtree(self.video_folder)
+            
+            os.makedirs(self.video_folder)
+            
+        else:
+            self.video_folder = None
 
     def launch(self):
         '''
@@ -27,6 +40,9 @@ class GUI:
         '''
         Stop the GUI
         '''
+        if self.video_folder != None:
+            pass
+            # convert folder and delete
         pygame.quit()
     
     def update(self, state, real_time, sim_time, rtf):
@@ -59,6 +75,11 @@ class GUI:
 
         # Update the display to show the latest changes
         pygame.display.flip()
+
+        # Save video 
+        if self.video_folder != None:
+            pygame.image.save(self.window, f"{self.video_folder}/frame{self.frame_num}.png")
+            self.frame_num += 1
 
         # Keep pygame screen open (or quit if the user closes the screen)
         for event in pygame.event.get():

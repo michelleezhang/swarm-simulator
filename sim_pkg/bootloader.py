@@ -17,7 +17,12 @@ class Bootloader():
         self.buffer_size = config_data["NUM_OF_MSGS"] * config_data["MSG_SIZE"]
         self.msg_type = config_data["MSG_TYPE"]
         self.rtf = config_data["REAL_TIME_FACTOR"]
-        
+
+        if "LOG_FILE" in config_data:
+            self.log_file = config_data["LOG_FILE"]
+        else:
+            self.log_file = None
+
     def launch(self, barrier, id, a_ids=-1):
         '''
         Creates a robot instance to run the user file
@@ -26,7 +31,7 @@ class Bootloader():
             # Create a Coachbot instance with given id number
             bot_client = Bot_Client("localhost", 8000, self.buffer_size, self.rtf)
             bot_client.start()
-            robot = Coachbot(bot_client, self.msg_type, id, a_ids)
+            robot = Coachbot(bot_client, self.msg_type, id, a_ids, self.log_file)
 
             # Run usr function in userfile module
             fn = importlib.import_module("user." + self.userfile) # Import userfile as a module

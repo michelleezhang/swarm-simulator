@@ -32,7 +32,7 @@ def main(userfile, config_data, initfile, run_number, trial_number):
     bootloader = Bootloader(userfile, config_data)
     simulator = Simulator(config_data, initfile)
     if vis == 1:
-        gui = GUI(config_data)
+        gui = GUI(config_data, trial_number)
     elif vis == 0:
         gui = None
 
