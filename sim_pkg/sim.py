@@ -52,6 +52,11 @@ class Simulator():
             self.initial_num_robots = self.num_robots
             self.last_active_id = self.num_robots - 1
             self.extra = None
+        
+        if "COLLISION_CHECK" in self.config_data and self.config_data["COLLISION_CHECK"] == 0:
+            self.collision_check = False
+        else:
+            self.collision_check = True
 
         # Initialize swarm
         self.initialize_swarm()
@@ -355,23 +360,26 @@ class Simulator():
                 else:
                     if robot.posn[0] != pos[1] or robot.posn[1] != pos[2]: # If new pos is diff from old pos:
                         collision_will_occur = False
-                        # Decrement time to collision for everyone
-                        robot.collision_list -= dt
 
-                        # Get a list of indices of all robots that have run out of time till collision
-                        for r in np.where(robot.collision_list <= 0)[0]: 
-                            if r != robot.id and r <= self.last_active_id and self.swarm[r].alive: # NEW: C+D
-                            # if r != robot.id: # Avoid self-collision checks
-                                ir_dist = (self.swarm[r].posn[0] - pos[1])**2 + (self.swarm[r].posn[1] - pos[2])**2
-                                if ir_dist <= (2 * self.robot_radius)**2:
-                                    self.num_collisions += 1  
-                                    collision_will_occur = True
-                                else: # If two robots have collided, don't recalculate for them (will eventually recalculate when posn updates to a valid posn)
-                                    # Recalculate time to collision
-                                    # Calculate magnitude of velocity vector: note sqrt(x^2+y^2) >= sqrt(a^2+b^2) iff x^2+y^2 >= a^2+b^2
-                                    vel1, vel2 = (self.swarm[r].velocity[0])**2 + (self.swarm[r].velocity[1])**2, (robot.velocity[0])**2 + (robot.velocity[1])**2
-                                    max_v = max(vel1, vel2) # Select larger velocity
-                                    robot.collision_list[r] = ir_dist / (2 * np.sqrt(max_v) * dt)  # time to collision
+                        if self.collision_check: # If we want to turn on collisions
+                            # Decrement time to collision for everyone
+                            robot.collision_list -= dt
+
+                            # Get a list of indices of all robots that have run out of time till collision
+                            for r in np.where(robot.collision_list <= 0)[0]: 
+                                if r != robot.id and r <= self.last_active_id and self.swarm[r].alive: # NEW: C+D
+                                # if r != robot.id: # Avoid self-collision checks
+                                    ir_dist = (self.swarm[r].posn[0] - pos[1])**2 + (self.swarm[r].posn[1] - pos[2])**2
+                                    if ir_dist <= (2 * self.robot_radius)**2:
+                                        self.num_collisions += 1  
+                                        collision_will_occur = True
+                                    else: # If two robots have collided, don't recalculate for them (will eventually recalculate when posn updates to a valid posn)
+                                        # Recalculate time to collision
+                                        # Calculate magnitude of velocity vector: note sqrt(x^2+y^2) >= sqrt(a^2+b^2) iff x^2+y^2 >= a^2+b^2
+                                        vel1, vel2 = (self.swarm[r].velocity[0])**2 + (self.swarm[r].velocity[1])**2, (robot.velocity[0])**2 + (robot.velocity[1])**2
+                                        max_v = max(vel1, vel2) # Select larger velocity
+                                        robot.collision_list[r] = ir_dist / (2 * np.sqrt(max_v) * dt)  # time to collision
+
 
                         if not collision_will_occur:
                             robot.posn[0], robot.posn[1] = min(max(pos[1], -self.arena_length / 2 + self.robot_radius), self.arena_length / 2 - self.robot_radius), min(max(pos[2], -self.arena_height / 2 + self.robot_radius), self.arena_height / 2 - self.robot_radius) 
