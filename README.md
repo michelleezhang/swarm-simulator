@@ -10,7 +10,7 @@ Each simulation may take three input files: the user file, the configuration fil
 * The configuration file stores parameters for the simulation
 * The initialization file initializes robot positions in the swarm
     * This file is optional
-    * Accepted file formats: ``.py`` or ``.csv`` (where columns are `x`, `y`, `theta`, and `a_ids`)
+    * Accepted file formats: ``.py`` or ``.csv`` (where columns correspond to `x`, `y`, `theta`, and `a_ids`)
 
 To run the simulator:
 1. Move all user, configuration, and intialization files into the `user` directory

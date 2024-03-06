@@ -84,12 +84,12 @@ class Simulator():
             elif init_suffix == ".csv":
                 x, y, theta, a_ids = [], [], [], []
                 with open("user/" + self.initfile, newline='') as csvfile:
-                    reader = csv.DictReader(csvfile)
+                    reader = csv.reader(csvfile)
                     for row in reader:
-                        x.append(float(row['x']))
-                        y.append(float(row['y']))
-                        theta.append(float(row['theta']))
-                        a_ids.append(float(row['a_ids']))
+                        x.append(float(row[0]))
+                        y.append(float(row[1]))
+                        theta.append(float(row[2]))
+                        a_ids.append(float(row[3]))
         else:
             x, y, theta, a_ids = np.random.uniform(-(self.arena_length - 0.1) / 2, (self.arena_length - 0.1) / 2, size=self.num_robots), np.random.uniform(-(self.arena_height - 0.1) / 2, (self.arena_height - 0.1) / 2, size=self.num_robots), np.zeros(self.num_robots), np.zeros(self.num_robots)
 
