@@ -60,44 +60,64 @@ def main(userfile, config_data, initfile, run_number, trial_number):
 if __name__ == '__main__':
     # Parse command line arguments to obtain the paths to the required files
     parser = argparse.ArgumentParser(description="Run the robots, simulator, and GUI")
-    parser.add_argument("-b", "--batchfile", type=str, help="Path to user code file", required=True)
+    parser.add_argument("-b", "--batchfile", type=str, help="Path to batch file", required=False)
+    parser.add_argument("-u", "--userfile", type=str, help="Path to user code file", required=False)
+    parser.add_argument("-c", "--configfile", type=str, help="Path to configuration file", required=False)
+    parser.add_argument("-i", "--initfile", type=str, help="Path to initialization file", required=False)
     args = parser.parse_args()
 
-    # Unpack batchfile data
-    with open("user/" + args.batchfile, 'r') as bfile:
-        batch_config = json.loads(bfile.read())
-    bfile.close()
+    # If a batchfile was given, unpack batchfile data
+    if args.batchfile:
+        with open("user/" + args.batchfile, 'r') as bfile:
+            batch_config = json.loads(bfile.read())
+        bfile.close()
 
-    num_runs = batch_config["NUM_RUNS"]
+        num_runs = batch_config["NUM_RUNS"]
 
-    for i in range(1, num_runs + 1):
-        if f"TRIALS_{i}" in batch_config:
-            num_trials = batch_config[f"TRIALS_{i}"]
-        else:
-            num_trials = batch_config["DEFAULT_TRIALS"]
-
-        for trial in range(1, num_trials + 1):
-            if f"USER_{i}" in batch_config:
-                userfile = batch_config[f"USER_{i}"]
+        for i in range(1, num_runs + 1):
+            if f"TRIALS_{i}" in batch_config:
+                num_trials = batch_config[f"TRIALS_{i}"]
             else:
-                userfile = batch_config["DEFAULT_USER"]
+                num_trials = batch_config["DEFAULT_TRIALS"]
 
-            if f"CONFIG_{i}" in batch_config:
-                configfile = batch_config[f"CONFIG_{i}"]
-            else:
-                configfile = batch_config["DEFAULT_CONFIG"]
+            for trial in range(1, num_trials + 1):
+                if f"USER_{i}" in batch_config:
+                    userfile = batch_config[f"USER_{i}"]
+                else:
+                    userfile = batch_config["DEFAULT_USER"]
 
-            # Unpack configuration data dictionary
-            with open("user/" + configfile, 'r') as cfile:
-                config_data = json.loads(cfile.read())
-            cfile.close()
+                if f"CONFIG_{i}" in batch_config:
+                    configfile = batch_config[f"CONFIG_{i}"]
+                else:
+                    configfile = batch_config["DEFAULT_CONFIG"]
 
-            if f"INIT_{i}" in batch_config:
-                initfile = batch_config[f"INIT_{i}"]
-            elif "DEFAULT_INIT" in batch_config:
-                initfile = batch_config["DEFAULT_INIT"]
-            else:
-                initfile = None
-            
-            # Run main function
-            main(userfile, config_data, initfile, i, trial)
+                # Unpack configuration data dictionary
+                with open("user/" + configfile, 'r') as cfile:
+                    config_data = json.loads(cfile.read())
+                cfile.close()
+
+                if f"INIT_{i}" in batch_config:
+                    initfile = batch_config[f"INIT_{i}"]
+                elif "DEFAULT_INIT" in batch_config:
+                    initfile = batch_config["DEFAULT_INIT"]
+                else:
+                    initfile = None
+                
+                # Run main function
+                main(userfile, config_data, initfile, i, trial)
+    else:
+        num_runs = 1
+        userfile = args.userfile
+        configfile = args.configfile
+        initfile = args.initfile
+
+        # Unpack configuration data dictionary
+        with open("user/" + configfile, 'r') as cfile:
+            config_data = json.loads(cfile.read())
+        cfile.close()
+
+        main(userfile, config_data, initfile, 1, 1)
+
+
+    
+    

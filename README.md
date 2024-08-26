@@ -10,12 +10,12 @@ Each simulation may take three input files: the user file, the configuration fil
 * The configuration file stores parameters for the simulation
 * The initialization file initializes robot positions in the swarm
     * This file is optional
-    * Accepted file formats: ``.py`` or ``.csv`` (where columns correspond to `x`, `y`, `theta`, and `a_ids`)
+    * Accepted file formats: ``.py`` or ``.csv`` (where columns correspond to `a_ids`, `x`, `y`, and `theta` in order)
 
 To run the simulator:
 1. Move all user, configuration, and intialization files into the `user` directory
 2. Navigate to the `sim_pkg` directory
-3. Run `python coachbot_simulator.py -b <batchfile>`
+3. Run `python coachbot_simulator.py -b <batchfile>` (or `python coachbot_simulator.py -u <userfile> -c <configfile> -u <initfile>` if you would like to run a standalone simulation)
     * `<batchfile>` is the batch file, which specifies the number of simulations to run ("NUM_RUNS") and the input files to use for each simulation
     * Default input files can be set in the batch file, under "DEFAULT_USER", "DEFAULT_CONFIG", and "DEFAULT_INIT" respectively
         * To exclude the initialization file by default, simply omit "DEFAULT_INIT"
